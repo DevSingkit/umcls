@@ -1,0 +1,13 @@
+pnpm lint
+
+# PH0-002 AC: "detect-secrets pre-commit hook is active; a fake API key in a
+# file is rejected." Requires the Python tool `detect-secrets` to be
+# installed separately (pip install detect-secrets) — Husky can't install
+# Python tooling itself, this just wires it into the git hook.
+if command -v detect-secrets >/dev/null 2>&1; then
+  detect-secrets-hook --baseline .secrets.baseline $(git diff --cached --name-only --diff-filter=ACM)
+else
+  echo "⚠️  detect-secrets not installed — secret scanning is being SKIPPED this commit."
+  echo "    Install it: pip install detect-secrets && detect-secrets scan > .secrets.baseline"
+  echo "    Do not treat this warning as optional for long — see PH0-002 in tasks.md."
+fi
