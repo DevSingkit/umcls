@@ -14,6 +14,8 @@
 //   • Footer is the one dark (ink) surface on the page, per "one dark tone only" (§1.1)
 
 import Image from "next/image";
+import Link from "next/link";
+
 import {
   BookOpen,
   ClipboardCheck,
@@ -115,7 +117,7 @@ export default function LandingPage() {
       {/* ── Floating pill nav ────────────────────────────────────────────── */}
       <div className="sticky top-4 z-40 px-4 sm:top-6">
         <header className="mx-auto flex max-w-[1200px] items-center justify-between rounded-full bg-white px-5 py-3 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:px-8">
-          <a href="/" className="inline-flex min-h-[44px] items-center">
+          <link href="/" className="inline-flex min-h-[44px] items-center">
             <Image
               src="/logo.png"
               alt="UMCLS LMS"
@@ -124,7 +126,7 @@ export default function LandingPage() {
               priority
               className="h-8 w-auto object-contain"
             />
-          </a>
+          </link>
 
           <a
             href="/login"
