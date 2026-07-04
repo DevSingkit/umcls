@@ -1,0 +1,55 @@
+name: Preview & Lighthouse CI
+
+# PH0-008. IMPORTANT: this workflow does NOT deploy anything. Vercel's
+# GitHub integration is already linked to this repo and deploys every PR
+# on its own — that's what posts the "Vercel Preview" comment/check you
+# already see on PRs. Re-deploying here would just create a duplicate,
+# unnecessary deployment.
+#
+# What this workflow actually does: wait for Vercel's own deployment to go
+# from "pending" to "success" via the GitHub Deployments API, grab the
+# resulting preview URL, then run Lighthouse CI against it. This satisfies
+# PH0-008's Lighthouse acceptance criteria without fighting the existing
+# Vercel integration.
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: preview-lighthouse-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI (Vercel Preview)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Polls GitHub's Deployments API for the deployment Vercel's
+      # integration creates for this PR/SHA, and outputs its URL once
+      # Vercel marks it successful. Timeout is generous — cold Next.js
+      # preview builds can take a few minutes.
+      - name: Wait for Vercel preview deployment
+        id: wait-for-preview
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          max_timeout: 300
+          check_interval: 10
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ steps.wait-for-preview.outputs.url }}
+            ${{ steps.wait-for-preview.outputs.url }}/login
+          configPath: ./lighthouserc.js
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      # Lighthouse CI's own `assert` step (config'd in lighthouserc.js)
+      # already fails this job on an accessibility score < 95. The
+      # performance gate is set to `warn` there, not `error`, per
+      # VERSION_ROADMAP.md — deliberately relaxed for V1, not forgotten.

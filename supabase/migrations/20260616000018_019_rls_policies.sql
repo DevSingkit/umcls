@@ -324,9 +324,15 @@ using (
 );
 
 -- Student-facing view: strips is_correct entirely.
--- security_invoker=true means the view respects the calling user's RLS context.
+-- security_invoker=false (the fix): with invoker=true, Postgres checks the
+-- calling role's own grants, but `authenticated` has no SELECT on the base
+-- table (see revoke below), so students got a permission error instead of
+-- the masked view. invoker=false means the view runs as its owner, which
+-- can read the table, and the column list above is what actually keeps
+-- is_correct hidden from students. Confirmed live: students got
+-- "permission denied for table answer_options" until this was changed.
 create or replace view answer_options_for_student
-with (security_invoker = true) as
+with (security_invoker = false) as
     select id, question_id, option_text, order_index
     from answer_options;
 -- is_correct is intentionally excluded

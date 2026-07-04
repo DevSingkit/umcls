@@ -1,0 +1,138 @@
+name: CI
+
+# PH0-008 — PR validation gate. Nothing here deploys anything; Vercel's
+# GitHub integration handles deploys on its own (see preview.yml for the
+# Lighthouse step that piggybacks on that deployment).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Bump alongside your local toolchain. Repo confirmed on pnpm + Next 15.5.15.
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9"
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check
+        run: pnpm exec tsc --noEmit
+
+  rls-tests:
+    name: RLS Policy Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Spins up local Postgres + Supabase stack, applies every migration
+      # in supabase/migrations, then runs the RLS-specific test suite.
+      # ADJUST the test command below to match whatever actually exists in
+      # the repo (pgTAP via `supabase test db`, or a custom vitest/jest
+      # suite that hits the local instance directly) — placeholder here
+      # assumes pgTAP since that's the Supabase-native option for RC-02/
+      # RC-03/RC-05 style policy assertions.
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Run RLS tests
+        run: supabase test db
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Build-time env vars — these are PUBLIC (NEXT_PUBLIC_*) values only.
+      # Server-only secrets (service role key, Upstash tokens, etc.) must
+      # NOT be here; they're not needed for `next build` and shouldn't be
+      # in CI logs. Add repo secrets if the build genuinely fails without
+      # them.
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Fails the job (and blocks merge via branch protection) on any
+      # HIGH or CRITICAL CVE, per PH0-008's acceptance criteria.
+      - name: Audit (high/critical only)
+        run: pnpm audit --audit-level=high

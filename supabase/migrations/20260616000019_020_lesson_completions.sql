@@ -19,7 +19,9 @@ create index if not exists idx_completions_lesson  on lesson_completions(lesson_
 
 alter table lesson_completions enable row level security;
 
-create policy if not exists "completions_insert_student"
+drop policy if exists "completions_insert_student" on lesson_completions;
+
+create policy "completions_insert_student"
 on lesson_completions for insert to authenticated
 with check (
     auth_role() = 'student'
@@ -28,7 +30,9 @@ with check (
     and exists (select 1 from lessons where id = lesson_id and is_published = true)
 );
 
-create policy if not exists "completions_select"
+drop policy if exists "completions_select" on lesson_completions;
+
+create policy "completions_select"
 on lesson_completions for select to authenticated
 using (
     student_id = auth.uid()
