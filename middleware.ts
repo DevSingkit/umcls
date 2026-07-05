@@ -5,7 +5,49 @@ import type { NextRequest } from 'next/server'
 import { redis } from '@/lib/security/rate-limit'
 import { isSessionInactive } from '@/lib/security/guards'
 
+// SECURITY.md §9 documents the header VALUES as living in next.config.ts,
+// but the CSP's script-src nonce has to be generated fresh per request —
+// next.config.ts's headers() is computed once at build time and can't do
+// that. So the nonce + CSP itself are generated here, in middleware,
+// which runs per-request. The other static headers (HSTS, X-Frame-Options,
+// etc.) are also set here for the same reason: one place, one source of
+// truth, instead of splitting header logic across two files.
+function buildCsp(nonce: string) {
+    return [
+        "default-src 'self'",
+        `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "font-src 'self'",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+        "frame-src https://www.youtube.com https://youtube.com",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "upgrade-insecure-requests",
+    ].join('; ')
+}
+
+function applySecurityHeaders(response: NextResponse, nonce: string) {
+    response.headers.set('Content-Security-Policy', buildCsp(nonce))
+    response.headers.set('X-DNS-Prefetch-Control', 'on')
+    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+    response.headers.set('X-Frame-Options', 'DENY')
+    response.headers.set('X-Content-Type-Options', 'nosniff')
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    return response
+}
+
 export async function middleware(request: NextRequest) {
+    // Generate the nonce first and attach it to the *request* headers
+    // (not just the response). Next.js reads x-nonce off the incoming
+    // request to apply it to its own framework-injected <script> tags —
+    // this only works if it's set before NextResponse.next() is built,
+    // which is why this happens before the Supabase client setup below.
+    const nonce = crypto.randomUUID()
+    request.headers.set('x-nonce', nonce)
+
     let response = NextResponse.next({ request })
 
     const supabase = createServerClient(
@@ -38,7 +80,7 @@ export async function middleware(request: NextRequest) {
     const isProtectedPath = isAdminPath || isTeacherPath || isStudentPath
 
     if (!user && isProtectedPath) {
-        return NextResponse.redirect(new URL('/login', request.url))
+        return applySecurityHeaders(NextResponse.redirect(new URL('/login', request.url)), nonce)
     }
 
     if (user && isProtectedPath) {
@@ -49,7 +91,10 @@ export async function middleware(request: NextRequest) {
             .single()
 
         if (!profile?.is_active) {
-            return NextResponse.redirect(new URL('/login?reason=deactivated', request.url))
+            return applySecurityHeaders(
+                NextResponse.redirect(new URL('/login?reason=deactivated', request.url)),
+                nonce
+            )
         }
 
         // Grace period: if the user signed in within the last 60 seconds,
@@ -59,23 +104,25 @@ export async function middleware(request: NextRequest) {
             Date.now() - new Date(user.last_sign_in_at).getTime() < 60_000
 
         if (!justSignedIn && isSessionInactive(profile.last_seen_at)) {
-            return NextResponse.redirect(new URL('/login?reason=timeout', request.url))
+            return applySecurityHeaders(
+                NextResponse.redirect(new URL('/login?reason=timeout', request.url)),
+                nonce
+            )
         }
 
         const role = profile.role
         if (isAdminPath && role !== 'admin') {
-            return NextResponse.redirect(new URL('/unauthorized', request.url))
+            return applySecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), nonce)
         }
         if (isTeacherPath && role !== 'teacher') {
-            return NextResponse.redirect(new URL('/unauthorized', request.url))
+            return applySecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), nonce)
         }
         if (isStudentPath && role !== 'student') {
-            return NextResponse.redirect(new URL('/unauthorized', request.url))
+            return applySecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), nonce)
         }
 
         const cacheKey = `seen:${user.id}`
         const alreadyTracked = await redis.get(cacheKey)
-
         if (!alreadyTracked) {
             await redis.set(cacheKey, '1', { ex: 300 })
             const cookieHeader = request.headers.get('cookie') ?? ''
@@ -87,11 +134,7 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    response.headers.set('X-Frame-Options', 'DENY')
-    response.headers.set('X-Content-Type-Options', 'nosniff')
-    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-
-    return response
+    return applySecurityHeaders(response, nonce)
 }
 
 export const config = {

@@ -20,7 +20,7 @@ export function TopNav({ role, fullName }: TopNavProps) {
     return (
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-ink px-4 lg:hidden">
             <div className="flex items-baseline gap-2">
-                <span className="text-body-emphasis text-on-ink">LMS</span>
+                <span className="text-body-emphasis text-on-ink">UMCLS</span>
                 <span className="text-caption-sm text-on-ink/70">{ROLE_LABELS[role]}</span>
             </div>
 

@@ -7,7 +7,7 @@ import './globals.css'
 import '@/lib/env'
 
 export const metadata: Metadata = {
-  title: 'LMS',
+  title: 'UMCLS',
   description: 'School Learning Management System',
 }
 

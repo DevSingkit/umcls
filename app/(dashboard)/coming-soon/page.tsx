@@ -17,8 +17,7 @@ export default async function ComingSoonPage({ searchParams }: ComingSoonPagePro
             <Construction size={64} className="text-steel" aria-hidden="true" />
             <h1 className="text-display-xs text-charcoal">{label} is coming soon</h1>
             <p className="max-w-sm text-body-md text-graphite">
-                This part of the LMS is scoped for a later version. See VERSION_ROADMAP.md for what ships
-                when.
+                This part of the LMS is scoped for a later version.
             </p>
         </div>
     );

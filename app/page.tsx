@@ -117,7 +117,7 @@ export default function LandingPage() {
       {/* ── Floating pill nav ────────────────────────────────────────────── */}
       <div className="sticky top-4 z-40 px-4 sm:top-6">
         <header className="mx-auto flex max-w-[1200px] items-center justify-between rounded-full bg-white px-5 py-3 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:px-8">
-          <link href="/" className="inline-flex min-h-[44px] items-center">
+          <Link href="/" className="inline-flex min-h-[44px] items-center">
             <Image
               src="/logo.png"
               alt="UMCLS LMS"
@@ -126,7 +126,7 @@ export default function LandingPage() {
               priority
               className="h-8 w-auto object-contain"
             />
-          </link>
+          </Link>
 
           <a
             href="/login"

@@ -1,3 +1,4 @@
+'use server'
 // See lib/auth/AUTH_NOTES.md for why these checks exist
 // See DATABASE.md section on answer_options for why the service role client is used here
 import { createClient } from '@/lib/supabase/server'
@@ -63,7 +64,9 @@ export async function gradeQuizSubmission(
         }
     })
     const score = Math.round((correctCount / studentAnswers.length) * 100)
-    const isPassing = score >= quiz.passing_score
+    // passing_score is a raw "correct answers needed" count (e.g. 6 out of 10),
+    // not a percentage — compare it against correctCount, not the 0-100 score.
+    const isPassing = correctCount >= quiz.passing_score
     const { data: attempt, error: attemptError } = await supabase
         .from('quiz_attempts')
         .insert({
