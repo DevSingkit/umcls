@@ -9,18 +9,13 @@ import { isSessionInactive } from '@/lib/security/guards'
 // but the CSP's script-src nonce has to be generated fresh per request —
 // next.config.ts's headers() is computed once at build time and can't do
 // that. So the nonce + CSP itself are generated here, in middleware,
-// which runs per-request. The other static headers (HSTS, X-Frame-Options,
-// etc.) are also set here for the same reason: one place, one source of
-// truth, instead of splitting header logic across two files.
+// which runs per-request.
 function buildCsp(nonce: string) {
     // Next.js's DEV SERVER (webpack HMR / React Fast Refresh) uses eval()
     // internally to load modules — this is Next's own tooling, not
     // anything in this app's code. A strict-dynamic, no-unsafe-eval CSP
     // (correct and desired in production) blocks that eval() call and
-    // silently breaks ALL client-side JS in dev, including plain
-    // useState handlers with no server/network involvement at all. That
-    // was the actual cause of "nothing happens on click" locally — not
-    // Supabase, not Redis, not the login action.
+    // silently breaks ALL client-side JS in dev.
     const isDev = process.env.NODE_ENV !== 'production'
 
     return [
@@ -40,8 +35,35 @@ function buildCsp(nonce: string) {
     ].join('; ')
 }
 
-function applySecurityHeaders(response: NextResponse, nonce: string) {
-    response.headers.set('Content-Security-Policy', buildCsp(nonce))
+// PRODUCTION BUG FOUND during PH8-002 live verification: the previous
+// version mutated `request.headers` in place and passed the whole
+// `request` object to NextResponse.next({ request }). That does NOT
+// reliably propagate to Next's internal RSC render in the way needed
+// for Next to apply the nonce to its own framework <script> tags — the
+// nonce showed up correctly in the CSP *response* header, but never
+// reached the actual <script nonce="..."> attributes, so with
+// 'strict-dynamic' present (which makes browsers ignore 'self' and
+// host-based rules entirely, trusting ONLY nonce/hash-matched scripts),
+// literally every script on the page — including Next's own framework
+// bundles — was blocked. Total UI paralysis in production, not just a
+// dev-mode issue.
+//
+// Fix, per Next.js's actual documented CSP pattern: build a *fresh*
+// Headers object from the incoming request, set x-nonce and the CSP on
+// THAT, and pass it as `request: { headers: requestHeaders }` — not the
+// original request object. This has to be threaded through every single
+// NextResponse.next()/redirect() call in this file, including the one
+// Supabase's cookie setAll() callback creates, or the nonce silently
+// stops propagating on requests that refresh the session cookie.
+function buildRequestHeaders(request: NextRequest, nonce: string, csp: string): Headers {
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-nonce', nonce)
+    requestHeaders.set('Content-Security-Policy', csp)
+    return requestHeaders
+}
+
+function applyResponseHeaders(response: NextResponse, csp: string) {
+    response.headers.set('Content-Security-Policy', csp)
     response.headers.set('X-DNS-Prefetch-Control', 'on')
     response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
     response.headers.set('X-Frame-Options', 'DENY')
@@ -52,15 +74,11 @@ function applySecurityHeaders(response: NextResponse, nonce: string) {
 }
 
 export async function middleware(request: NextRequest) {
-    // Generate the nonce first and attach it to the *request* headers
-    // (not just the response). Next.js reads x-nonce off the incoming
-    // request to apply it to its own framework-injected <script> tags —
-    // this only works if it's set before NextResponse.next() is built,
-    // which is why this happens before the Supabase client setup below.
     const nonce = crypto.randomUUID()
-    request.headers.set('x-nonce', nonce)
+    const csp = buildCsp(nonce)
+    const requestHeaders = buildRequestHeaders(request, nonce, csp)
 
-    let response = NextResponse.next({ request })
+    let response = NextResponse.next({ request: { headers: requestHeaders } })
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,7 +90,11 @@ export async function middleware(request: NextRequest) {
                 },
                 setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
                     cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-                    response = NextResponse.next({ request })
+                    // Rebuild with the SAME requestHeaders (carrying the
+                    // nonce/CSP) rather than a bare NextResponse.next({ request })
+                    // — this was the specific line that silently dropped
+                    // nonce propagation on any request that refreshed cookies.
+                    response = NextResponse.next({ request: { headers: requestHeaders } })
                     cookiesToSet.forEach(({ name, value, options }) =>
                         response.cookies.set(name, value, options)
                     )
@@ -92,7 +114,7 @@ export async function middleware(request: NextRequest) {
     const isProtectedPath = isAdminPath || isTeacherPath || isStudentPath
 
     if (!user && isProtectedPath) {
-        return applySecurityHeaders(NextResponse.redirect(new URL('/login', request.url)), nonce)
+        return applyResponseHeaders(NextResponse.redirect(new URL('/login', request.url)), csp)
     }
 
     if (user && isProtectedPath) {
@@ -103,9 +125,9 @@ export async function middleware(request: NextRequest) {
             .single()
 
         if (!profile?.is_active) {
-            return applySecurityHeaders(
+            return applyResponseHeaders(
                 NextResponse.redirect(new URL('/login?reason=deactivated', request.url)),
-                nonce
+                csp
             )
         }
 
@@ -116,21 +138,21 @@ export async function middleware(request: NextRequest) {
             Date.now() - new Date(user.last_sign_in_at).getTime() < 60_000
 
         if (!justSignedIn && isSessionInactive(profile.last_seen_at)) {
-            return applySecurityHeaders(
+            return applyResponseHeaders(
                 NextResponse.redirect(new URL('/login?reason=timeout', request.url)),
-                nonce
+                csp
             )
         }
 
         const role = profile.role
         if (isAdminPath && role !== 'admin') {
-            return applySecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), nonce)
+            return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), csp)
         }
         if (isTeacherPath && role !== 'teacher') {
-            return applySecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), nonce)
+            return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), csp)
         }
         if (isStudentPath && role !== 'student') {
-            return applySecurityHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), nonce)
+            return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), csp)
         }
 
         const cacheKey = `seen:${user.id}`
@@ -146,7 +168,7 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    return applySecurityHeaders(response, nonce)
+    return applyResponseHeaders(response, csp)
 }
 
 export const config = {
