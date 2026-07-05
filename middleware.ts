@@ -13,9 +13,21 @@ import { isSessionInactive } from '@/lib/security/guards'
 // etc.) are also set here for the same reason: one place, one source of
 // truth, instead of splitting header logic across two files.
 function buildCsp(nonce: string) {
+    // Next.js's DEV SERVER (webpack HMR / React Fast Refresh) uses eval()
+    // internally to load modules — this is Next's own tooling, not
+    // anything in this app's code. A strict-dynamic, no-unsafe-eval CSP
+    // (correct and desired in production) blocks that eval() call and
+    // silently breaks ALL client-side JS in dev, including plain
+    // useState handlers with no server/network involvement at all. That
+    // was the actual cause of "nothing happens on click" locally — not
+    // Supabase, not Redis, not the login action.
+    const isDev = process.env.NODE_ENV !== 'production'
+
     return [
         "default-src 'self'",
-        `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+        isDev
+            ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
+            : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: https:",
         "font-src 'self'",
