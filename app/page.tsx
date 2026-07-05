@@ -128,13 +128,13 @@ export default function LandingPage() {
             />
           </Link>
 
-          <a
+          <Link
             href="/login"
             className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#141413] px-6 text-[14px] font-medium tracking-[-0.42px] text-[#F3F0EE] transition-colors hover:bg-[#292929]"
           >
             Sign in
             <ArrowRight className="h-3.5 w-3.5" />
-          </a>
+          </Link>
         </header>
       </div>
 
@@ -164,20 +164,20 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <a
+            <Link
               href="/login"
               className="inline-flex min-h-[44px] items-center gap-2 rounded-[20px] bg-[#141413] px-7 text-[16px] font-medium tracking-[-0.48px] text-[#F3F0EE] transition-colors hover:bg-[#292929]"
             >
               Sign in to your account
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="#features"
               className="inline-flex min-h-[44px] items-center gap-2 rounded-[20px] border-[1.5px] border-[#141413] bg-white px-7 text-[16px] font-medium tracking-[-0.48px] text-[#141413] transition-colors hover:bg-[#F3F0EE]"
             >
               See what&rsquo;s inside
-            </a>
+            </Link>
           </div>
 
           {/* Recognition pills — kept out of the CTA row so the ink pill reads
@@ -311,13 +311,13 @@ export default function LandingPage() {
               email.
             </p>
 
-            <a
+            <Link
               href="/login"
               className="mt-8 inline-flex min-h-[44px] items-center gap-2 rounded-[20px] bg-[#F3F0EE] px-7 text-[16px] font-medium tracking-[-0.48px] text-[#141413] transition-colors hover:bg-white"
             >
               Sign in
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -359,7 +359,7 @@ export default function LandingPage() {
                   +63 975 152 1284
                 </li>
                 <li className="flex items-center gap-2 text-[13px]">
-                  <a
+                  <Link
                     href="https://facebook.com/p/United-Methodist-Cooperative-Learning-System-Inc-61576554814851"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -367,7 +367,7 @@ export default function LandingPage() {
                   >
                     Facebook page
                     <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
