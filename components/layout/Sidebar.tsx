@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,9 +14,9 @@ interface SidebarProps {
 }
 
 /**
- * Fixed left sidebar, desktop only (≥ 1024px — DESIGN-LMS.md §3.3, §1.7).
- * Background {colors.ink}; active item = 2px {colors.primary} left border
- * + {colors.ink-soft} background.
+ * Fixed left sidebar, desktop only (≥ 1024px — DESIGN-LMS.md §6.1).
+ * Background is `ink` (#1F2A24) — a warm dark green-charcoal, not flat
+ * black. Active item gets a brand-green pill behind the icon+label.
  */
 export function Sidebar({ role, fullName }: SidebarProps) {
     const pathname = usePathname();
@@ -27,15 +28,17 @@ export function Sidebar({ role, fullName }: SidebarProps) {
             aria-label="Main navigation"
             className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-[240px] lg:flex-col lg:bg-ink"
         >
-            <div className="px-5 py-6">
-                <span className="text-display-xs text-on-ink">UMCLS</span>
+            <div className="flex items-center gap-2 px-5 py-6">
+                <Image src="/logo.png" alt="" width={32} height={32} className="shrink-0 rounded-md" />
+                <span className="font-heading text-h3 text-on-ink">UMCLS</span>
             </div>
 
-            <nav aria-label="Primary" className="flex-1">
-                <ul>
+            <nav aria-label="Primary" className="flex-1 px-3">
+                <ul className="flex flex-col gap-1">
                     {items.map((item) => {
-                        const isActive =
-                            pathname === item.href || (item.isV1 && pathname.startsWith(`${item.href}/`));
+                        const isActive = item.isActive
+                            ? item.isActive(pathname)
+                            : pathname === item.href || (item.isV1 && pathname.startsWith(`${item.href}/`));
                         const Icon = item.icon;
 
                         return (
@@ -44,16 +47,12 @@ export function Sidebar({ role, fullName }: SidebarProps) {
                                     href={item.href}
                                     aria-current={isActive ? "page" : undefined}
                                     className={cn(
-                                        "flex items-center gap-3 border-l-2 border-transparent px-5 py-3 text-body-md text-on-ink",
-                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-ink",
-                                        isActive ? "border-primary bg-ink-soft" : "hover:bg-ink-soft/60"
+                                        "flex h-12 items-center gap-3 rounded-pill px-4 text-body-md text-on-ink",
+                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink",
+                                        isActive ? "bg-brand font-semibold" : "opacity-80 hover:bg-white/5 hover:opacity-100"
                                     )}
                                 >
-                                    <Icon
-                                        size={20}
-                                        aria-hidden="true"
-                                        className={isActive ? "text-primary" : "text-steel"}
-                                    />
+                                    <Icon size={20} aria-hidden="true" className="shrink-0" />
                                     <span>{item.label}</span>
                                 </Link>
                             </li>
@@ -62,31 +61,29 @@ export function Sidebar({ role, fullName }: SidebarProps) {
                 </ul>
             </nav>
 
-            <div className="mt-4 flex items-center gap-5">
-                <div
-                    aria-hidden="true"
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-ink-soft text-body-emphasis text-on-ink"
-                >
-                    {initial}
+            <div className="border-t border-white/10 px-3 pb-3 pt-3">
+                <div className="flex items-center gap-3 px-4 py-2">
+                    <div
+                        aria-hidden="true"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/10 text-body-emphasis text-on-ink"
+                    >
+                        {initial}
+                    </div>
+                    <span className="truncate text-caption text-on-ink/80">{fullName}</span>
                 </div>
-                <span className="truncate text-caption-md text-on-ink/80">{fullName}</span>
-            </div>
 
-            <div className="border-t border-ink-soft px-5 py-4">
                 <form action={signOut}>
                     <button
                         type="submit"
                         className={cn(
-                            "flex w-full items-center gap-3 py-3 text-body-md text-on-ink",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+                            "flex h-12 w-full items-center gap-3 rounded-pill px-4 text-body-md text-on-ink opacity-80 hover:bg-white/5 hover:opacity-100",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
                         )}
                     >
-                        <LogOut size={20} aria-hidden="true" className="text-steel" />
-                        Sign Out
+                        <LogOut size={20} aria-hidden="true" className="shrink-0" />
+                        Sign out
                     </button>
                 </form>
-
-
             </div>
         </aside>
     );

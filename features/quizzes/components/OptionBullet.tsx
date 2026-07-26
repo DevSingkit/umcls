@@ -13,15 +13,17 @@ export function OptionBullet({
 }) {
     return (
         <div
-            className={`flex items-center gap-3 rounded-button px-4 py-2.5 border ${isCorrect ? 'border-success bg-success/5' : 'border-hairline'
-                }`}
+            className={`flex items-center gap-3 rounded-md px-4 py-2.5 border ${
+                isCorrect ? 'border-brand bg-brand-soft' : 'border-hairline'
+            }`}
         >
             <span
-                className={`flex items-center justify-center w-5 h-5 rounded-full border-2 shrink-0 ${isCorrect ? 'border-success bg-success text-white' : 'border-hairline'
-                    }`}
+                className={`flex items-center justify-center w-6 h-6 rounded-pill border-2 shrink-0 ${
+                    isCorrect ? 'border-brand bg-brand text-on-ink' : 'border-hairline-strong'
+                }`}
             >
                 {isCorrect && (
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                         <path
                             fillRule="evenodd"
                             d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
@@ -30,11 +32,11 @@ export function OptionBullet({
                     </svg>
                 )}
             </span>
-            <span className={`text-body-md ${isCorrect ? 'text-ink font-medium' : 'text-graphite'}`}>
+            <span className={`text-body-md ${isCorrect ? 'text-ink font-semibold' : 'text-ink-soft'}`}>
                 {text}
             </span>
             {isCorrect && (
-                <span className="ml-auto text-caption-sm text-success uppercase tracking-wide">
+                <span className="ml-auto text-caption font-semibold text-brand">
                     Correct answer
                 </span>
             )}

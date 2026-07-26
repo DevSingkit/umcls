@@ -1,80 +1,102 @@
 import type { Config } from "tailwindcss";
-// Tokens pulled directly from DESIGN-LMS.md §1.2 / §1.3.
-// Do not hand-tune these — if a token is wrong, fix it in DESIGN-LMS.md
-// first, then mirror the change here, so the doc stays the source of truth.
+// Tokens pulled directly from DESIGN-LMS.md v1.0 (the "UMCLS Classroom
+// Design System"), sections 2-4. This replaces the old Mastercard-style
+// palette entirely. Do not hand-tune these — if a token is wrong, fix it
+// in DESIGN-LMS.md first, then mirror the change here.
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./features/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        // Brand
-        primary: "#024ad8",
-        "primary-bright": "#296ef9",
-        "primary-deep": "#0e3191",
-        "primary-soft": "#c9e0fc",
-        "on-primary": "#ffffff",
-        // Ink
-        ink: "#1a1a1a",
-        "ink-deep": "#000000",
-        "ink-soft": "#292929",
-        "on-ink": "#ffffff",
-        // Surfaces
-        canvas: "#ffffff",
-        paper: "#ffffff",
-        cloud: "#f7f7f7",
-        fog: "#e8e8e8",
-        hairline: "#e8e8e8",
-        "hairline-strong": "#c2c2c2",
-        // Neutrals
-        steel: "#c2c2c2",
-        graphite: "#636363",
-        charcoal: "#3d3d3d",
-        link: "#024ad8",
-        "link-pressed": "#0e3191",
-        // Semantic
-        success: "#1a7a4a",
-        "success-soft": "#d4f5e3",
-        warning: "#b45309",
-        "warning-soft": "#fef3c7",
-        error: "#b3262b",
-        "error-soft": "#f9d4d2",
-        info: "#024ad8",
-        // Role accents
-        "role-admin": "#356373",
-        "role-teacher": "#1a1a1a",
-        "role-student": "#c9e0fc",
-        // Grade spectrum (V1 note: only pass/fail is needed for the MCQ/TF
-        // results screen — these letter-grade bands are here for when V2's
-        // full gradebook needs them, harmless to have now)
-        "grade-a": "#1a7a4a",
-        "grade-b": "#2563eb",
-        "grade-c": "#b45309",
-        "grade-d": "#b3262b",
+        // Canvas & surfaces
+        canvas: "#F7F5F0",
+        surface: "#FFFFFF",
+        "surface-sunken": "#EFEBE3",
+        hairline: "#E2DED4",
+        "hairline-strong": "#C9C3B5",
+
+        // Ink (text & nav)
+        ink: "#1F2A24",
+        "ink-soft": "#3F4A43",
+        "text-secondary": "#6B7268",
+        "text-muted": "#9A9F94",
+        "on-ink": "#F7F5F0",
+
+        // Brand — schoolhouse green
+        brand: "#2E7D46",
+        "brand-hover": "#256339",
+        "brand-soft": "#E3F1E7",
+
+        // Warm accent (attention, not alarm)
+        amber: "#E8963C",
+        "amber-soft": "#FBEBD6",
+
+        // Destructive / consequential
+        red: "#C4453A",
+        "red-soft": "#F7E2E0",
+
+        // Semantic (mirror brand/amber/red — never repurposed elsewhere)
+        success: "#2E7D46",
+        "success-soft": "#E3F1E7",
+        warning: "#E8963C",
+        "warning-soft": "#FBEBD6",
+        error: "#C4453A",
+        "error-soft": "#F7E2E0",
+        info: "#3B7EC4",
+        "info-soft": "#E1EDF8",
+
+        // Role accents (badges/avatars only, never buttons)
+        "role-admin": "#5B6472",
+        "role-teacher": "#2E7D46",
+        "role-student": "#3B7EC4",
       },
       fontFamily: {
-        sans: ['"Forma DJR Micro"', '"Inter"', "system-ui", "sans-serif"],
+        // Both headings and body now use Roboto — matches Google
+        // Classroom's actual font choice, replacing the earlier
+        // Nunito/Inter pairing. Two separate next/font declarations
+        // (see app/layout.tsx) so heading weights (500/700) and body
+        // weights (400/500) each load only what they need.
+        heading: ["var(--font-roboto-heading)", "Roboto", "system-ui", "sans-serif"],
+        sans: ["var(--font-roboto-body)", "Roboto", "system-ui", "sans-serif"],
       },
-      // Everything below is new. The old config only had colors and one
-      // font, so any class like text-display-xs or rounded-hero used in
-      // the admin page did not exist and was silently ignored by the
-      // browser. That is why the page looked plain. These additions give
-      // real meaning to the class names already used in that page, built
-      // from the same scale logic as the rest of DESIGN-LMS.md.
       fontSize: {
-        "display-xs": ["1.5rem", { lineHeight: "2rem", fontWeight: "600" }],
-        "label-md": ["0.75rem", { lineHeight: "1rem", fontWeight: "600" }],
-        "caption-md": ["0.8125rem", { lineHeight: "1.125rem" }],
+        // Headings (Roboto — only ships 400/500/700/900, no 600/800, so
+        // h1 maps to 700 instead of the old Nunito 800)
+        h1: ["2rem", { lineHeight: "1.2", fontWeight: "700" }], // 32px
+        h2: ["1.5rem", { lineHeight: "1.25", fontWeight: "700" }], // 24px
+        h3: ["1.1875rem", { lineHeight: "1.3", fontWeight: "500" }], // 19px
+
+        // Body (Roboto — body-emphasis/label map to 500, the closest
+        // real cut to the old Inter 600)
+        "body-lg": ["1.125rem", { lineHeight: "1.55" }], // 18px — lesson/re-teach reading content
+        "body-md": ["1rem", { lineHeight: "1.5" }], // 16px — standard, minimum size anywhere
+        "body-emphasis": ["1rem", { lineHeight: "1.5", fontWeight: "500" }],
+        caption: ["0.875rem", { lineHeight: "1.4", fontWeight: "500" }],
+        label: ["0.875rem", { lineHeight: "1.3", fontWeight: "500" }],
+
+        // Data
+        "data-lg": ["1.75rem", { lineHeight: "1.1", fontWeight: "700" }], // dashboard stat numbers
+        "data-md": ["1.25rem", { lineHeight: "1.1", fontWeight: "700" }], // grade numbers
       },
       spacing: {
-        md: "1rem",
-        xxl: "3rem",
+        xxs: "4px",
+        xs: "8px",
+        sm: "16px",
+        md: "24px",
+        lg: "32px",
+        xl: "48px",
+        xxl: "64px",
       },
       borderRadius: {
-        button: "0.5rem",
-        hero: "1rem",
+        // Only two radii, per DESIGN-LMS.md §4 — everything is either a
+        // soft rectangle (md) or a full pill. No in-between values.
+        md: "12px",
+        pill: "999px",
       },
       boxShadow: {
-        "card-lift": "0 4px 16px rgba(0,0,0,0.08)",
+        card: "0 2px 8px rgba(31, 42, 36, 0.06)",
+        "card-hover": "0 4px 16px rgba(31, 42, 36, 0.10)",
+        modal: "0 24px 48px rgba(31, 42, 36, 0.18)",
       },
     },
   },

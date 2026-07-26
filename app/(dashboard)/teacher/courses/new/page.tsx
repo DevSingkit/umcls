@@ -17,11 +17,11 @@ export default function NewCoursePage() {
 
     return (
         <div className="max-w-xl">
-            <h1 className="text-display-xs text-ink mb-8">Create a new course</h1>
+            <h1 className="mb-8 font-heading text-h1 text-ink">Create a new course</h1>
 
-            <form action={formAction} className="bg-white rounded-hero shadow-card-lift p-8 space-y-6">
+            <form action={formAction} className="space-y-6 rounded-md bg-surface p-8 shadow-card">
                 <div>
-                    <label htmlFor="title" className="text-label-md uppercase tracking-wide text-graphite block mb-2">
+                    <label htmlFor="title" className="mb-2 block text-label text-ink-soft">
                         Course title
                     </label>
                     <input
@@ -29,39 +29,39 @@ export default function NewCoursePage() {
                         name="title"
                         type="text"
                         required
-                        className="w-full h-11 px-5 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                        className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand"
                         placeholder="e.g. Introduction to Biology"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="subject" className="text-label-md uppercase tracking-wide text-graphite block mb-2">
+                    <label htmlFor="subject" className="mb-2 block text-label text-ink-soft">
                         Subject
                     </label>
                     <input
                         id="subject"
                         name="subject"
                         type="text"
-                        className="w-full h-11 px-5 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                        className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand"
                         placeholder="e.g. Science"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="description" className="text-label-md uppercase tracking-wide text-graphite block mb-2">
+                    <label htmlFor="description" className="mb-2 block text-label text-ink-soft">
                         Description
                     </label>
                     <textarea
                         id="description"
                         name="description"
                         rows={4}
-                        className="w-full px-5 py-3 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                        className="w-full rounded-md border-[1.5px] border-hairline-strong px-4 py-3 text-body-md outline-none focus:border-brand"
                         placeholder="What is this course about?"
                     />
                 </div>
 
                 {!state.ok && state.error && (
-                    <p className="text-caption-md text-error" role="alert">
+                    <p className="text-caption text-red" role="alert">
                         {state.error}
                     </p>
                 )}
@@ -69,7 +69,7 @@ export default function NewCoursePage() {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-11 rounded-button bg-ink text-white font-medium disabled:opacity-60"
+                    className="h-11 w-full rounded-md bg-brand text-body-md font-semibold text-on-ink hover:bg-brand-hover disabled:opacity-60"
                 >
                     {isPending ? 'Creating course…' : 'Create course'}
                 </button>

@@ -14,15 +14,15 @@ export default async function UnauthorizedPage() {
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-canvas px-6 text-center">
-            <ShieldAlert size={64} className="text-steel" aria-hidden="true" />
-            <h1 className="text-display-xs text-charcoal">You don&apos;t have access to this page</h1>
-            <p className="max-w-sm text-body-md text-graphite">
+            <ShieldAlert size={64} className="text-text-secondary" aria-hidden="true" />
+            <h1 className="text-h1 text-ink">You don&apos;t have access to this page</h1>
+            <p className="max-w-sm text-body-md text-text-secondary">
                 Your account role doesn&apos;t have permission to view this page. If you think this is a
                 mistake, contact your school admin.
             </p>
             <Link
                 href={backHref}
-                className="mt-2 inline-flex h-11 items-center rounded-md bg-primary px-6 text-button-md text-on-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="mt-2 inline-flex h-11 items-center rounded-md bg-ink px-6 text-body-emphasis text-on-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
             >
                 {backLabel}
             </Link>

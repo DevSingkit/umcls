@@ -1,10 +1,5 @@
 'use client'
-// The actual lesson creation form. Split into its own client component
-// because the page above needs to read the courseId on the server
-// first, and a single file cannot be both a server component and a
-// client component at once.
-
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { createLesson, type CreateLessonResult } from '@/features/lessons/actions/lessons'
 
 const initialState: CreateLessonResult = { ok: false, error: '' }
@@ -15,16 +10,34 @@ async function createLessonAction(_prevState: CreateLessonResult, formData: Form
 
 export function NewLessonForm({ courseId }: { courseId: string }) {
     const [state, formAction, isPending] = useActionState(createLessonAction, initialState)
+    // One row to start; teacher can add more. Each row just needs a
+    // unique key for React — the actual values live in the DOM inputs
+    // and are read via formData.getAll on submit.
+    const [linkRowIds, setLinkRowIds] = useState<number[]>([0])
+
+    function addLinkRow() {
+        setLinkRowIds((rows) => [...rows, rows.length ? Math.max(...rows) + 1 : 0])
+    }
+
+    function removeLinkRow(id: number) {
+        setLinkRowIds((rows) => rows.filter((r) => r !== id))
+    }
 
     return (
-        <div className="max-w-xl">
-            <h1 className="text-display-xs text-ink mb-8">Create a new lesson</h1>
+        <div className="max-w-xl mx-auto pb-16">
+            <h1 className="font-heading text-h1 text-ink mb-2">
+                Create a new lesson
+            </h1>
+            <p className="text-body-md text-text-secondary mb-8">
+                Fill in the lesson and attach any files or links now — everything is saved together
+                in one step. Materials can&apos;t be added later, so add everything you need here.
+            </p>
 
-            <form action={formAction} className="bg-white rounded-hero shadow-card-lift p-8 space-y-6">
+            <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-8">
                 <input type="hidden" name="courseId" value={courseId} />
 
                 <div>
-                    <label htmlFor="title" className="text-label-md uppercase tracking-wide text-graphite block mb-2">
+                    <label htmlFor="title" className="block text-label text-ink mb-2">
                         Lesson title
                     </label>
                     <input
@@ -32,13 +45,14 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                         name="title"
                         type="text"
                         required
-                        className="w-full h-11 px-5 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
                         placeholder="e.g. Cell structure"
+                        className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
+                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="content" className="text-label-md uppercase tracking-wide text-graphite block mb-2">
+                    <label htmlFor="content" className="block text-label text-ink mb-2">
                         Lesson content
                     </label>
                     <textarea
@@ -46,13 +60,76 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                         name="content"
                         rows={10}
                         required
-                        className="w-full px-5 py-3 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
                         placeholder="Write the lesson here"
+                        className="w-full px-4 py-3 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink leading-relaxed
+                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
 
+                <div>
+                    <label htmlFor="files" className="block text-label text-ink mb-2">
+                        Files (optional)
+                    </label>
+                    <input
+                        id="files"
+                        name="files"
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.mp3,.mp4"
+                        className="w-full text-body-md text-text-secondary"
+                    />
+                    <p className="text-caption text-text-secondary mt-2">
+                        PDF, DOC/DOCX, JPEG/PNG, MP3, MP4 — max 40 MB each. Select multiple files at once if needed.
+                    </p>
+                </div>
+
+                <div>
+                    <label className="block text-label text-ink mb-2">
+                        Links (optional)
+                    </label>
+                    <p className="text-caption text-text-secondary mb-3">
+                        YouTube, Google Drive, or any other link.
+                    </p>
+                    <div className="space-y-3">
+                        {linkRowIds.map((id) => (
+                            <div key={id} className="flex gap-3 flex-wrap items-center">
+                                <input
+                                    type="text"
+                                    name="linkLabel"
+                                    placeholder="Label (optional)"
+                                    className="h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
+                                               focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                />
+                                <input
+                                    type="url"
+                                    name="linkUrl"
+                                    placeholder="https://..."
+                                    className="h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink flex-1 min-w-[200px]
+                                               focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                />
+                                {linkRowIds.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeLinkRow(id)}
+                                        className="text-caption text-red font-medium hover:underline"
+                                    >
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={addLinkRow}
+                        className="mt-3 text-caption text-brand font-semibold hover:underline"
+                    >
+                        + Add another link
+                    </button>
+                </div>
+
                 {!state.ok && state.error && (
-                    <p className="text-caption-md text-error" role="alert">
+                    <p className="text-caption text-red" role="alert">
                         {state.error}
                     </p>
                 )}
@@ -60,7 +137,8 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-11 rounded-button bg-ink text-white font-medium disabled:opacity-60"
+                    className="w-full h-11 rounded-md bg-brand text-on-ink font-semibold text-body-md
+                               hover:bg-brand-hover disabled:opacity-60 transition-colors"
                 >
                     {isPending ? 'Creating lesson…' : 'Create lesson'}
                 </button>

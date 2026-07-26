@@ -2,6 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font (Roboto, for both headings and body) is loaded via next/font/google
+   in app/layout.tsx, not here — that avoids a render-blocking @import and
+   gives Next.js automatic font optimization + the CSS variables this file
+   and tailwind.config.ts both rely on. */
+
 body {
-  @apply bg-canvas text-ink font-sans;
+  /* Warm paper canvas, everywhere — never plain white behind the whole
+     page. Only cards/modals/inputs are surface white. See DESIGN-LMS.md §2. */
+  @apply bg-canvas text-ink font-sans text-body-md;
+}
+
+h1, h2, h3 {
+  @apply font-heading;
+}
+
+/* Visible focus ring on every focusable element, never removed.
+   DESIGN-LMS.md §9 — non-negotiable for this audience. */
+:focus-visible {
+  outline: 2px solid #2E7D46;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

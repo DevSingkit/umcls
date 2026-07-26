@@ -22,18 +22,18 @@ export function EnrollForm({
 
     return (
         <div className="max-w-xl">
-            <h1 className="text-display-xs text-ink mb-8">Enroll a student</h1>
+            <h1 className="text-h1 text-ink mb-8">Enroll a student</h1>
 
-            <form action={formAction} className="bg-white rounded-hero shadow-card-lift p-8 space-y-6">
+            <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
                 <div>
-                    <label htmlFor="studentId" className="text-label-md uppercase tracking-wide text-graphite block mb-2">
+                    <label htmlFor="studentId" className="text-label uppercase tracking-wide text-text-secondary block mb-2">
                         Student
                     </label>
                     <select
                         id="studentId"
                         name="studentId"
                         required
-                        className="w-full h-11 px-5 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                        className="w-full h-11 px-5 rounded-md border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
                     >
                         <option value="">Choose a student</option>
                         {students.map((student) => (
@@ -45,14 +45,14 @@ export function EnrollForm({
                 </div>
 
                 <div>
-                    <label htmlFor="courseId" className="text-label-md uppercase tracking-wide text-graphite block mb-2">
+                    <label htmlFor="courseId" className="text-label uppercase tracking-wide text-text-secondary block mb-2">
                         Course
                     </label>
                     <select
                         id="courseId"
                         name="courseId"
                         required
-                        className="w-full h-11 px-5 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                        className="w-full h-11 px-5 rounded-md border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
                     >
                         <option value="">Choose a course</option>
                         {courses.map((course) => (
@@ -64,13 +64,13 @@ export function EnrollForm({
                 </div>
 
                 {!state.ok && state.error && (
-                    <p className="text-caption-md text-error" role="alert">
+                    <p className="text-caption text-error" role="alert">
                         {state.error}
                     </p>
                 )}
 
                 {state.ok && (
-                    <p className="text-caption-md text-success" role="status">
+                    <p className="text-caption text-success" role="status">
                         Student enrolled successfully.
                     </p>
                 )}
@@ -78,7 +78,7 @@ export function EnrollForm({
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-11 rounded-button bg-ink text-white font-medium disabled:opacity-60"
+                    className="w-full h-11 rounded-md bg-ink text-on-ink font-medium disabled:opacity-60"
                 >
                     {isPending ? 'Enrolling…' : 'Enroll student'}
                 </button>

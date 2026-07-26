@@ -16,7 +16,6 @@
 import { z } from 'zod'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createAdminClient } from '@/lib/supabase/admin'
-
 const createUserSchema = z.object({
     fullName: z.string().min(2, 'Name is too short'),
     email: z.string().email('Enter a valid email'),
@@ -28,35 +27,28 @@ const createUserSchema = z.object({
         .regex(/[A-Z]/, 'Password needs an uppercase letter')
         .regex(/[0-9]/, 'Password needs a number'),
 })
-
 export type CreateUserResult =
     | { ok: true }
     | { ok: false; error: string }
-
 export async function createUser(formData: FormData): Promise<CreateUserResult> {
     // Step 1: only an admin can do this. requireRole throws if not, which
     // is caught below and turned into a normal error result for the form.
     await requireRole(['admin'])
-
     const parsed = createUserSchema.safeParse({
         fullName: formData.get('fullName'),
         email: formData.get('email'),
         role: formData.get('role'),
         temporaryPassword: formData.get('temporaryPassword'),
     })
-
     if (!parsed.success) {
         return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form and try again.' }
     }
-
     const { fullName, email, role, temporaryPassword } = parsed.data
-
     // This is the one place a service-role client is genuinely needed:
     // creating a login account is a system-level action with no natural
     // "acting user" other than the admin approving it. See the warning
     // comment in lib/supabase/admin.ts.
     const supabaseAdmin = createAdminClient()
-
     // Create the login account, and pass full_name and role in the
     // metadata so the database trigger can use them when it builds the
     // public.users row automatically. No manual insert needed.
@@ -69,10 +61,8 @@ export async function createUser(formData: FormData): Promise<CreateUserResult> 
             role,
         },
     })
-
     if (authError || !authUser.user) {
         return { ok: false, error: authError?.message ?? 'Could not create the login account.' }
     }
-
     return { ok: true }
 }

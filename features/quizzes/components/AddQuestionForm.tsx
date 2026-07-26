@@ -1,13 +1,14 @@
 'use client'
 // Form to add one question at a time, styled like Google Forms:
 // options are individual rows you can add/remove, and you mark the
-// correct one by clicking its bullet rather than retyping it below.
+// correct one(s) by clicking its bullet/checkbox rather than retyping
+// it below.
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { addQuestion } from '@/features/quizzes/actions/create-quiz'
 
-type QuestionType = 'multiple_choice_single' | 'true_false'
+type QuestionType = 'multiple_choice_single' | 'true_false' | 'checklist' | 'short_answer'
 
 let optionKeySeed = 0
 function nextOptionKey() {
@@ -25,7 +26,9 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
     const [questionText, setQuestionText] = useState('')
     const [options, setOptions] = useState([makeEmptyOption(), makeEmptyOption()])
     const [correctIndex, setCorrectIndex] = useState<number | null>(null)
+    const [correctKeys, setCorrectKeys] = useState<Set<string>>(new Set())
     const [correctTf, setCorrectTf] = useState<'True' | 'False'>('True')
+    const [referenceAnswer, setReferenceAnswer] = useState('')
     const [error, setError] = useState('')
     const [isPending, setIsPending] = useState(false)
     const formRef = useRef<HTMLFormElement>(null)
@@ -42,12 +45,24 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
         setOptions((prev) => {
             const removedIndex = prev.findIndex((o) => o.key === key)
             const next = prev.filter((o) => o.key !== key)
-            // Keep correctIndex pointing at the same option, or clear it if
-            // the option that was marked correct just got removed.
             if (correctIndex !== null) {
                 if (removedIndex === correctIndex) setCorrectIndex(null)
                 else if (removedIndex < correctIndex) setCorrectIndex(correctIndex - 1)
             }
+            setCorrectKeys((prev) => {
+                const nextSet = new Set(prev)
+                nextSet.delete(key)
+                return nextSet
+            })
+            return next
+        })
+    }
+
+    function toggleCorrectKey(key: string) {
+        setCorrectKeys((prev) => {
+            const next = new Set(prev)
+            if (next.has(key)) next.delete(key)
+            else next.add(key)
             return next
         })
     }
@@ -56,7 +71,9 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
         setQuestionText('')
         setOptions([makeEmptyOption(), makeEmptyOption()])
         setCorrectIndex(null)
+        setCorrectKeys(new Set())
         setCorrectTf('True')
+        setReferenceAnswer('')
         setQuestionType('multiple_choice_single')
     }
 
@@ -76,6 +93,24 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
             }
         }
 
+        if (questionType === 'checklist') {
+            const filledOptions = options.map((o) => o.text.trim()).filter(Boolean)
+            if (filledOptions.length < 2) {
+                setError('Add at least two answer options.')
+                return
+            }
+            const anyCorrectFilled = options.some((o) => correctKeys.has(o.key) && o.text.trim())
+            if (!anyCorrectFilled) {
+                setError('Check the box next to at least one correct answer.')
+                return
+            }
+        }
+
+        if (questionType === 'short_answer' && !referenceAnswer.trim()) {
+            setError('Enter a reference answer for grading.')
+            return
+        }
+
         const formData = new FormData()
         formData.set('quizId', quizId)
         formData.set('questionText', questionText)
@@ -83,6 +118,15 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
 
         if (questionType === 'true_false') {
             formData.set('correctAnswer', correctTf)
+        } else if (questionType === 'checklist') {
+            const filledOptions = options.map((o) => o.text.trim()).filter(Boolean)
+            const correctTexts = options
+                .filter((o) => correctKeys.has(o.key) && o.text.trim())
+                .map((o) => o.text.trim())
+            formData.set('options', filledOptions.join(','))
+            formData.set('correctAnswer', correctTexts.join(','))
+        } else if (questionType === 'short_answer') {
+            formData.set('correctAnswer', referenceAnswer.trim())
         } else {
             const filledOptions = options.map((o) => o.text.trim()).filter(Boolean)
             const correctOption = correctIndex !== null ? options[correctIndex] : undefined
@@ -100,8 +144,6 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
         }
 
         resetForm()
-        // Re-run the server component (QuizEditPage) so the new question
-        // card appears above this form, without a full browser reload.
         router.refresh()
     }
 
@@ -109,18 +151,20 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
         <form
             ref={formRef}
             onSubmit={handleSubmit}
-            className="bg-white rounded-hero shadow-card-lift p-8 space-y-6 border-l-4 border-hairline"
+            className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6 border-l-4 border-l-brand"
         >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-body-emphasis text-ink">Add a question</h2>
                 <select
                     aria-label="Question type"
                     value={questionType}
                     onChange={(e) => setQuestionType(e.target.value as QuestionType)}
-                    className="h-10 px-4 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none text-caption-md"
+                    className="min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
                 >
                     <option value="multiple_choice_single">Multiple choice</option>
                     <option value="true_false">True or false</option>
+                    <option value="checklist">Checklist (multiple answers)</option>
+                    <option value="short_answer">Short answer</option>
                 </select>
             </div>
 
@@ -130,22 +174,22 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                 required
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
-                className="w-full px-5 py-3 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none text-body-md"
+                className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                 placeholder="Type the question here"
             />
 
-            {questionType === 'multiple_choice_single' ? (
+            {questionType === 'multiple_choice_single' && (
                 <div className="space-y-2">
-                    <p className="text-caption-sm text-graphite">Click the bullet to mark the correct answer</p>
+                    <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
                     {options.map((option, index) => (
                         <div key={option.key} className="flex items-center gap-3">
                             <button
                                 type="button"
                                 aria-label={`Mark option ${index + 1} as correct`}
                                 onClick={() => setCorrectIndex(index)}
-                                className={`flex items-center justify-center w-5 h-5 rounded-full border-2 shrink-0 transition-colors ${correctIndex === index
-                                        ? 'border-success bg-success text-white'
-                                        : 'border-hairline hover:border-ink'
+                                className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctIndex === index
+                                        ? 'border-brand bg-brand text-on-ink'
+                                        : 'border-hairline-strong hover:border-brand'
                                     }`}
                             >
                                 {correctIndex === index && (
@@ -163,14 +207,14 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${index + 1}`}
-                                className="flex-1 h-11 px-4 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                             />
                             {options.length > 2 && (
                                 <button
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="text-graphite hover:text-error text-caption-md px-2"
+                                    className="text-text-secondary hover:text-red text-body-md px-2"
                                 >
                                     ✕
                                 </button>
@@ -180,23 +224,66 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                     <button
                         type="button"
                         onClick={addOptionRow}
-                        className="text-caption-md text-graphite hover:text-ink pl-8"
+                        className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
                     >
                         + Add option
                     </button>
                 </div>
-            ) : (
+            )}
+
+            {questionType === 'checklist' && (
                 <div className="space-y-2">
-                    <p className="text-caption-sm text-graphite">Click the bullet to mark the correct answer</p>
+                    <p className="text-caption text-text-secondary">Check the box next to every correct answer</p>
+                    {options.map((option, index) => (
+                        <div key={option.key} className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                aria-label={`Mark option ${index + 1} as correct`}
+                                checked={correctKeys.has(option.key)}
+                                onChange={() => toggleCorrectKey(option.key)}
+                                className="h-5 w-5 shrink-0 accent-brand"
+                            />
+                            <input
+                                type="text"
+                                value={option.text}
+                                onChange={(e) => updateOptionText(option.key, e.target.value)}
+                                placeholder={`Option ${index + 1}`}
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                            />
+                            {options.length > 2 && (
+                                <button
+                                    type="button"
+                                    aria-label={`Remove option ${index + 1}`}
+                                    onClick={() => removeOptionRow(option.key)}
+                                    className="text-text-secondary hover:text-red text-body-md px-2"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={addOptionRow}
+                        className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
+                    >
+                        + Add option
+                    </button>
+                </div>
+            )}
+
+            {questionType === 'true_false' && (
+                <div className="space-y-2">
+                    <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
                     {(['True', 'False'] as const).map((label) => (
                         <div key={label} className="flex items-center gap-3">
                             <button
                                 type="button"
                                 aria-label={`Mark ${label} as correct`}
                                 onClick={() => setCorrectTf(label)}
-                                className={`flex items-center justify-center w-5 h-5 rounded-full border-2 shrink-0 transition-colors ${correctTf === label
-                                        ? 'border-success bg-success text-white'
-                                        : 'border-hairline hover:border-ink'
+                                className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctTf === label
+                                        ? 'border-brand bg-brand text-on-ink'
+                                        : 'border-hairline-strong hover:border-brand'
                                     }`}
                             >
                                 {correctTf === label && (
@@ -215,8 +302,25 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                 </div>
             )}
 
+            {questionType === 'short_answer' && (
+                <div className="space-y-2">
+                    <p className="text-caption text-text-secondary">
+                        This question is graded manually — enter a reference answer for your own use while grading.
+                        Students will see a text box instead of answer options.
+                    </p>
+                    <textarea
+                        aria-label="Reference answer"
+                        rows={2}
+                        value={referenceAnswer}
+                        onChange={(e) => setReferenceAnswer(e.target.value)}
+                        placeholder="e.g. Expected answer or grading notes"
+                        className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                    />
+                </div>
+            )}
+
             {error && (
-                <p className="text-caption-md text-error" role="alert">
+                <p className="text-caption text-red" role="alert">
                     {error}
                 </p>
             )}
@@ -224,7 +328,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-button bg-ink text-white font-medium disabled:opacity-60"
+                className="w-full h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
             >
                 {isPending ? 'Adding…' : 'Add question'}
             </button>

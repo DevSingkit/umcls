@@ -1,33 +1,49 @@
-import Link from 'next/link'
-import { getMyEnrolledCourses } from '@/features/courses/actions/get-enrolled-courses'
+import { getStudentDashboardData } from '@/features/dashboard/actions/student-dashboard'
+import { getMyTodoItems } from '@/features/todo/queries/todo-items'
+import { TodoList } from '@/features/todo/components/TodoList'
+import { ContinueLearning } from '@/features/dashboard/components/ContinueLearning'
+import { RecentGrades } from '@/features/dashboard/components/RecentGrades'
+import { CoursesPreview } from '@/features/dashboard/components/CoursesPreview'
 
-// Simple student home page. Shows the courses they are enrolled in.
+// Student home page. Order follows §8.6: orient before act. Courses
+// preview comes first so a student sees what class they're in before
+// being handed a task list; To-Do and Continue Learning sit together
+// after that, Recent Grades last.
 export default async function StudentDashboardPage() {
-    const courses = await getMyEnrolledCourses()
+    const [{ continueLearning, recentGrades, coursesPreview, courseNameById }, todoItems] = await Promise.all([
+        getStudentDashboardData(),
+        getMyTodoItems(),
+    ])
 
     return (
         <div>
-            <h1 className="text-display-xs text-ink mb-8">Welcome back</h1>
+            <h1 className="font-heading text-h1 text-ink mb-8">Welcome back</h1>
 
-            {courses.length === 0 ? (
-                <div className="bg-white rounded-hero shadow-card-lift p-8 text-center">
-                    <p className="text-body-md text-graphite">
-                        You are not enrolled in any course yet. Ask your school admin to add you.
-                    </p>
+            <div className="mb-10">
+                <CoursesPreview
+                    courses={coursesPreview}
+                    viewAllHref="/student/courses"
+                    courseHrefBase="/student/courses"
+                    emptyMessage="You are not enrolled in any course yet. Ask your school admin to add you."
+                />
+            </div>
+
+            <div className="grid gap-8 lg:grid-cols-[1fr_320px] mb-10">
+                <div className="order-2 lg:order-1">
+                    <h2 className="font-heading text-h2 text-ink mb-4">Continue learning</h2>
+                    <ContinueLearning items={continueLearning} />
                 </div>
-            ) : (
-                <div className="grid gap-4">
-                    {courses.map((course: any) => (
-                        <Link
-                            key={course.id}
-                            href={`/student/courses/${course.id}`}
-                            className="bg-white rounded-hero shadow-card-lift p-6 block hover:bg-cloud"
-                        >
-                            <span className="text-body-emphasis text-ink">{course.title}</span>
-                        </Link>
-                    ))}
+
+                <div className="order-1 lg:order-2">
+                    <h2 className="font-heading text-h2 text-ink mb-4">To-Do</h2>
+                    <TodoList items={todoItems} courseNameById={courseNameById} />
                 </div>
-            )}
+            </div>
+
+            <div>
+                <h2 className="font-heading text-h2 text-ink mb-4">Recent grades</h2>
+                <RecentGrades items={recentGrades} />
+            </div>
         </div>
     )
 }

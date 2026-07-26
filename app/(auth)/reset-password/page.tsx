@@ -2,9 +2,8 @@
 
 // app/reset-password/page.tsx
 //
-// Design system: DESIGN-LMS.md v3.0.0 (§2.1 Auth Flow — Reset Password)
-// Same card treatment as app/login/page.tsx and app/forgot-password/page.tsx —
-// see login/page.tsx for the full token → Tailwind arbitrary-value map.
+// Design system: DESIGN-LMS.md v1.0 (Auth Flow — Reset Password)
+// Same card treatment as app/login/page.tsx and app/forgot-password/page.tsx.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -38,7 +37,7 @@ export default function ResetPasswordPage() {
     return (
         <main
             id="main-content"
-            className="flex min-h-screen flex-col items-center justify-center bg-[#F3F0EE] px-6 py-16"
+            className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 py-16"
         >
             <div className="w-full max-w-sm">
                 {/* Logo */}
@@ -53,46 +52,45 @@ export default function ResetPasswordPage() {
                     />
                 </div>
 
-                {/* Card — white / 40px radius (rounded.hero) / card-lift shadow */}
-                <div className="rounded-[40px] bg-white p-8 shadow-[0_24px_48px_rgba(0,0,0,0.08)] sm:p-10">
+                {/* Card */}
+                <div className="rounded-md bg-surface p-8 shadow-modal sm:p-10">
                     {success ? (
                         <div className="text-center">
-                            {/* Circle icon — echoes the circle-portrait signature */}
-                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#d4f5e3]">
+                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-pill bg-success-soft">
                                 <CheckCircle2
-                                    className="h-6 w-6 text-[#1a7a4a]"
+                                    className="h-6 w-6 text-success"
                                     strokeWidth={1.5}
                                 />
                             </div>
 
-                            <p className="mt-5 flex items-center justify-center gap-1.5 text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]">
-                                <span aria-hidden="true" className="text-[#F37338]">
+                            <p className="mt-5 flex items-center justify-center gap-1.5 text-label uppercase tracking-wide text-text-secondary">
+                                <span aria-hidden="true" className="text-amber">
                                     •
                                 </span>
                                 Password updated
                             </p>
 
-                            <h1 className="mt-2 text-[20px] font-medium leading-[1.2] tracking-[-0.4px] text-[#141413]">
+                            <h1 className="mt-2 text-h3 text-ink">
                                 You&apos;re all set
                             </h1>
 
-                            <p className="mt-3 text-[14px] leading-[1.5] text-[#696969]">
+                            <p className="mt-3 text-body-md text-text-secondary">
                                 Taking you to the sign in page&hellip;
                             </p>
                         </div>
                     ) : (
                         <>
-                            <p className="mb-3 flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]">
-                                <span aria-hidden="true" className="text-[#F37338]">
+                            <p className="mb-3 flex items-center gap-1.5 text-label uppercase tracking-wide text-text-secondary">
+                                <span aria-hidden="true" className="text-amber">
                                     •
                                 </span>
                                 Reset password
                             </p>
 
-                            <h1 className="text-[20px] font-medium leading-[1.2] tracking-[-0.4px] text-[#141413]">
+                            <h1 className="text-h3 text-ink">
                                 Set a new password
                             </h1>
-                            <p className="mb-8 mt-2 text-[16px] leading-[1.4] text-[#696969]">
+                            <p className="mb-8 mt-2 text-body-md text-text-secondary">
                                 Choose a new password with at least 12 characters,
                                 including an uppercase letter, a lowercase letter, and a
                                 number.
@@ -102,7 +100,7 @@ export default function ResetPasswordPage() {
                                 <div className="mb-5">
                                     <label
                                         htmlFor="password"
-                                        className="mb-2 block text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]"
+                                        className="mb-2 block text-label uppercase tracking-wide text-text-secondary"
                                     >
                                         New password
                                     </label>
@@ -115,14 +113,14 @@ export default function ResetPasswordPage() {
                                         minLength={12}
                                         aria-describedby={error ? "reset-error" : undefined}
                                         aria-invalid={error ? true : undefined}
-                                        className="h-11 w-full rounded-[20px] border border-[#D1CDC7] bg-white px-5 text-[16px] text-[#141413] placeholder:text-[#9A9390] focus:border-[1.5px] focus:border-[#141413] focus:outline-none"
+                                        className="h-11 w-full rounded-md border border-hairline bg-surface px-5 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-ink focus:outline-none"
                                     />
                                 </div>
 
                                 <div className="mb-6">
                                     <label
                                         htmlFor="confirmPassword"
-                                        className="mb-2 block text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]"
+                                        className="mb-2 block text-label uppercase tracking-wide text-text-secondary"
                                     >
                                         Confirm new password
                                     </label>
@@ -135,7 +133,7 @@ export default function ResetPasswordPage() {
                                         minLength={12}
                                         aria-describedby={error ? "reset-error" : undefined}
                                         aria-invalid={error ? true : undefined}
-                                        className="h-11 w-full rounded-[20px] border border-[#D1CDC7] bg-white px-5 text-[16px] text-[#141413] placeholder:text-[#9A9390] focus:border-[1.5px] focus:border-[#141413] focus:outline-none"
+                                        className="h-11 w-full rounded-md border border-hairline bg-surface px-5 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-ink focus:outline-none"
                                     />
                                 </div>
 
@@ -143,24 +141,23 @@ export default function ResetPasswordPage() {
                                     <div
                                         id="reset-error"
                                         role="alert"
-                                        className="mb-5 flex items-start gap-2 rounded-[20px] bg-[#F9D4D2] px-5 py-3"
+                                        className="mb-5 flex items-start gap-2 rounded-md bg-error-soft px-5 py-3"
                                     >
                                         <AlertCircle
-                                            className="mt-0.5 h-4 w-4 shrink-0 text-[#B3262B]"
+                                            className="mt-0.5 h-4 w-4 shrink-0 text-error"
                                             strokeWidth={2}
                                             aria-hidden="true"
                                         />
-                                        <p className="text-[14px] leading-[1.5] text-[#B3262B]">
+                                        <p className="text-caption text-error">
                                             {error}
                                         </p>
                                     </div>
                                 )}
 
-                                {/* button-primary — ink pill, no uppercase (v3 §7.1) */}
                                 <button
                                     type="submit"
                                     disabled={isPending}
-                                    className="h-11 w-full rounded-[20px] bg-[#141413] text-[16px] font-medium tracking-[-0.48px] text-[#F3F0EE] transition-colors hover:bg-[#292929] active:bg-[#141413] disabled:bg-[#E8E8E8] disabled:text-[#9A9390]"
+                                    className="h-11 w-full rounded-md bg-ink text-body-md font-medium text-on-ink transition-colors hover:bg-ink-soft active:bg-ink disabled:bg-hairline disabled:text-text-muted"
                                 >
                                     {isPending ? "Updating…" : "Update password"}
                                 </button>
@@ -168,7 +165,7 @@ export default function ResetPasswordPage() {
 
                             <Link
                                 href="/login"
-                                className="mt-6 block text-center text-[14px] text-[#3860BE] hover:underline"
+                                className="mt-6 block text-center text-body-md text-info hover:underline"
                             >
                                 Back to sign in
                             </Link>

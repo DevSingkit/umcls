@@ -1,7 +1,8 @@
 'use server'
 // Fetches one lesson. Teachers can only view lessons in their own
-// courses. Students can only view published lessons in courses they
-// are enrolled in. Same double check pattern as AUTH_NOTES.md.
+// courses. Students can only view published lessons, in published
+// courses, that they are enrolled in. Same double check pattern as
+// AUTH_NOTES.md.
 
 import { requireUser } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
@@ -53,11 +54,27 @@ export async function getLesson(lessonId: string) {
             return null
         }
 
+        // Also require the parent course itself to be published — a
+        // lesson can be individually published while its course is
+        // still a draft (e.g. teacher publishing lessons ahead of the
+        // course launch), and a student can be enrolled before launch
+        // too (admin enrollment has no publish-state check). Without
+        // this, a student could view lesson content for a course that
+        // wouldn't otherwise show up anywhere in their UI at all.
+        // completions.ts already enforces this same pairing
+        // (lesson.is_published && courses.is_published) — this brings
+        // the read path in line with the write path instead of relying
+        // on RLS alone to close the gap silently.
         const { data: course } = await supabase
             .from('courses')
             .select('id, title')
             .eq('id', lesson.course_id)
+            .eq('is_published', true)
             .single()
+
+        if (!course) {
+            return null
+        }
 
         return { lesson, course }
     }
@@ -65,24 +82,3 @@ export async function getLesson(lessonId: string) {
     return null
 }
 
-// Lets a teacher publish or unpublish their own lesson.
-export async function toggleLessonPublish(lessonId: string, courseId: string, publish: boolean) {
-    const { requireRole } = await import('@/lib/auth/get-current-user')
-    const user = await requireRole(['teacher'])
-    const supabase = await createClient()
-
-    const { data: course } = await supabase
-        .from('courses')
-        .select('id')
-        .eq('id', courseId)
-        .eq('teacher_id', user.id)
-        .single()
-
-    if (!course) {
-        return { ok: false as const }
-    }
-
-    await supabase.from('lessons').update({ is_published: publish }).eq('id', lessonId)
-
-    return { ok: true as const }
-}

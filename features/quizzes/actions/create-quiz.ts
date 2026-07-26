@@ -1,10 +1,9 @@
 'use server'
 // Lets a teacher create a quiz inside a course, then add questions to
-// it. V1 only supports multiple choice with one correct answer, and
-// true or false. No timer, no shuffle, no autosave yet.
+// it. Supports multiple choice (single), true/false, checklist
+// (multiple correct options), and short answer (manual grading).
 
 import { z } from 'zod'
-import { redirect } from 'next/navigation'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 
@@ -32,7 +31,6 @@ export async function createQuiz(formData: FormData): Promise<CreateQuizResult> 
 
     const { courseId, title } = parsed.data
 
-    // Make sure this teacher actually owns the course before adding a quiz to it.
     const { data: course } = await supabase
         .from('courses')
         .select('id')
@@ -66,18 +64,20 @@ export async function createQuiz(formData: FormData): Promise<CreateQuizResult> 
 const addQuestionSchema = z.object({
     quizId: z.string().uuid(),
     questionText: z.string().min(2, 'Question is too short'),
-    questionType: z.enum(['multiple_choice_single', 'true_false']),
-    // Comma separated option text, only used for multiple choice.
+    questionType: z.enum(['multiple_choice_single', 'true_false', 'checklist', 'short_answer']),
+    // Comma separated option text, used for multiple choice and checklist.
     options: z.string().optional(),
-    correctAnswer: z.string().min(1, 'Choose the correct answer'),
+    // For multiple_choice_single and true_false: one value.
+    // For checklist: comma separated list of correct option texts.
+    // For short_answer: the reference answer, used by the teacher during manual grading.
+    correctAnswer: z.string().min(1, 'Enter the correct answer'),
 })
 
 export type AddQuestionResult =
     | { ok: true }
     | { ok: false; error: string }
 
-// Adds one question, plus its answer options, to a quiz. For true or
-// false, the two options are created automatically.
+// Adds one question, plus its answer options (if any), to a quiz.
 export async function addQuestion(formData: FormData): Promise<AddQuestionResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
@@ -86,7 +86,11 @@ export async function addQuestion(formData: FormData): Promise<AddQuestionResult
         quizId: formData.get('quizId'),
         questionText: formData.get('questionText'),
         questionType: formData.get('questionType'),
-        options: formData.get('options'),
+        // formData.get() returns null when a field isn't present in the
+        // form at all (e.g. true_false/short_answer don't render an
+        // "options" input) — Zod's .optional() only accepts undefined,
+        // not null, so this normalizes null → undefined before parsing.
+        options: formData.get('options') ?? undefined,
         correctAnswer: formData.get('correctAnswer'),
     })
 
@@ -96,7 +100,6 @@ export async function addQuestion(formData: FormData): Promise<AddQuestionResult
 
     const { quizId, questionText, questionType, options, correctAnswer } = parsed.data
 
-    // Confirm this teacher owns the course that this quiz belongs to.
     const { data: quiz } = await supabase
         .from('quizzes')
         .select('id, course_id, courses!inner(teacher_id)')
@@ -107,6 +110,9 @@ export async function addQuestion(formData: FormData): Promise<AddQuestionResult
         return { ok: false, error: 'You do not have access to this quiz.' }
     }
 
+    // Short answer needs manual grading, so we store the reference
+    // answer in the question's explanation field for the teacher to
+    // see while grading. It does not auto-grade.
     const { data: question, error: questionError } = await supabase
         .from('questions')
         .insert({
@@ -114,12 +120,18 @@ export async function addQuestion(formData: FormData): Promise<AddQuestionResult
             question_text: questionText,
             question_type: questionType,
             points: 1,
+            explanation: questionType === 'short_answer' ? correctAnswer : null,
         })
         .select('id')
         .single()
 
     if (questionError || !question) {
         return { ok: false, error: 'Could not save the question.' }
+    }
+
+    // Short answer has no answer options at all.
+    if (questionType === 'short_answer') {
+        return { ok: true }
     }
 
     let optionRows: { question_id: string; option_text: string; is_correct: boolean; order_index: number }[] = []
@@ -139,12 +151,31 @@ export async function addQuestion(formData: FormData): Promise<AddQuestionResult
             return { ok: false, error: 'Add at least two answer options, separated by commas.' }
         }
 
-        optionRows = optionTexts.map((text, index) => ({
-            question_id: question.id,
-            option_text: text,
-            is_correct: text === correctAnswer,
-            order_index: index,
-        }))
+        if (questionType === 'checklist') {
+            // Checklist allows more than one correct option, so we
+            // compare against a comma separated list of correct answers.
+            const correctSet = new Set(
+                correctAnswer
+                    .split(',')
+                    .map((text) => text.trim())
+                    .filter(Boolean)
+            )
+
+            optionRows = optionTexts.map((text, index) => ({
+                question_id: question.id,
+                option_text: text,
+                is_correct: correctSet.has(text),
+                order_index: index,
+            }))
+        } else {
+            // multiple_choice_single: exactly one correct option.
+            optionRows = optionTexts.map((text, index) => ({
+                question_id: question.id,
+                option_text: text,
+                is_correct: text === correctAnswer,
+                order_index: index,
+            }))
+        }
     }
 
     const { error: optionsError } = await supabase.from('answer_options').insert(optionRows)
@@ -164,7 +195,7 @@ export async function getQuizForTeacher(quizId: string) {
 
     const { data: quiz } = await supabase
         .from('quizzes')
-        .select('id, title, course_id, passing_score, is_published, courses!inner(teacher_id, title)')
+        .select('id, title, course_id, passing_score, is_published, time_limit_minutes, show_results_after, courses!inner(teacher_id, title)')
         .eq('id', quizId)
         .single()
 
@@ -174,12 +205,10 @@ export async function getQuizForTeacher(quizId: string) {
 
     const { data: questions } = await supabase
         .from('questions')
-        .select('id, question_text, question_type, order_index, answer_options(id, option_text, is_correct, order_index)')
+        .select('id, question_text, question_type, order_index, explanation, answer_options(id, option_text, is_correct, order_index)')
         .eq('quiz_id', quizId)
         .order('order_index')
 
-    // Options come back unordered from the nested select — sort them so
-    // True/False and MCQ options always render in the order they were added.
     const questionsWithSortedOptions = (questions ?? []).map((q: any) => ({
         ...q,
         answer_options: [...(q.answer_options ?? [])].sort((a, b) => a.order_index - b.order_index),
@@ -205,6 +234,53 @@ export async function setPassingScore(quizId: string, passingScore: number) {
     }
 
     await supabase.from('quizzes').update({ passing_score: passingScore }).eq('id', quizId)
+
+    return { ok: true as const }
+}
+
+// Lets a teacher turn the timer on/off, or change the minutes, after
+// the quiz already exists. null means no timer.
+export async function setTimeLimit(quizId: string, timeLimitMinutes: number | null) {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+
+    const { data: quiz } = await supabase
+        .from('quizzes')
+        .select('id, courses!inner(teacher_id)')
+        .eq('id', quizId)
+        .single()
+
+    if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
+        return { ok: false as const }
+    }
+
+    await supabase.from('quizzes').update({ time_limit_minutes: timeLimitMinutes }).eq('id', quizId)
+
+    return { ok: true as const }
+}
+
+export type ResultsVisibility = 'immediately' | 'after_grading' | 'never'
+
+// Lets a teacher control whether students see per-question correctness
+// after submitting. See migration 033 for what each value means. This
+// only changes what grade-quiz-submission.ts includes in its response
+// going forward — it doesn't rewrite anything for attempts already
+// submitted.
+export async function setResultsVisibility(quizId: string, visibility: ResultsVisibility) {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+
+    const { data: quiz } = await supabase
+        .from('quizzes')
+        .select('id, courses!inner(teacher_id)')
+        .eq('id', quizId)
+        .single()
+
+    if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
+        return { ok: false as const }
+    }
+
+    await supabase.from('quizzes').update({ show_results_after: visibility }).eq('id', quizId)
 
     return { ok: true as const }
 }

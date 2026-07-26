@@ -1,120 +1,71 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getCourseWithLessons } from '@/features/lessons/actions/lessons'
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/get-current-user'
+import { getTeacherCourseStream } from '@/features/courses/actions/get-teacher-course-stream'
+import { TeacherCourseStream } from '@/features/courses/components/TeacherCourseStream'
+import { CourseMenu } from '@/features/courses/components/CourseMenu'
+import { MaterialList } from '@/features/materials/components/MaterialList'
+import { CreateMenu } from '@/features/courses/components/CreateMenu'
 
-// Shows one course, its lessons, and its quizzes. If the course does
-// not exist, or does not belong to this teacher, shows a normal 404
-// page instead of leaking that it exists.
-export default async function CourseDetailPage({
+export default async function TeacherCourseDetailPage({
     params,
 }: {
     params: Promise<{ courseId: string }>
 }) {
     const { courseId } = await params
-    const result = await getCourseWithLessons(courseId)
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
 
-    if (!result) {
+    const { data: course, error: courseError } = await supabase
+        .from('courses')
+        .select('id, title, description, is_published, show_classmates')
+        .eq('id', courseId)
+        .eq('teacher_id', user.id)
+        .is('deleted_at', null)
+        .single()
+
+    if (courseError || !course) {
         notFound()
     }
 
-    const { course, lessons } = result
+    const [streamResult, materialsRes] = await Promise.all([
+        getTeacherCourseStream(courseId),
+        supabase
+            .from('materials')
+            .select('id, file_name, file_type, file_size_bytes, storage_path, external_url, created_at')
+            .eq('course_id', courseId)
+            .is('lesson_id', null) // course-wide materials only
+            .is('deleted_at', null),
+    ])
 
-    const user = await requireRole(['teacher'])
-    const supabase = await createClient()
-    const { data: quizzes } = await supabase
-        .from('quizzes')
-        .select('id, title, is_published')
-        .eq('course_id', courseId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
+    if ('error' in streamResult) {
+        notFound()
+    }
+
+    const materials = materialsRes.data ?? []
 
     return (
-        <div>
-            <p className="text-label-md uppercase tracking-wide text-graphite">
-                {course.subject || 'Course'}
-            </p>
-            <div className="flex items-center justify-between mt-2 mb-8">
-                <h1 className="text-display-xs text-ink">{course.title}</h1>
-                <div className="flex gap-3">
-                    <Link
-                        href={`/teacher/courses/${courseId}/quizzes/new`}
-                        className="h-11 px-6 flex items-center rounded-button border border-hairline font-medium"
-                    >
-                        New Quiz
-                    </Link>
-                    <Link
-                        href={`/teacher/courses/${courseId}/lessons/new`}
-                        className="h-11 px-6 flex items-center rounded-button bg-ink text-white font-medium"
-                    >
-                        New Lesson
-                    </Link>
+        <div className="flex flex-col gap-6">
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <h1 className="font-heading text-h1 text-ink">{course.title}</h1>
+                    {course.description && (
+                        <p className="text-body-md text-text-secondary">{course.description}</p>
+                    )}
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                    <CreateMenu courseId={courseId} />
+                    <CourseMenu courseId={course.id} isPublished={course.is_published} />
                 </div>
             </div>
 
-            {course.description && (
-                <p className="text-body-md text-graphite mb-8">{course.description}</p>
-            )}
+            <TeacherCourseStream courseId={courseId} items={streamResult.items} />
 
-            <h2 className="text-body-emphasis text-ink mb-4">Lessons</h2>
-            {lessons.length === 0 ? (
-                <div className="bg-white rounded-hero shadow-card-lift p-8 text-center mb-8">
-                    <p className="text-body-md text-graphite">
-                        This course has no lessons yet.
-                    </p>
-                </div>
-            ) : (
-                <div className="grid gap-4 mb-8">
-                    {lessons.map((lesson) => (
-                        <Link
-                            key={lesson.id}
-                            href={`/teacher/courses/${courseId}/lessons/${lesson.id}`}
-                            className="bg-white rounded-hero shadow-card-lift p-6 flex items-center justify-between hover:bg-cloud"
-                        >
-                            <span className="text-body-emphasis text-ink">{lesson.title}</span>
-                            <span
-                                className={
-                                    lesson.is_published
-                                        ? 'text-caption-md text-success'
-                                        : 'text-caption-md text-graphite'
-                                }
-                            >
-                                {lesson.is_published ? 'Published' : 'Draft'}
-                            </span>
-                        </Link>
-                    ))}
-                </div>
-            )}
-
-            <h2 className="text-body-emphasis text-ink mb-4">Quizzes</h2>
-            {!quizzes || quizzes.length === 0 ? (
-                <div className="bg-white rounded-hero shadow-card-lift p-8 text-center">
-                    <p className="text-body-md text-graphite">
-                        This course has no quizzes yet.
-                    </p>
-                </div>
-            ) : (
-                <div className="grid gap-4">
-                    {quizzes.map((quiz) => (
-                        <Link
-                            key={quiz.id}
-                            href={`/teacher/courses/${courseId}/quizzes/${quiz.id}/edit`}
-                            className="bg-white rounded-hero shadow-card-lift p-6 flex items-center justify-between hover:bg-cloud"
-                        >
-                            <span className="text-body-emphasis text-ink">{quiz.title}</span>
-                            <span
-                                className={
-                                    quiz.is_published
-                                        ? 'text-caption-md text-success'
-                                        : 'text-caption-md text-graphite'
-                                }
-                            >
-                                {quiz.is_published ? 'Published' : 'Draft'}
-                            </span>
-                        </Link>
-                    ))}
-                </div>
+            {materials.length > 0 && (
+                <section>
+                    <h2 className="mb-3 text-label text-text-secondary">Materials</h2>
+                    <MaterialList materials={materials} canDelete />
+                </section>
             )}
         </div>
     )

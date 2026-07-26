@@ -27,13 +27,16 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
 
     return (
         <div className="max-w-xl">
-            <h1 className="text-display-xs text-ink mb-8">Create a new quiz</h1>
+            <h1 className="font-heading text-h1 text-ink mb-8">Create a new quiz</h1>
 
-            <form action={handleSubmit} className="bg-white rounded-hero shadow-card-lift p-8 space-y-6">
+            <form
+                action={handleSubmit}
+                className="bg-surface rounded-md border border-hairline shadow-card p-8 space-y-6"
+            >
                 <input type="hidden" name="courseId" value={courseId} />
 
                 <div>
-                    <label htmlFor="title" className="text-label-md uppercase tracking-wide text-graphite block mb-2">
+                    <label htmlFor="title" className="text-label text-ink-soft block mb-2">
                         Quiz title
                     </label>
                     <input
@@ -41,17 +44,17 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                         name="title"
                         type="text"
                         required
-                        className="w-full h-11 px-5 rounded-button border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                        className="w-full min-h-[44px] px-5 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                         placeholder="e.g. Chapter 1 check"
                     />
                 </div>
 
-                <p className="text-caption-md text-graphite">
-                    You will set the passing score after adding your questions.
+                <p className="text-caption text-text-secondary">
+                    You&apos;ll set the passing score after adding your questions.
                 </p>
 
                 {error && (
-                    <p className="text-caption-md text-error" role="alert">
+                    <p className="text-caption text-red" role="alert">
                         {error}
                     </p>
                 )}
@@ -59,7 +62,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-11 rounded-button bg-ink text-white font-medium disabled:opacity-60"
+                    className="w-full h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
                 >
                     {isPending ? 'Creating quiz…' : 'Create quiz and add questions'}
                 </button>

@@ -1,0 +1,8 @@
+-- This timestamp exists in the remote migration history table but had
+-- no corresponding local file — likely an earlier `migration repair`
+-- run against a guessed timestamp for the auto-publish change
+-- (see 20260726000002_047_auto_publish_lessons_quizzes_assignments.sql
+-- for the actual, correctly-filed version of that change).
+-- This file is a documentation placeholder only — it intentionally
+-- contains no SQL, since whatever this timestamp originally
+-- represented was already applied via other migrations.
