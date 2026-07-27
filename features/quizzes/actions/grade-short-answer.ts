@@ -158,7 +158,7 @@ export async function listAttemptsForQuiz(quizId: string) {
     const { data: attempts } = await supabase
         .from('quiz_attempts')
         .select(
-            'id, status, score, is_passing, submitted_at, users!quiz_attempts_student_id_fkey(full_name), quiz_responses(is_correct, questions(question_type))'
+            'id, status, score, is_passing, submitted_at, attempt_number, users!quiz_attempts_student_id_fkey(full_name), quiz_responses(is_correct, questions(question_type))'
         )
         .eq('quiz_id', quizId)
         .order('submitted_at', { ascending: false })
@@ -170,6 +170,7 @@ export async function listAttemptsForQuiz(quizId: string) {
         score: a.score,
         isPassing: a.is_passing,
         submittedAt: a.submitted_at,
+        attemptNumber: a.attempt_number,
         needsGrading: (a.quiz_responses ?? []).some(
             (r: any) => r.questions?.question_type === 'short_answer' && r.is_correct === null
         ),

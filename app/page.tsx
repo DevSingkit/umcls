@@ -134,7 +134,7 @@ export default function LandingPage() {
 
       {/* ── Our story ────────────────────────────────────────────────────── */}
       <section className="px-4 py-20 sm:px-6 md:py-24">
-        <div className="mx-auto max-w-[800px]">
+        <div className="mx-auto max-w-[1200px]">
           <p className="text-label text-text-secondary">Who we are</p>
 
           <h2 className="mt-3 font-heading text-h2 text-ink">
