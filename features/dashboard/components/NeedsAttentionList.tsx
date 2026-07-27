@@ -20,7 +20,7 @@ export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
         return (
             <div className="border border-dashed border-hairline-strong rounded-md p-6 text-center">
                 <p className="text-body-md text-text-secondary">
-                    Nothing needs grading right now. You're all caught up.
+                    Nothing needs grading right now. You&apos;re all caught up.
                 </p>
             </div>
         )
@@ -39,7 +39,7 @@ export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
                             {item.courseName} · {item.kind === 'quiz_short_answer' ? 'Quiz' : 'Assignment'}
                         </p>
                         <p className="text-body-emphasis text-ink truncate">
-                            {item.studentName} submitted "{item.title}"
+                            {item.studentName} submitted &quot;{item.title}&quot;
                         </p>
                     </div>
                     <span className="text-caption text-text-secondary whitespace-nowrap">

@@ -409,7 +409,7 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
 
             {isLocked && (
                 <p className="text-caption text-error mb-3">
-                    Time's up — you can no longer change your answers. Click below to submit.
+                    Time&apos;s up — you can no longer change your answers. Click below to submit.
                 </p>
             )}
 

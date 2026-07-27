@@ -37,14 +37,17 @@ export function QuizPreviewForm({ quiz }: { quiz: Quiz }) {
 
     // Purely cosmetic countdown — nothing happens at zero. This is a
     // preview, not a real attempt, so there's no expiry or lock state
-    // to enforce.
+    // to enforce. Only start the interval when the quiz actually has a
+    // time limit; the "already zero" case is handled inside the setter
+    // itself so the effect never needs to read remainingSeconds directly.
+    const hasTimer = quiz.time_limit_minutes !== null
     useEffect(() => {
-        if (remainingSeconds === null) return
+        if (!hasTimer) return
         const interval = setInterval(() => {
             setRemainingSeconds((prev) => (prev !== null && prev > 0 ? prev - 1 : 0))
         }, 1000)
         return () => clearInterval(interval)
-    }, [])
+    }, [hasTimer])
 
     function selectSingleAnswer(questionId: string, optionId: string) {
         setAnswers((prev) => ({

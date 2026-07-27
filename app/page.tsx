@@ -127,13 +127,7 @@ export default function LandingPage() {
             <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
               <HandHeart className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
               DepEd NCR Recognized
-            </span>
-            <span className="inline-flex items-center rounded-pill border border-hairline-strong bg-surface px-4 py-1.5 text-caption text-text-secondary">
-              Kinder Permit K-0025 s.&nbsp;2023
-            </span>
-            <span className="inline-flex items-center rounded-pill border border-hairline-strong bg-surface px-4 py-1.5 text-caption text-text-secondary">
-              Elementary Permit E-0024 s.&nbsp;2023
-            </span>
+            </span>       
           </div>
         </div>
       </section>
@@ -279,8 +273,6 @@ export default function LandingPage() {
             <div>
               <p className="text-label text-on-ink">Government recognition</p>
               <ul className="mt-3 space-y-2 text-caption text-on-ink/70">
-                <li>Kindergarten Permit K-0025 s.&nbsp;2023</li>
-                <li>Elementary Permit E-0024 s.&nbsp;2023</li>
                 <li>DepEd NCR Region</li>
               </ul>
             </div>
