@@ -16,7 +16,7 @@ export default async function EditLessonPage({
     }
 
     const content = lesson.content as { type: string; body: string } | null
-    const allMaterials = await listMaterials(courseId, lessonId)
+    const allMaterials = await listMaterials(courseId, { type: 'lesson', lessonId })
     const lessonMaterials = allMaterials.filter((m) => m.lesson_id === lessonId)
 
     return (

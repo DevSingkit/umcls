@@ -34,7 +34,8 @@ export default async function TeacherCourseDetailPage({
             .from('materials')
             .select('id, file_name, file_type, file_size_bytes, storage_path, external_url, created_at')
             .eq('course_id', courseId)
-            .is('lesson_id', null) // course-wide materials only
+            .is('lesson_id', null)
+            .is('assignment_id', null) // course-wide materials only — exclude both lesson- and assignment-attached ones
             .is('deleted_at', null),
     ])
 

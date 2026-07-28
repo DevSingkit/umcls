@@ -28,7 +28,7 @@ export default async function StudentLessonViewPage({
     const content = lesson.content as { type: string; body: string } | null
 
     const user = await getCurrentUser()
-    const allMaterials = await listMaterials(courseId, lessonId)
+    const allMaterials = await listMaterials(courseId, { type: 'lesson', lessonId })
     const lessonMaterials = allMaterials.filter((m) => m.lesson_id === lessonId)
     const comments = await listLessonComments(lessonId)
     const simplification = await getSimplifiedLessonForStudent(lessonId)

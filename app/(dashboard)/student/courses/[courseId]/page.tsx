@@ -1,8 +1,6 @@
 import { notFound } from 'next/navigation'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
-import { MaterialList } from '@/features/materials/components/MaterialList'
-import { listMaterials } from '@/features/materials/actions/materials'
 import { getCourseStream } from '@/features/courses/actions/get-course-stream'
 import { CourseStream } from '@/features/courses/components/CourseStream'
 
@@ -35,11 +33,7 @@ export default async function StudentCourseDetailPage({
         notFound()
     }
 
-    const [items, allMaterials] = await Promise.all([
-        getCourseStream(courseId),
-        listMaterials(courseId),
-    ])
-    const courseMaterials = allMaterials.filter((m) => !m.lesson_id)
+    const items = await getCourseStream(courseId)
 
     const lessonItems = items.filter((i) => i.kind === 'lesson')
     const completedCount = lessonItems.filter((i) => i.kind === 'lesson' && i.completed).length
@@ -54,15 +48,6 @@ export default async function StudentCourseDetailPage({
             <h1 className="font-heading text-h1 text-ink mt-2 mb-8">{course.title}</h1>
             {course.description && (
                 <p className="text-body-md text-text-secondary mb-8">{course.description}</p>
-            )}
-
-            {courseMaterials.length > 0 && (
-                <>
-                    <h2 className="text-body-emphasis text-ink mb-4">Course Materials</h2>
-                    <div className="mb-8">
-                        <MaterialList materials={courseMaterials} canDelete={false} />
-                    </div>
-                </>
             )}
 
             {totalLessons > 0 && (

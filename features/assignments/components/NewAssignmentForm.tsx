@@ -3,12 +3,32 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createAssignment } from '@/features/assignments/actions/assignments'
 
+let linkRowKeySeed = 0
+function nextLinkRowKey() {
+    linkRowKeySeed += 1
+    return `link-${linkRowKeySeed}`
+}
+
 export function NewAssignmentForm({ courseId }: { courseId: string }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
     const [dueDate, setDueDate] = useState('')
     const [dueTime, setDueTime] = useState('')
+    const [linkRows, setLinkRows] = useState<{ key: string; url: string; label: string }[]>([])
+    const [selectedFileNames, setSelectedFileNames] = useState<string[]>([])
     const router = useRouter()
+
+    function addLinkRow() {
+        setLinkRows((prev) => [...prev, { key: nextLinkRowKey(), url: '', label: '' }])
+    }
+
+    function updateLinkRow(key: string, field: 'url' | 'label', value: string) {
+        setLinkRows((prev) => prev.map((row) => (row.key === key ? { ...row, [field]: value } : row)))
+    }
+
+    function removeLinkRow(key: string) {
+        setLinkRows((prev) => prev.filter((row) => row.key !== key))
+    }
 
     function handleSubmit(formData: FormData) {
         setError(null)
@@ -44,8 +64,90 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     className="mt-1 w-full px-4 py-3 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
             </div>
+            <div className="pt-2 border-t border-hairline space-y-6">
+                <div>
+                    <label className="block text-label text-ink-soft mb-1">Attachments (optional)</label>
+                    <label
+                        htmlFor="files"
+                        className="inline-flex h-11 items-center px-5 rounded-md bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover cursor-pointer transition-colors"
+                    >
+                        Choose files
+                    </label>
+                    <input
+                        id="files"
+                        name="files"
+                        type="file"
+                        multiple
+                        className="sr-only"
+                        onChange={(e) =>
+                            setSelectedFileNames(Array.from(e.target.files ?? []).map((f) => f.name))
+                        }
+                    />
+                    <p className="mt-2 text-caption text-text-secondary">
+                        PDF, DOC/DOCX, JPEG/PNG, MP3, or MP4 — max 40 MB each
+                    </p>
+                    {selectedFileNames.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                            {selectedFileNames.map((name) => (
+                                <li key={name} className="text-caption text-ink truncate">
+                                    📎 {name}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+
+                <div>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-label text-ink-soft">Links (optional)</label>
+                        <button
+                            type="button"
+                            onClick={addLinkRow}
+                            className="text-caption font-semibold text-brand hover:text-brand-hover"
+                        >
+                            + Add a link
+                        </button>
+                    </div>
+                    {linkRows.length === 0 ? (
+                        <p className="text-caption text-text-secondary">
+                            No links added yet.
+                        </p>
+                    ) : (
+                        <div className="space-y-2">
+                            {linkRows.map((row) => (
+                                <div key={row.key} className="flex items-center gap-2">
+                                    <input
+                                        type="url"
+                                        name="linkUrl"
+                                        placeholder="https://..."
+                                        value={row.url}
+                                        onChange={(e) => updateLinkRow(row.key, 'url', e.target.value)}
+                                        className="flex-1 h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                    />
+                                    <input
+                                        type="text"
+                                        name="linkLabel"
+                                        placeholder="Label (optional)"
+                                        value={row.label}
+                                        onChange={(e) => updateLinkRow(row.key, 'label', e.target.value)}
+                                        className="w-40 h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                    />
+                                    <button
+                                        type="button"
+                                        aria-label="Remove link"
+                                        onClick={() => removeLinkRow(row.key)}
+                                        className="text-text-secondary hover:text-red text-body-md px-2"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
             <div>
-                <label className="text-label text-ink-soft">Due date (optional)</label>
+                <label className="block text-label text-ink-soft">Due date (optional)</label>
                 <div className="mt-1 grid grid-cols-2 gap-3">
                     <input
                         id="dueDate"
@@ -90,6 +192,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     />
                 </div>
             </div>
+
             <button
                 type="submit"
                 disabled={isPending}

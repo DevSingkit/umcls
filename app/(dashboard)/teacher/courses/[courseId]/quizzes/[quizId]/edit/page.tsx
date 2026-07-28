@@ -5,13 +5,32 @@ import { PassingScoreSetting } from '@/features/quizzes/components/PassingScoreS
 import { TimeLimitSetting } from '@/features/quizzes/components/TimeLimitSetting'
 import { ResultsVisibilitySetting } from '@/features/quizzes/components/ResultsVisibilitySetting'
 import { QuestionCard } from '@/features/quizzes/components/QuestionCard'
+import { PostQuizButton } from '@/features/quizzes/components/PostQuizButton'
+import { QuizTitleField } from '@/features/quizzes/components/QuizTitleField'
 import Link from 'next/link'
+
+// FIX: this page was serving stale question data after adding a
+// question, even though addQuestion's insert succeeded and
+// router.refresh() was firing correctly. Root cause: the Supabase
+// client's select() calls go over fetch() internally, and Next.js can
+// cache fetch() responses (its Data Cache) independently of whether
+// the route itself is dynamically rendered — those are two separate
+// caching layers. Being dynamic (this route already is, since
+// requireRole() reads cookies) does not by itself force every fetch()
+// inside the render to skip that cache. The two exports below force
+// every fetch issued during this page's render, including the ones
+// Supabase's client makes invisibly, to bypass Next's Data Cache
+// entirely, so a question added a moment ago is always reflected on
+// the very next render.
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
 
 // Shows the quiz being built, Google Forms-style: each saved question
 // is a card showing the question text and its options, with the
 // correct one marked. The "add question" form is pinned at the bottom
-// as the next card. Publish button appears once there is at least one
-// question.
+// as the next card, followed by the Post button — the quiz stays a
+// draft (is_published defaults to false, migration 051) until the
+// teacher explicitly posts it here.
 export default async function QuizEditPage({
     params,
 }: {
@@ -29,7 +48,7 @@ export default async function QuizEditPage({
     return (
         <div className="max-w-2xl">
             <div className="mb-8">
-                <h1 className="font-heading text-h1 text-ink">{quiz.title}</h1>
+                <QuizTitleField quizId={quiz.id} initialTitle={quiz.title} />
                 <p className="text-caption text-text-secondary mt-1">
                     {questions.length === 0
                         ? 'No questions yet — add your first one below.'
@@ -77,6 +96,14 @@ export default async function QuizEditPage({
             )}
 
             <AddQuestionForm quizId={quiz.id} />
+
+            <div className="mt-8">
+                <PostQuizButton
+                    quizId={quiz.id}
+                    isPublished={quiz.is_published}
+                    hasQuestions={questions.length > 0}
+                />
+            </div>
         </div>
     )
 }

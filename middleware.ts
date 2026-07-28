@@ -114,7 +114,7 @@ export async function middleware(request: NextRequest) {
     const isProtectedPath = isAdminPath || isTeacherPath || isStudentPath
 
     if (!user && isProtectedPath) {
-        return applyResponseHeaders(NextResponse.redirect(new URL('/login', request.url)), csp)
+        return applyResponseHeaders(NextResponse.redirect(new URL('/login', request.url), 303), csp)
     }
 
     if (user && isProtectedPath) {
@@ -126,7 +126,7 @@ export async function middleware(request: NextRequest) {
 
         if (!profile?.is_active) {
             return applyResponseHeaders(
-                NextResponse.redirect(new URL('/login?reason=deactivated', request.url)),
+                NextResponse.redirect(new URL('/login?reason=deactivated', request.url), 303),
                 csp
             )
         }
@@ -139,20 +139,20 @@ export async function middleware(request: NextRequest) {
 
         if (!justSignedIn && isSessionInactive(profile.last_seen_at)) {
             return applyResponseHeaders(
-                NextResponse.redirect(new URL('/login?reason=timeout', request.url)),
+                NextResponse.redirect(new URL('/login?reason=timeout', request.url), 303),
                 csp
             )
         }
 
         const role = profile.role
         if (isAdminPath && role !== 'admin') {
-            return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), csp)
+            return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url), 303), csp)
         }
         if (isTeacherPath && role !== 'teacher') {
-            return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), csp)
+            return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url), 303), csp)
         }
         if (isStudentPath && role !== 'student') {
-            return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url)), csp)
+            return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url), 303), csp)
         }
 
         const cacheKey = `seen:${user.id}`

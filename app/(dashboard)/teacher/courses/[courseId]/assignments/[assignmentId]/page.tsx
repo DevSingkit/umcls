@@ -2,25 +2,37 @@ import { notFound } from 'next/navigation'
 import { getAssignment } from '@/features/assignments/actions/assignments'
 import { listSubmissionsForAssignment } from '@/features/assignments/actions/submissions'
 import { SubmissionsGradeList } from '@/features/assignments/components/SubmissionsGradeList'
+import { listMaterials } from '@/features/materials/actions/materials'
+import { MaterialList } from '@/features/materials/components/MaterialList'
 
 export default async function AssignmentDetailPage({
     params,
 }: {
     params: Promise<{ courseId: string; assignmentId: string }>
 }) {
-    const { assignmentId } = await params
+    const { courseId, assignmentId } = await params
     const assignment = await getAssignment(assignmentId)
 
     if (!assignment) {
         notFound()
     }
 
-    const rows = await listSubmissionsForAssignment(assignmentId)
+    const [rows, materials] = await Promise.all([
+        listSubmissionsForAssignment(assignmentId),
+        listMaterials(courseId, { type: 'assignment', assignmentId }),
+    ])
     const instructions = assignment.instructions as { body?: string } | null
 
     return (
         <div>
-            <h1 className="font-heading text-h1 text-ink mt-2 mb-4">{assignment.title}</h1>
+            <div className="flex items-center gap-3 mt-2 mb-4">
+                <h1 className="font-heading text-h1 text-ink">{assignment.title}</h1>
+                {!assignment.is_published && (
+                    <span className="inline-flex items-center rounded-pill bg-amber-soft text-amber text-caption font-semibold px-3 py-1">
+                        Draft — not posted
+                    </span>
+                )}
+            </div>
             <p className="text-caption text-text-secondary mb-8">
                 {assignment.due_at ? `Due ${new Date(assignment.due_at).toLocaleString()}` : 'No due date'}
                 {' · '}Max {assignment.max_score}
@@ -31,6 +43,13 @@ export default async function AssignmentDetailPage({
             {instructions?.body && (
                 <div className="bg-surface rounded-md shadow-card p-6 mb-8">
                     <p className="text-body-md text-ink whitespace-pre-wrap">{instructions.body}</p>
+                </div>
+            )}
+
+            {materials.length > 0 && (
+                <div className="mb-8">
+                    <h2 className="text-body-emphasis text-ink mb-4">Attachments</h2>
+                    <MaterialList materials={materials} canDelete />
                 </div>
             )}
 

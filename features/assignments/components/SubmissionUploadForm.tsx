@@ -12,6 +12,7 @@ type Submission = {
     is_late: boolean
     status: string
     score: number | null
+    feedback: string | null
 } | null
 
 export function SubmissionUploadForm({
@@ -56,7 +57,7 @@ export function SubmissionUploadForm({
                         {existing.is_late && ' — Late'}
                     </p>
                     <p className="text-caption mt-2">
-                        {existing.status === 'graded' ? (
+                        {existing.status === 'returned' ? (
                             <span className="text-success">
                                 Graded: {existing.score} / {maxScore}
                             </span>
@@ -64,6 +65,14 @@ export function SubmissionUploadForm({
                             <span className="text-text-secondary">Awaiting grading</span>
                         )}
                     </p>
+                    {existing.status === 'returned' && existing.feedback && (
+                        <div className="mt-3 pt-3 border-t border-hairline">
+                            <p className="text-caption font-semibold text-text-secondary mb-1">
+                                Feedback from your teacher
+                            </p>
+                            <p className="text-body-md text-ink whitespace-pre-wrap">{existing.feedback}</p>
+                        </div>
+                    )}
                 </div>
             )}
             <form ref={formRef} action={handleSubmit} className="flex items-center gap-3">

@@ -29,7 +29,7 @@ export function EditLessonForm({
     const linkFormRef = useRef<HTMLFormElement>(null)
 
     async function refreshMaterials() {
-        const all = await listMaterials(courseId, lessonId)
+        const all = await listMaterials(courseId, { type: 'lesson', lessonId })
         setMaterials(all.filter((m) => m.lesson_id === lessonId))
     }
 
@@ -48,7 +48,7 @@ export function EditLessonForm({
     function handleFileUpload(formData: FormData) {
         setUploadError(null)
         startUploading(async () => {
-            const result = await uploadMaterial(courseId, lessonId, formData)
+            const result = await uploadMaterial(courseId, { type: 'lesson', lessonId }, formData)
             if (!result.ok) {
                 setUploadError(result.error)
                 return
@@ -61,7 +61,7 @@ export function EditLessonForm({
     function handleLinkAdd(formData: FormData) {
         setUploadError(null)
         startUploading(async () => {
-            const result = await addMaterialLink(courseId, lessonId, formData)
+            const result = await addMaterialLink(courseId, { type: 'lesson', lessonId }, formData)
             if (!result.ok) {
                 setUploadError(result.error)
                 return

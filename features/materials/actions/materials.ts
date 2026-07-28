@@ -4,6 +4,14 @@
 // MIME type and size are checked here AND at the bucket level
 // (see supabase/migrations/..._materials_storage_bucket.sql) — same
 // "check it in two places" reasoning as AUTH_NOTES.md.
+//
+// Extended (migration 051) to also attach to an assignment, not just a
+// lesson — a material's owner is either a lesson, an assignment, or
+// neither (course-level), never both (materials_single_owner_check).
+// uploadMaterial/addMaterialLink/listMaterials all take an explicit
+// `target` shape now instead of a single lessonId param, so a caller
+// can't accidentally pass a lesson id where an assignment id was meant,
+// or vice versa.
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 
@@ -19,15 +27,53 @@ const ALLOWED_MIME_TYPES = new Set([
     'video/mp4',
 ])
 
+export type MaterialTarget =
+    | { type: 'lesson'; lessonId: string }
+    | { type: 'assignment'; assignmentId: string }
+    | { type: 'course' } // course-level material, no lesson or assignment
+
 export type UploadMaterialResult =
     | { ok: true }
     | { ok: false; error: string }
 
-// Uploads a file as a material attached to a course (and optionally a
-// specific lesson within it). Teacher must own the course.
+// Confirms the given target actually belongs to this course (and, for
+// a lesson/assignment target, that the row exists). Kept as one helper
+// so uploadMaterial and addMaterialLink can't drift from each other.
+async function verifyTargetInCourse(
+    supabase: Awaited<ReturnType<typeof createClient>>,
+    courseId: string,
+    target: MaterialTarget
+): Promise<{ ok: true } | { ok: false; error: string }> {
+    if (target.type === 'lesson') {
+        const { data: lesson } = await supabase
+            .from('lessons')
+            .select('id')
+            .eq('id', target.lessonId)
+            .eq('course_id', courseId)
+            .single()
+        if (!lesson) {
+            return { ok: false, error: 'Lesson not found in this course.' }
+        }
+    }
+    if (target.type === 'assignment') {
+        const { data: assignment } = await supabase
+            .from('assignments')
+            .select('id')
+            .eq('id', target.assignmentId)
+            .eq('course_id', courseId)
+            .single()
+        if (!assignment) {
+            return { ok: false, error: 'Assignment not found in this course.' }
+        }
+    }
+    return { ok: true }
+}
+
+// Uploads a file as a material attached to a course, and optionally a
+// specific lesson or assignment within it. Teacher must own the course.
 export async function uploadMaterial(
     courseId: string,
-    lessonId: string | null,
+    target: MaterialTarget,
     formData: FormData
 ): Promise<UploadMaterialResult> {
     const user = await requireRole(['teacher'])
@@ -50,7 +96,6 @@ export async function uploadMaterial(
 
     const supabase = await createClient()
 
-    // Confirm this teacher owns the course before writing anything.
     const { data: course } = await supabase
         .from('courses')
         .select('id')
@@ -62,18 +107,9 @@ export async function uploadMaterial(
         return { ok: false, error: 'Course not found.' }
     }
 
-    // If a lesson id was given, confirm it actually belongs to this course.
-    if (lessonId) {
-        const { data: lesson } = await supabase
-            .from('lessons')
-            .select('id')
-            .eq('id', lessonId)
-            .eq('course_id', courseId)
-            .single()
-
-        if (!lesson) {
-            return { ok: false, error: 'Lesson not found in this course.' }
-        }
+    const targetCheck = await verifyTargetInCourse(supabase, courseId, target)
+    if (!targetCheck.ok) {
+        return targetCheck
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
@@ -89,7 +125,8 @@ export async function uploadMaterial(
 
     const { error: insertError } = await supabase.from('materials').insert({
         course_id: courseId,
-        lesson_id: lessonId,
+        lesson_id: target.type === 'lesson' ? target.lessonId : null,
+        assignment_id: target.type === 'assignment' ? target.assignmentId : null,
         uploaded_by: user.id,
         file_name: file.name,
         file_type: file.type,
@@ -112,7 +149,7 @@ export async function uploadMaterial(
 // that makes storage_path nullable and adds external_url.
 export async function addMaterialLink(
     courseId: string,
-    lessonId: string | null,
+    target: MaterialTarget,
     formData: FormData
 ): Promise<UploadMaterialResult> {
     const user = await requireRole(['teacher'])
@@ -146,22 +183,15 @@ export async function addMaterialLink(
         return { ok: false, error: 'Course not found.' }
     }
 
-    if (lessonId) {
-        const { data: lesson } = await supabase
-            .from('lessons')
-            .select('id')
-            .eq('id', lessonId)
-            .eq('course_id', courseId)
-            .single()
-
-        if (!lesson) {
-            return { ok: false, error: 'Lesson not found in this course.' }
-        }
+    const targetCheck = await verifyTargetInCourse(supabase, courseId, target)
+    if (!targetCheck.ok) {
+        return targetCheck
     }
 
     const { error } = await supabase.from('materials').insert({
         course_id: courseId,
-        lesson_id: lessonId,
+        lesson_id: target.type === 'lesson' ? target.lessonId : null,
+        assignment_id: target.type === 'assignment' ? target.assignmentId : null,
         uploaded_by: user.id,
         file_name: typeof label === 'string' && label.trim() ? label.trim() : parsed.hostname,
         file_type: 'text/url',
@@ -176,18 +206,25 @@ export async function addMaterialLink(
 }
 
 // Works for teacher (own course) or student (enrolled + active).
-export async function listMaterials(courseId: string, lessonId?: string | null) {
+// Pass a target to scope to just that lesson/assignment's materials,
+// or omit it to get every material in the course.
+export async function listMaterials(courseId: string, target?: MaterialTarget) {
     const supabase = await createClient()
 
     let query = supabase
         .from('materials')
-        .select('id, file_name, file_type, file_size_bytes, storage_path, external_url, lesson_id, created_at')
+        .select(
+            'id, file_name, file_type, file_size_bytes, storage_path, external_url, lesson_id, assignment_id, created_at'
+        )
         .eq('course_id', courseId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
-    if (lessonId) {
-        query = query.eq('lesson_id', lessonId)
+    if (target?.type === 'lesson') {
+        query = query.eq('lesson_id', target.lessonId)
+    }
+    if (target?.type === 'assignment') {
+        query = query.eq('assignment_id', target.assignmentId)
     }
 
     const { data, error } = await query

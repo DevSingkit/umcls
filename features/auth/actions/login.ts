@@ -3,7 +3,7 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { loginRateLimit } from '@/lib/security/rate-limit'
+import { loginBurstRateLimit, loginSustainedRateLimit } from '@/lib/security/rate-limit'
 // SECURITY.md §10: 5 attempts / 15 min / IP, 429 + audit log entry on
 // exceed. loginRateLimit was already built in lib/security/rate-limit.ts
 // but was never actually imported here — this was a real gap found during
@@ -27,7 +27,18 @@ export async function login(formData: FormData) {
     // Rate limit before touching Supabase at all — cheapest possible
     // rejection, and keyed per-IP so one attacker can't lock out a
     // legitimate user's email, only their own IP.
-    const { success } = await loginRateLimit.limit(`login:${ip}`)
+    //
+    // Two limiters, both must pass:
+    //   - burst: generous, short window — a real person mistyping their
+    //     password a few times in a row never trips this.
+    //   - sustained: stricter, long window — catches an attacker who
+    //     spaces attempts out to stay under the burst limit. A real
+    //     person never legitimately needs 20+ attempts inside an hour.
+    const [burst, sustained] = await Promise.all([
+        loginBurstRateLimit.limit(`login:${ip}`),
+        loginSustainedRateLimit.limit(`login:${ip}`),
+    ])
+    const success = burst.success && sustained.success
     const supabase = await createClient()
     if (!success) {
         // Audit the throttle itself, not just failed logins below — a
@@ -35,7 +46,7 @@ export async function login(formData: FormData) {
         // keeping even if we never learn which emails were tried.
         await supabase.rpc('log_audit_event', {
             p_action: 'AUTH_LOGIN_RATE_LIMITED',
-            p_metadata: { ip },
+            p_metadata: { ip, limiter: !burst.success ? 'burst' : 'sustained' },
         })
         return { error: 'Too many login attempts. Please wait a few minutes and try again.' }
     }

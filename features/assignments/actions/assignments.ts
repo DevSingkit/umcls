@@ -5,6 +5,7 @@
 import { z } from 'zod'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
+import { uploadMaterial, addMaterialLink } from '@/features/materials/actions/materials'
 
 const assignmentSchema = z.object({
     title: z.string().min(2, 'Title is too short'),
@@ -62,6 +63,7 @@ export async function createAssignment(courseId: string, formData: FormData): Pr
             due_at: dueAt || null,
             max_score: maxScore,
             passing_score: passingScore,
+            is_published: true,
         })
         .select('id')
         .single()
@@ -70,7 +72,41 @@ export async function createAssignment(courseId: string, formData: FormData): Pr
         return { ok: false, error: 'Could not create the assignment. Please try again.' }
     }
 
-    return { ok: true, assignmentId: data.id }
+    const assignmentId = data.id
+    const target = { type: 'assignment' as const, assignmentId }
+
+    // Attach any uploaded files. Each file needs its own FormData since
+    // uploadMaterial expects a single 'file' entry, not a multi-file list.
+    const files = formData.getAll('files').filter((f): f is File => f instanceof File && f.size > 0)
+    for (const file of files) {
+        const singleFileForm = new FormData()
+        singleFileForm.set('file', file)
+        const result = await uploadMaterial(courseId, target, singleFileForm)
+        if (!result.ok) {
+            // Assignment itself was created successfully — don't fail the
+            // whole action over one attachment. Log so it's not silently lost.
+            console.error(`createAssignment: failed to attach file "${file.name}":`, result.error)
+        }
+    }
+
+    // Attach any link rows (paired by index, same convention as the
+    // dynamic "+ Add another link" rows used in lesson creation).
+    const linkUrls = formData.getAll('linkUrl').map((v) => String(v))
+    const linkLabels = formData.getAll('linkLabel').map((v) => String(v))
+    for (let i = 0; i < linkUrls.length; i++) {
+    const url = linkUrls[i]?.trim()
+    if (!url) continue
+    const linkForm = new FormData()
+    linkForm.set('url', url)
+    const label = linkLabels[i]
+    if (label) linkForm.set('label', label)
+    const result = await addMaterialLink(courseId, target, linkForm)
+    if (!result.ok) {
+        console.error(`createAssignment: failed to attach link "${url}":`, result.error)
+    }
+}
+
+    return { ok: true, assignmentId }
 }
 
 // Fetches one assignment for editing — teacher-owned only.
@@ -80,7 +116,7 @@ export async function getAssignmentForEdit(assignmentId: string) {
 
     const { data: assignment } = await supabase
         .from('assignments')
-        .select('id, course_id, title, instructions, due_at, max_score, passing_score')
+        .select('id, course_id, title, instructions, due_at, max_score, passing_score, is_published')
         .eq('id', assignmentId)
         .is('deleted_at', null)
         .single()

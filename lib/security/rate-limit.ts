@@ -12,10 +12,33 @@ export const redis = new Redis({
 });
 
 // See SECURITY.md §10 for the full rate limit table.
-export const loginRateLimit = new Ratelimit({
+//
+// Login is layered into two limiters, checked together (see login.ts) —
+// a single flat window can't be both generous to a real person retrying
+// a forgotten password AND strict enough to catch an attacker, since
+// raising the count to be forgiving also raises the ceiling for brute
+// force, and lowering it to stop brute force also locks out someone's mom.
+//
+//   - loginBurstRateLimit: forgiving, short window. Covers "typed the
+//     wrong password 4-5 times in a row" without tripping.
+//   - loginSustainedRateLimit: stricter, long window. Catches an
+//     attacker who deliberately stays under the burst limit by spacing
+//     attempts out (e.g. 1 every 90 seconds) — a real person never
+//     needs 20+ attempts inside an hour, but a slow brute-force script
+//     would.
+//
+// Both run on every attempt; either one failing blocks the login.
+export const loginBurstRateLimit = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(5, "15 m"),
+    prefix: "ratelimit:login:burst",
+    limiter: Ratelimit.slidingWindow(10, "5 m"),
 });
+export const loginSustainedRateLimit = new Ratelimit({
+    redis,
+    prefix: "ratelimit:login:sustained",
+    limiter: Ratelimit.slidingWindow(20, "10 m"),
+});
+
 export const resetRateLimit = new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(3, "1 h"),

@@ -108,7 +108,12 @@ export function TeacherCourseStream({
                                 )}
                             </div>
 
-                            <div className="shrink-0">
+                            <div className="shrink-0 flex items-center gap-2">
+                                {item.type !== 'lesson' && !item.isPublished && (
+                                    <span className="inline-flex items-center rounded-pill bg-amber-soft text-amber text-caption font-semibold px-3 py-1 whitespace-nowrap">
+                                        Not posted
+                                    </span>
+                                )}
                                 <StreamItemMenu
                                     type={item.type}
                                     itemId={item.id}

@@ -25,7 +25,7 @@ export default async function LessonViewPage({
     const user = await getCurrentUser()
     const content = lesson.content as { type: string; body: string } | null
 
-    const allMaterials = await listMaterials(courseId, lessonId)
+    const allMaterials = await listMaterials(courseId, { type: 'lesson', lessonId })
     const lessonMaterials = allMaterials.filter((m) => m.lesson_id === lessonId)
     const comments = await listLessonComments(lessonId)
     const simplification = user?.role === 'teacher' ? await getSimplifiedLessonForTeacher(lessonId) : null
