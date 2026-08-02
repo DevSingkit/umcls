@@ -51,7 +51,7 @@ export function AuditLogViewer({
                 <select
                     value={actorId}
                     onChange={(e) => updateFilter(setActorId, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline outline-none text-caption"
+                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     <option value="">All actors</option>
                     {actors.map((actor) => (
@@ -63,7 +63,7 @@ export function AuditLogViewer({
                 <select
                     value={actionType}
                     onChange={(e) => updateFilter(setActionType, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline outline-none text-caption"
+                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     <option value="">All actions</option>
                     {actionTypes.map((type) => (
@@ -76,14 +76,14 @@ export function AuditLogViewer({
                     type="date"
                     value={dateFrom}
                     onChange={(e) => updateFilter(setDateFrom, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline outline-none text-caption"
+                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                     aria-label="From date"
                 />
                 <input
                     type="date"
                     value={dateTo}
                     onChange={(e) => updateFilter(setDateTo, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline outline-none text-caption"
+                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                     aria-label="To date"
                 />
             </div>
@@ -92,10 +92,10 @@ export function AuditLogViewer({
                 <table className="w-full text-left">
                     <thead>
                         <tr className="border-b border-hairline">
-                            <th className="p-4 text-label uppercase tracking-wide text-text-secondary">When</th>
-                            <th className="p-4 text-label uppercase tracking-wide text-text-secondary">Actor</th>
-                            <th className="p-4 text-label uppercase tracking-wide text-text-secondary">Action</th>
-                            <th className="p-4 text-label uppercase tracking-wide text-text-secondary">Target</th>
+                            <th className="p-4 text-label text-text-secondary">When</th>
+                            <th className="p-4 text-label text-text-secondary">Actor</th>
+                            <th className="p-4 text-label text-text-secondary">Action</th>
+                            <th className="p-4 text-label text-text-secondary">Target</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -133,14 +133,14 @@ export function AuditLogViewer({
                     <button
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={isPending || data.page <= 1}
-                        className="h-9 px-4 rounded-md border border-hairline text-caption font-medium disabled:opacity-40"
+                        className="h-9 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
                     >
                         Previous
                     </button>
                     <button
                         onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                         disabled={isPending || data.page >= data.totalPages}
-                        className="h-9 px-4 rounded-md border border-hairline text-caption font-medium disabled:opacity-40"
+                        className="h-9 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
                     >
                         Next
                     </button>

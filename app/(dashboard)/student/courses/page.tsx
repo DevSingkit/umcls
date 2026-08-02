@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BookOpen } from 'lucide-react'
 import { getMyEnrolledCourses } from '@/features/courses/actions/get-enrolled-courses'
 
 export default async function StudentCoursesPage() {
@@ -15,17 +16,26 @@ export default async function StudentCoursesPage() {
                     </p>
                 </div>
             ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-3">
                     {courses.map((course: any) => (
                         <Link
                             key={course.id}
                             href={`/student/courses/${course.id}`}
-                            className="bg-surface rounded-md shadow-card p-6 block hover:shadow-card-hover"
+                            className="bg-surface rounded-md shadow-card p-5 flex items-center gap-4 hover:shadow-card-hover"
                         >
-                            <p className="text-body-emphasis text-ink">{course.title}</p>
-                            {course.subject && (
-                                <p className="text-caption text-text-secondary mt-1">{course.subject}</p>
-                            )}
+                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-brand-soft text-brand">
+                                <BookOpen size={20} aria-hidden="true" />
+                            </span>
+                            <div>
+                                <p className="text-body-emphasis text-ink">{course.title}</p>
+                                {course.description ? (
+                                    <p className="text-caption text-text-secondary mt-1">{course.description}</p>
+                                ) : (
+                                    course.subject && (
+                                        <p className="text-caption text-text-secondary mt-1">{course.subject}</p>
+                                    )
+                                )}
+                            </div>
                         </Link>
                     ))}
                 </div>

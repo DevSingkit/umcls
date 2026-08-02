@@ -77,7 +77,8 @@ export function EditLessonForm({
     }
 
     return (
-        <div className="max-w-xl mx-auto pb-16">
+        // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
+        <div className="max-w-2xl mx-auto pb-16">
             <h1 className="font-heading text-h1 text-ink mb-8">Edit lesson</h1>
 
             <form action={handleSave} className="bg-surface rounded-md shadow-card p-8 space-y-6 mb-8">
@@ -114,7 +115,7 @@ export function EditLessonForm({
                 </div>
 
                 {saveError && (
-                    <p className="text-caption text-red" role="alert">
+                    <p className="text-caption text-error" role="alert">
                         {saveError}
                     </p>
                 )}
@@ -182,7 +183,7 @@ export function EditLessonForm({
                     </button>
                 </form>
 
-                {uploadError && <p className="text-caption text-red">{uploadError}</p>}
+                {uploadError && <p className="text-caption text-error">{uploadError}</p>}
             </div>
 
             <MaterialListWithDelete materials={materials} onDelete={handleDeleteMaterial} />
@@ -219,7 +220,7 @@ function MaterialListWithDelete({
                     <span className="text-body-emphasis text-ink truncate">{material.file_name}</span>
                     <button
                         onClick={() => onDelete(material.id)}
-                        className="text-caption font-medium text-red hover:underline shrink-0"
+                        className="text-caption font-medium text-error hover:underline shrink-0"
                     >
                         Remove
                     </button>

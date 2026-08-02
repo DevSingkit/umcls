@@ -23,14 +23,14 @@ export function CourseReassignment({
     return (
         <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
             <div>
-                <label htmlFor="courseId" className="text-label uppercase tracking-wide text-text-secondary block mb-2">
+                <label htmlFor="courseId" className="text-label text-text-secondary block mb-2">
                     Course
                 </label>
                 <select
                     id="courseId"
                     name="courseId"
                     required
-                    className="w-full h-11 px-5 rounded-md border border-hairline outline-none"
+                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface outline-none focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     {courses.map((course) => (
                         <option key={course.id} value={course.id}>
@@ -41,14 +41,14 @@ export function CourseReassignment({
             </div>
 
             <div>
-                <label htmlFor="teacherId" className="text-label uppercase tracking-wide text-text-secondary block mb-2">
+                <label htmlFor="teacherId" className="text-label text-text-secondary block mb-2">
                     Assign to teacher
                 </label>
                 <select
                     id="teacherId"
                     name="teacherId"
                     required
-                    className="w-full h-11 px-5 rounded-md border border-hairline outline-none"
+                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface outline-none focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     {teachers.map((teacher) => (
                         <option key={teacher.id} value={teacher.id}>
@@ -64,7 +64,7 @@ export function CourseReassignment({
                 </p>
             )}
             {state.ok && (
-                <p className="text-caption text-ink" role="status">
+                <p className="text-caption text-success" role="status">
                     Course reassigned.
                 </p>
             )}
@@ -72,7 +72,7 @@ export function CourseReassignment({
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-md bg-ink text-on-ink font-medium disabled:opacity-60"
+                className="w-full h-11 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
                 {isPending ? 'Reassigning…' : 'Reassign course'}
             </button>

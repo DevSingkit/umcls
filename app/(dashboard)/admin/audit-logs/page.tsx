@@ -14,7 +14,7 @@ export default async function AuditLogsPage() {
 
     return (
         <div>
-            <h1 className="text-h1 text-ink mb-8">Audit Log</h1>
+            <h1 className="mb-8 font-heading text-h1 text-ink">Audit Log</h1>
             <AuditLogViewer initialData={initialData} actors={actors} actionTypes={actionTypes} />
         </div>
     )

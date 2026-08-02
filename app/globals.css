@@ -18,9 +18,11 @@ h1, h2, h3 {
 }
 
 /* Visible focus ring on every focusable element, never removed.
-   DESIGN-LMS.md §9 — non-negotiable for this audience. */
+   DESIGN-LMS.md §9 — non-negotiable for this audience. Color matches the
+   `brand` token (#128630), the institution's actual green — not the
+   earlier #2E7D46 placeholder. */
 :focus-visible {
-  outline: 2px solid #2E7D46;
+  outline: 2px solid #128630;
   outline-offset: 2px;
 }
 

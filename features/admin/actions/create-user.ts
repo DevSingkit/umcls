@@ -19,7 +19,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const createUserSchema = z.object({
     fullName: z.string().min(2, 'Name is too short'),
     email: z.string().email('Enter a valid email'),
-    role: z.enum(['teacher', 'student']),
+    role: z.enum(['admin', 'teacher', 'student']),
     temporaryPassword: z
         .string()
         .min(12, 'Password must be at least 12 characters')

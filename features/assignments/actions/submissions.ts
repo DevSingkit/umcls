@@ -1,8 +1,8 @@
 'use server'
-// Student submission (file upload only) and teacher grading (numeric
-// score only) for assignments. Same MIME/size validation approach as
-// materials.ts — see AUTH_NOTES.md for why we re-check role/ownership
-// here even though RLS also enforces it.
+// Student submission (file and/or text note) and teacher grading
+// (numeric score only) for assignments. Same MIME/size validation
+// approach as materials.ts — see AUTH_NOTES.md for why we re-check
+// role/ownership here even though RLS also enforces it.
 import { requireRole, requireUser } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 
@@ -20,31 +20,43 @@ const ALLOWED_MIME_TYPES = new Set([
 
 export type SubmitAssignmentResult = { ok: true } | { ok: false; error: string }
 
-// Submits (or resubmits) a file for an assignment. If a submission
-// already exists, this replaces the file and resets status to
-// 'submitted' (or 'resubmitted' if it had already been graded).
+// Submits (or resubmits) an assignment. A file and a text note are both
+// optional and independent — a student can submit just a note, just a
+// file, both, or (if they confirm through the client-side warning in
+// SubmissionUploadForm) neither. The server doesn't hard-block an empty
+// submission; that's a deliberate "warn, don't block" choice, not an
+// oversight — see CHANGELOG.md 2026-08-01.
+//
+// If a submission already exists, this updates it in place and resets
+// status to 'submitted' (or 'resubmitted' if it had already been
+// graded, which also clears the prior grade). A text-only resubmission
+// does NOT clear a previously attached file — only a newly uploaded
+// file replaces the old one.
 export async function submitAssignment(assignmentId: string, formData: FormData): Promise<SubmitAssignmentResult> {
     const user = await requireRole(['student'])
-    const file = formData.get('file')
 
-    if (!(file instanceof File) || file.size === 0) {
-        return { ok: false, error: 'Please choose a file to submit.' }
-    }
-    if (!ALLOWED_MIME_TYPES.has(file.type)) {
-        return {
-            ok: false,
-            error: 'That file type is not allowed. Allowed: PDF, DOC/DOCX, JPEG/PNG, MP3, MP4.',
+    const fileEntry = formData.get('file')
+    const file = fileEntry instanceof File && fileEntry.size > 0 ? fileEntry : null
+    const noteRaw = formData.get('note')
+    const note = typeof noteRaw === 'string' ? noteRaw.trim() : ''
+
+    if (file) {
+        if (!ALLOWED_MIME_TYPES.has(file.type)) {
+            return {
+                ok: false,
+                error: 'That file type is not allowed. Allowed: PDF, DOC/DOCX, JPEG/PNG, MP3, MP4.',
+            }
         }
-    }
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-        return { ok: false, error: 'File is too large. Max size is 40 MB.' }
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+            return { ok: false, error: 'File is too large. Max size is 40 MB.' }
+        }
     }
 
     const supabase = await createClient()
 
     const { data: assignment } = await supabase
         .from('assignments')
-        .select('id, course_id, due_at, is_published')
+        .select('id, course_id, due_at, is_published, allow_late')
         .eq('id', assignmentId)
         .is('deleted_at', null)
         .single()
@@ -66,11 +78,22 @@ export async function submitAssignment(assignmentId: string, formData: FormData)
     }
 
     const now = new Date()
-    const isLate = assignment.due_at ? now > new Date(assignment.due_at) : false
-    // Matches Google Classroom's behavior: a late submission is never
-    // blocked outright, just flagged "late" (is_late below) for the
-    // teacher to see and decide how to handle. allow_late is no longer
-    // used as a hard gate here.
+    const isPastDue = assignment.due_at ? now > new Date(assignment.due_at) : false
+
+    // Teacher-controlled hard gate. `allow_late` already existed on the
+    // schema but was explicitly NOT enforced here before — see the
+    // removed comment that used to say "allow_late is no longer used as
+    // a hard gate here." This is the fix: once the due date has passed,
+    // a teacher who left allow_late = false blocks submission entirely,
+    // not just flags it late.
+    if (isPastDue && !assignment.allow_late) {
+        return {
+            ok: false,
+            error: 'The due date has passed and late submissions are not allowed for this assignment.',
+        }
+    }
+    const isLate = isPastDue
+
     const { data: existing } = await supabase
         .from('assignment_submissions')
         .select('id, status')
@@ -78,39 +101,50 @@ export async function submitAssignment(assignmentId: string, formData: FormData)
         .eq('student_id', user.id)
         .maybeSingle()
 
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const storagePath = `${assignmentId}/${user.id}/${crypto.randomUUID()}-${safeName}`
+    let storagePath: string | null = null
+    if (file) {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+        storagePath = `${assignmentId}/${user.id}/${crypto.randomUUID()}-${safeName}`
 
-    const { error: uploadError } = await supabase.storage
-        .from('submissions')
-        .upload(storagePath, file, { contentType: file.type, upsert: false })
+        const { error: uploadError } = await supabase.storage
+            .from('submissions')
+            .upload(storagePath, file, { contentType: file.type, upsert: false })
 
-    if (uploadError) {
-        return { ok: false, error: 'Upload failed. Please try again.' }
+        if (uploadError) {
+            return { ok: false, error: 'Upload failed. Please try again.' }
+        }
     }
 
     const newStatus = existing?.status === 'graded' ? 'resubmitted' : 'submitted'
 
     if (existing) {
+        const updatePayload: Record<string, unknown> = {
+            submitted_at: now.toISOString(),
+            is_late: isLate,
+            status: newStatus,
+            response_text: note || null,
+            // Clear any prior grade on resubmission — it needs
+            // re-grading against the new content.
+            score: null,
+            feedback: null,
+            graded_by: null,
+            graded_at: null,
+        }
+        // Only overwrite the file fields if a new file was actually
+        // uploaded this time — a text-only resubmission shouldn't wipe
+        // out a file attached in an earlier submission.
+        if (file) {
+            updatePayload.file_path = storagePath
+            updatePayload.file_name = file.name
+        }
+
         const { error } = await supabase
             .from('assignment_submissions')
-            .update({
-                file_path: storagePath,
-                file_name: file.name,
-                submitted_at: now.toISOString(),
-                is_late: isLate,
-                status: newStatus,
-                // Clear any prior grade on resubmission — it needs
-                // re-grading against the new file.
-                score: null,
-                feedback: null,
-                graded_by: null,
-                graded_at: null,
-            })
+            .update(updatePayload)
             .eq('id', existing.id)
 
         if (error) {
-            await supabase.storage.from('submissions').remove([storagePath])
+            if (storagePath) await supabase.storage.from('submissions').remove([storagePath])
             return { ok: false, error: 'Could not save submission. Please try again.' }
         }
     } else {
@@ -118,15 +152,86 @@ export async function submitAssignment(assignmentId: string, formData: FormData)
             assignment_id: assignmentId,
             student_id: user.id,
             file_path: storagePath,
-            file_name: file.name,
+            file_name: file?.name ?? null,
+            response_text: note || null,
             is_late: isLate,
             status: 'submitted',
         })
 
         if (error) {
-            await supabase.storage.from('submissions').remove([storagePath])
+            if (storagePath) await supabase.storage.from('submissions').remove([storagePath])
             return { ok: false, error: 'Could not save submission. Please try again.' }
         }
+    }
+
+    return { ok: true }
+}
+
+export type UnsubmitAssignmentResult = { ok: true } | { ok: false; error: string }
+
+// Lets a student retract their own submission so they can edit and
+// resubmit from scratch. Two independent checks:
+//   1. The same due-date/allow_late gate as submitAssignment — if
+//      submission is currently blocked, unsubmit is blocked too (no
+//      point letting someone unsubmit into a state they then can't
+//      resubmit from).
+//   2. Uses the unsubmit_assignment() RPC (migration 052) instead of a
+//      direct DELETE, since there's no student DELETE policy on this
+//      table — the RPC itself independently refuses to delete a
+//      graded/returned submission, so a grade already given can never
+//      be silently erased this way even if this check below were ever
+//      bypassed.
+export async function unsubmitAssignment(assignmentId: string): Promise<UnsubmitAssignmentResult> {
+    const user = await requireRole(['student'])
+    const supabase = await createClient()
+
+    const { data: assignment } = await supabase
+        .from('assignments')
+        .select('id, due_at, allow_late')
+        .eq('id', assignmentId)
+        .is('deleted_at', null)
+        .single()
+
+    if (!assignment) {
+        return { ok: false, error: 'Assignment not found.' }
+    }
+
+    const now = new Date()
+    const isPastDue = assignment.due_at ? now > new Date(assignment.due_at) : false
+    if (isPastDue && !assignment.allow_late) {
+        return { ok: false, error: 'The due date has passed and this assignment can no longer be edited.' }
+    }
+
+    const { data: existing } = await supabase
+        .from('assignment_submissions')
+        .select('id, status, file_path')
+        .eq('assignment_id', assignmentId)
+        .eq('student_id', user.id)
+        .maybeSingle()
+
+    if (!existing) {
+        return { ok: false, error: 'You have not submitted this assignment yet.' }
+    }
+
+    if (existing.status === 'graded' || existing.status === 'returned') {
+        return { ok: false, error: 'This submission has already been graded and can no longer be unsubmitted.' }
+    }
+
+    const { data: deleted, error } = await supabase.rpc('unsubmit_assignment', {
+        p_submission_id: existing.id,
+    })
+
+    if (error) {
+        return { ok: false, error: `Could not unsubmit: ${error.message}` }
+    }
+    if (!deleted) {
+        return { ok: false, error: 'This submission can no longer be unsubmitted.' }
+    }
+
+    // Best-effort: remove the file from storage too. Nothing to remove
+    // for a text-only submission.
+    if (existing.file_path) {
+        await supabase.storage.from('submissions').remove([existing.file_path])
     }
 
     return { ok: true }
@@ -138,7 +243,7 @@ export async function getMySubmission(assignmentId: string) {
     const supabase = await createClient()
     const { data } = await supabase
         .from('assignment_submissions')
-        .select('id, file_name, submitted_at, is_late, status, score, feedback')
+        .select('id, file_name, response_text, submitted_at, is_late, status, score, feedback')
         .eq('assignment_id', assignmentId)
         .eq('student_id', user.id)
         .maybeSingle()
@@ -201,7 +306,7 @@ export async function listSubmissionsForAssignment(assignmentId: string) {
 
     const { data: submissions } = await supabase
         .from('assignment_submissions')
-        .select('id, student_id, file_name, submitted_at, is_late, status, score, feedback')
+        .select('id, student_id, file_name, response_text, submitted_at, is_late, status, score, feedback')
         .eq('assignment_id', assignmentId)
 
     const submissionByStudent = new Map((submissions ?? []).map((s) => [s.student_id, s]))

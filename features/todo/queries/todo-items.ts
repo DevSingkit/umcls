@@ -9,6 +9,17 @@
 // unless created with security_invoker) — it's safe because the
 // underlying assignments/quizzes tables already scope student access
 // to published, enrolled-course rows via their own RLS policies.
+//
+// Sort order (changed 2026-08-01, explicit request): newest-created
+// first, not due-date order. Previously sorted by due_at ascending
+// (nulls last), which put the earliest-due item on top regardless of
+// how recently it was posted — a student could get a brand-new
+// assignment buried below an old one just because the old one's due
+// date happened to be sooner. Now ordered by created_at descending, so
+// whatever a teacher just posted shows up at the top of the list.
+// Trade-off, noted rather than silently accepted: a genuinely overdue
+// item is no longer pinned above everything else — it sorts wherever
+// its creation date puts it, same as anything else.
 
 import { requireRole, getCurrentUser } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
@@ -32,8 +43,8 @@ export async function getMyTodoItems(): Promise<TodoItem[]> {
     // the logged-in student's own session.
     const { data, error } = await supabase
         .from('student_todo_items')
-        .select('id, item_type, title, course_id, due_at')
-        .order('due_at', { ascending: true, nullsFirst: false })
+        .select('id, item_type, title, course_id, due_at, created_at')
+        .order('created_at', { ascending: false })
 
     if (error || !data) {
         return []

@@ -38,14 +38,15 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                 setError(result.error)
                 return
             }
-            router.push(`/teacher/courses/${courseId}/assignments`)
+            router.push(`/teacher/courses/${courseId}`)
             router.refresh()
         })
     }
 
     return (
-        <form action={handleSubmit} className="max-w-xl grid gap-4 bg-surface rounded-md shadow-card p-8">
-            {error && <p className="text-caption text-red">{error}</p>}
+        // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
+        <form action={handleSubmit} className="max-w-2xl grid gap-4 bg-surface rounded-md shadow-card p-8">
+            {error && <p className="text-caption text-error">{error}</p>}
             <div>
                 <label htmlFor="title" className="text-label text-ink-soft">Title</label>
                 <input
@@ -136,7 +137,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                         type="button"
                                         aria-label="Remove link"
                                         onClick={() => removeLinkRow(row.key)}
-                                        className="text-text-secondary hover:text-red text-body-md px-2"
+                                        className="text-text-secondary hover:text-error text-body-md px-2"
                                     >
                                         ✕
                                     </button>
@@ -166,6 +167,24 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                 </div>
                 <input type="hidden" name="dueAt" value={dueDate ? `${dueDate}T${dueTime || '23:59'}` : ''} />
             </div>
+            <div>
+                <label htmlFor="gradingComponent" className="text-label text-ink-soft">Grading component</label>
+                <select
+                    id="gradingComponent"
+                    name="gradingComponent"
+                    required
+                    defaultValue=""
+                    className="mt-1 h-11 w-full px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                >
+                    <option value="" disabled>Choose a component…</option>
+                    <option value="written_work">Written Work</option>
+                    <option value="performance_task">Performance Task</option>
+                    <option value="quarterly_assessment">Quarterly Assessment</option>
+                </select>
+                <p className="mt-1 text-caption text-text-secondary">
+                    Determines how much this assignment counts toward the student's DepEd quarterly grade.
+                </p>
+            </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label htmlFor="maxScore" className="text-label text-ink-soft">Max score</label>
@@ -192,6 +211,22 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     />
                 </div>
             </div>
+
+            <div className="flex items-center gap-3">
+                <input
+                    id="allowLate"
+                    name="allowLate"
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-[1.5px] border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                />
+                <label htmlFor="allowLate" className="text-body-md text-ink">
+                    Allow submissions after the due date
+                </label>
+            </div>
+            <p className="-mt-3 text-caption text-text-secondary">
+                If off, students can no longer submit or edit their
+                submission once the due date passes.
+            </p>
 
             <button
                 type="submit"

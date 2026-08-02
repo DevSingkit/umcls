@@ -109,7 +109,7 @@ export function CourseMenu({
                     <button
                         role="menuitem"
                         onClick={() => setConfirmingDelete(true)}
-                        className="flex h-11 w-full items-center gap-3 px-4 text-left text-body-md text-red hover:bg-red-soft"
+                        className="flex h-11 w-full items-center gap-3 px-4 text-left text-body-md text-error hover:bg-error-soft"
                     >
                         <Trash2 size={18} aria-hidden="true" />
                         Delete course
@@ -134,7 +134,7 @@ export function CourseMenu({
                         <button
                             onClick={runToggle}
                             disabled={isPending}
-                            className="h-11 rounded-md border-[1.5px] border-red px-4 text-body-md font-semibold text-red hover:bg-red-soft disabled:opacity-60"
+                            className="h-11 rounded-md border-[1.5px] border-error px-4 text-body-md font-semibold text-error hover:bg-error-soft disabled:opacity-60"
                         >
                             Unpublish
                         </button>
@@ -149,7 +149,7 @@ export function CourseMenu({
                         This removes it and everything in it from view immediately. This can&apos;t
                         be undone from here.
                     </p>
-                    {deleteError && <p className="mt-2 text-caption text-red">{deleteError}</p>}
+                    {deleteError && <p className="mt-2 text-caption text-error">{deleteError}</p>}
                     <div className="mt-3 flex justify-end gap-2">
                         <button
                             onClick={() => setConfirmingDelete(false)}
@@ -161,7 +161,7 @@ export function CourseMenu({
                         <button
                             onClick={handleDelete}
                             disabled={isPending}
-                            className="h-11 rounded-md bg-red px-4 text-body-md font-semibold text-on-ink hover:opacity-90 disabled:opacity-60"
+                            className="h-11 rounded-md bg-error px-4 text-body-md font-semibold text-on-ink hover:opacity-90 disabled:opacity-60"
                         >
                             {isPending ? 'Deleting…' : 'Delete'}
                         </button>

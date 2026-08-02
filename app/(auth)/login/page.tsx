@@ -2,7 +2,7 @@
 
 // app/login/page.tsx
 //
-// Design system: DESIGN-LMS.md v1.0 (Authentication — Login)
+// Design system: DESIGN-LMS.md v1.1 (Authentication — Login)
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
@@ -32,7 +32,7 @@ export default function LoginPage() {
             id="main-content"
             className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 py-16"
         >
-            <div className="w-full max-w-sm">
+            <div className="w-full max-w-2xl">
                 {/* Logo */}
                 <div className="mb-8 flex justify-center">
                     <Image
@@ -41,24 +41,24 @@ export default function LoginPage() {
                         width={140}
                         height={44}
                         priority
-                        className="h-20 w-auto object-contain"
+                        className="h-11 w-auto object-contain"
                     />
                 </div>
 
                 {/* Card */}
                 <div className="rounded-md bg-surface p-8 shadow-modal sm:p-10">
                     {/* Eyebrow */}
-                    <p className="mb-3 flex items-center gap-1.5 text-label uppercase tracking-wide text-text-secondary">
+                    <p className="mb-3 flex items-center gap-1.5 text-label text-text-secondary">
                         <span aria-hidden="true" className="text-amber">
                             •
                         </span>
                         Sign in
                     </p>
 
-                    <h1 className="text-h3 text-ink">
+                    <h1 className="font-heading text-h3 text-ink">
                         United Methodist
                     </h1>
-                    <h1 className="mb-3 text-h3 text-ink">
+                    <h1 className="mb-3 font-heading text-h3 text-ink">
                         Cooperative Learning System
                     </h1>
                     <p className="mb-5 text-caption text-text-secondary">
@@ -73,7 +73,7 @@ export default function LoginPage() {
                         <div className="mb-5">
                             <label
                                 htmlFor="email"
-                                className="mb-2 block text-label uppercase tracking-wide text-text-secondary"
+                                className="mb-2 block text-label text-text-secondary"
                             >
                                 Email
                             </label>
@@ -86,14 +86,14 @@ export default function LoginPage() {
                                 aria-describedby={state.error ? "login-error" : undefined}
                                 aria-invalid={state.error ? true : undefined}
                                 placeholder="you@school.edu"
-                                className="h-11 w-full rounded-md border border-hairline bg-surface px-5 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-ink focus:outline-none"
+                                className="h-11 w-full rounded-md border border-hairline-strong bg-surface px-5 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                             />
                         </div>
 
                         <div className="mb-4">
                             <label
                                 htmlFor="password"
-                                className="mb-2 block text-label uppercase tracking-wide text-text-secondary"
+                                className="mb-2 block text-label text-text-secondary"
                             >
                                 Password
                             </label>
@@ -109,7 +109,7 @@ export default function LoginPage() {
                                     }
                                     aria-invalid={state.error ? true : undefined}
                                     placeholder="••••••••"
-                                    className="h-11 w-full rounded-md border border-hairline bg-surface px-5 pr-12 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-ink focus:outline-none"
+                                    className="h-11 w-full rounded-md border border-hairline-strong bg-surface px-5 pr-12 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                 />
                                 <button
                                     type="button"
@@ -118,7 +118,7 @@ export default function LoginPage() {
                                         showPassword ? "Hide password" : "Show password"
                                     }
                                     aria-pressed={showPassword}
-                                    className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center text-text-secondary"
+                                    className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                 >
                                     {showPassword ? (
                                         <EyeOff className="h-5 w-5" strokeWidth={1.5} />
@@ -132,7 +132,7 @@ export default function LoginPage() {
                         <div className="mb-6 text-right">
                             <Link
                                 href="/forgot-password"
-                                className="inline-flex h-11 items-center text-body-md text-info hover:underline"
+                                className="inline-flex h-11 items-center text-body-md text-brand hover:underline"
                             >
                                 Forgot password?
                             </Link>
@@ -159,8 +159,9 @@ export default function LoginPage() {
                             type="submit"
                             disabled={isPending}
                             className={cn(
-                                "h-11 w-full rounded-md bg-ink text-body-md font-medium text-on-ink transition-colors",
-                                "hover:bg-ink-soft active:bg-ink",
+                                "h-11 w-full rounded-md bg-brand text-body-md font-medium text-on-ink transition-colors",
+                                "hover:bg-brand-hover",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
                                 "disabled:bg-hairline disabled:text-text-muted"
                             )}
                         >

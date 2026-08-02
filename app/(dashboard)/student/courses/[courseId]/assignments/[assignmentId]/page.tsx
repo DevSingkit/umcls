@@ -33,7 +33,7 @@ export default async function StudentAssignmentDetailPage({
                     ? `Due ${new Date(assignment.due_at).toLocaleString()}`
                     : 'No due date'}
                 {' · '}Max {assignment.max_score}
-                {isPastDue && !submission && ' · Past due'}
+                {isPastDue && !submission && (assignment.allow_late ? ' · Past due — late submission allowed' : ' · Past due')}
             </p>
 
             {instructions?.body && (
@@ -42,41 +42,33 @@ export default async function StudentAssignmentDetailPage({
                 </div>
             )}
 
+            <h2 className="font-heading text-body-emphasis text-ink mb-4">Your submission</h2>
+
             {materials.length > 0 && (
-                <div className="mb-8">
-                    <h2 className="text-body-emphasis text-ink mb-4">Attachments</h2>
+                <div className="bg-surface rounded-md shadow-card p-6 mb-8">
+                    <h2 className="font-heading text-body-emphasis text-ink mb-4">Attachments</h2>
                     <MaterialList materials={materials} canDelete={false} />
                 </div>
             )}
 
-            <h2 className="text-body-emphasis text-ink mb-4">Your submission</h2>
-
-            {submission && (
-                <div className="bg-surface rounded-md shadow-card p-6 mb-6">
-                    <p className="text-body-md text-ink">{submission.file_name}</p>
-                    <p className="text-caption text-text-secondary mt-1">
-                        Submitted {new Date(submission.submitted_at).toLocaleString()}
-                        {submission.is_late && ' · Late'}
-                        {' · '}
-                        {submission.status === 'graded' || submission.status === 'returned'
-                            ? `Score: ${submission.score} / ${assignment.max_score}`
-                            : submission.status === 'resubmitted'
-                              ? 'Resubmitted — awaiting grading'
-                              : 'Submitted — awaiting grading'}
-                    </p>
-                    {submission.feedback && (
-                        <p className="text-body-md text-ink mt-3 whitespace-pre-wrap">
-                            {submission.feedback}
-                        </p>
-                    )}
-                </div>
-            )}
-
+            {/*
+                The submission summary card, the note field, the file
+                input, and the Unsubmit button all live inside
+                SubmissionUploadForm now — previously there was a
+                separate, decorative <textarea id="submissionNote">
+                rendered directly on this page that was never inside a
+                <form> and never actually reached submitAssignment. That
+                field looked functional but silently did nothing; it's
+                removed here in favor of the real, wired-up note field
+                inside the form component. See CHANGELOG.md 2026-08-01.
+            */}
             <SubmissionUploadForm
-    assignmentId={assignmentId}
-    maxScore={assignment.max_score}
-    existing={submission}
-/>
+                assignmentId={assignmentId}
+                maxScore={assignment.max_score}
+                existing={submission}
+                dueAt={assignment.due_at}
+                allowLate={assignment.allow_late}
+            />
         </div>
     )
 }

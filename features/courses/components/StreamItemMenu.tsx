@@ -79,7 +79,7 @@ export function StreamItemMenu({
                     <button
                         role="menuitem"
                         onClick={() => setConfirmingDelete(true)}
-                        className="flex h-10 w-full items-center gap-3 px-4 text-left text-body-md text-red hover:bg-red-soft"
+                        className="flex h-10 w-full items-center gap-3 px-4 text-left text-body-md text-error hover:bg-error-soft"
                     >
                         <Trash2 size={16} aria-hidden="true" />
                         Delete
@@ -93,7 +93,7 @@ export function StreamItemMenu({
                     <p className="mt-1 text-caption text-text-secondary">
                         Students will lose access immediately. This can&apos;t be undone from here.
                     </p>
-                    {error && <p className="mt-2 text-caption text-red">{error}</p>}
+                    {error && <p className="mt-2 text-caption text-error">{error}</p>}
                     <div className="mt-3 flex justify-end gap-2">
                         <button
                             onClick={() => setConfirmingDelete(false)}
@@ -105,7 +105,7 @@ export function StreamItemMenu({
                         <button
                             onClick={handleDelete}
                             disabled={isPending}
-                            className="h-9 rounded-md border-[1.5px] border-red px-3 text-caption font-semibold text-red hover:bg-red-soft disabled:opacity-60"
+                            className="h-9 rounded-md border-[1.5px] border-error px-3 text-caption font-semibold text-error hover:bg-error-soft disabled:opacity-60"
                         >
                             {isPending ? 'Deleting…' : 'Delete'}
                         </button>

@@ -43,7 +43,7 @@ function formatWhen(createdAt: string): string {
 export function RecentActivityFeed({ rows }: { rows: RecentAuditLogRow[] }) {
     return (
         <div className="bg-surface rounded-md shadow-card p-6">
-            <p className="text-label uppercase tracking-wide text-text-secondary mb-4">
+            <p className="text-label text-text-secondary mb-4">
                 Recent activity
             </p>
             {rows.length === 0 ? (

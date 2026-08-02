@@ -13,8 +13,8 @@ interface TopNavProps {
 }
 
 /**
- * Ink top bar shown below the desktop breakpoint (< 1024px). Matches the
- * sidebar's warm dark green-charcoal background (DESIGN-LMS.md §6.1/§6.2).
+ * Pink top bar shown below the desktop breakpoint (< 1024px). Matches the
+ * sidebar's deep raspberry-pink chrome color (DESIGN-LMS.md §6.1/§6.2).
  * The notification bell renders inline here on mobile (not fixed) so it
  * sits next to the account menu instead of floating on top of it.
  */
@@ -22,7 +22,7 @@ export function TopNav({ role, fullName, userId }: TopNavProps) {
     const initial = fullName?.trim()?.charAt(0)?.toUpperCase() || "?";
 
     return (
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-ink px-4 lg:hidden">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-sidebar px-4 lg:hidden">
             <div className="flex items-center gap-2">
                 <Image src="/logo.png" alt="" width={24} height={24} className="shrink-0 rounded-md" />
                 <span className="font-heading text-body-emphasis text-on-ink">UMCLS</span>
@@ -40,7 +40,7 @@ export function TopNav({ role, fullName, userId }: TopNavProps) {
                         aria-label={`Account menu for ${fullName}`}
                         className={cn(
                             "flex h-11 w-11 list-none items-center justify-center rounded-pill bg-white/10 text-body-emphasis text-on-ink",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
                         )}
                     >
                         {initial}

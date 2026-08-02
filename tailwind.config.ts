@@ -15,17 +15,24 @@ const config: Config = {
         hairline: "#E2DED4",
         "hairline-strong": "#C9C3B5",
 
-        // Ink (text & nav)
+        // Ink (text — used everywhere for headings/body, NOT the sidebar)
         ink: "#1F2A24",
         "ink-soft": "#3F4A43",
         "text-secondary": "#6B7268",
         "text-muted": "#9A9F94",
         "on-ink": "#F7F5F0",
 
-        // Brand — schoolhouse green
-        brand: "#2E7D46",
-        "brand-hover": "#256339",
-        "brand-soft": "#E3F1E7",
+        // Sidebar/chrome — separate from `ink`. `ink` stays the text
+        // color everywhere; this is ONLY for structural chrome
+        // (Sidebar.tsx's bg-ink usage becomes bg-sidebar).
+        sidebar: "#8F1349",
+        "sidebar-hover": "#7A1040",
+        "sidebar-active": "#C21A5D",
+
+        // Brand — institution green (was schoolhouse green #2E7D46)
+        brand: "#128630",
+        "brand-hover": "#0F6D27",
+        "brand-soft": "#E1F0E5",
 
         // Warm accent (attention, not alarm)
         amber: "#E8963C",
@@ -36,8 +43,8 @@ const config: Config = {
         "red-soft": "#F7E2E0",
 
         // Semantic (mirror brand/amber/red — never repurposed elsewhere)
-        success: "#2E7D46",
-        "success-soft": "#E3F1E7",
+        success: "#128630",
+        "success-soft": "#E1F0E5",
         warning: "#E8963C",
         "warning-soft": "#FBEBD6",
         error: "#C4453A",
@@ -47,7 +54,7 @@ const config: Config = {
 
         // Role accents (badges/avatars only, never buttons)
         "role-admin": "#5B6472",
-        "role-teacher": "#2E7D46",
+        "role-teacher": "#128630",
         "role-student": "#3B7EC4",
       },
       fontFamily: {

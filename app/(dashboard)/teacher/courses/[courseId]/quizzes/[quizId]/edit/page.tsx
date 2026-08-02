@@ -4,6 +4,7 @@ import { AddQuestionForm } from '@/features/quizzes/components/AddQuestionForm'
 import { PassingScoreSetting } from '@/features/quizzes/components/PassingScoreSetting'
 import { TimeLimitSetting } from '@/features/quizzes/components/TimeLimitSetting'
 import { ResultsVisibilitySetting } from '@/features/quizzes/components/ResultsVisibilitySetting'
+import { GradingComponentSetting } from '@/features/quizzes/components/GradingComponentSetting'
 import { QuestionCard } from '@/features/quizzes/components/QuestionCard'
 import { PostQuizButton } from '@/features/quizzes/components/PostQuizButton'
 import { QuizTitleField } from '@/features/quizzes/components/QuizTitleField'
@@ -57,6 +58,11 @@ export default async function QuizEditPage({
             </div>
 
             <div className="space-y-6 mb-6">
+                <GradingComponentSetting
+                    quizId={quiz.id}
+                    currentGradingComponent={quiz.grading_component}
+                />
+
                 <TimeLimitSetting quizId={quiz.id} currentTimeLimitMinutes={quiz.time_limit_minutes} />
 
                 {questions.length > 0 && (

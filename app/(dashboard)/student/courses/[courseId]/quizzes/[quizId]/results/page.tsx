@@ -43,7 +43,7 @@ export default async function QuizResultsPage({
         (quiz.show_results_after === 'after_grading' && isFullyGraded)
 
     return (
-        <div className="max-w-xl mx-auto text-center py-12">
+        <div className="max-w-2xl mx-auto text-center py-12">
             <p className="text-label text-text-secondary">{quiz.title}</p>
 
             {!canReveal ? (

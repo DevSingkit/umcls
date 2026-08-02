@@ -1,9 +1,22 @@
 import Link from 'next/link'
+import { ClipboardList, HelpCircle } from 'lucide-react'
 import type { TodoItem } from '@/features/todo/queries/todo-items'
 
 const ITEM_LABEL: Record<TodoItem['itemType'], string> = {
     assignment: 'Assignment',
     quiz: 'Quiz',
+}
+
+// Same fixed icon + color mapping used in CourseStream.tsx and
+// TeacherCourseStream.tsx — one mapping, everywhere (DESIGN-LMS.md §8.7a).
+const ITEM_ICON: Record<TodoItem['itemType'], typeof ClipboardList> = {
+    assignment: ClipboardList,
+    quiz: HelpCircle,
+}
+
+const ITEM_ICON_BG: Record<TodoItem['itemType'], string> = {
+    assignment: 'bg-amber-soft text-amber',
+    quiz: 'bg-info-soft text-info',
 }
 
 function hrefFor(item: TodoItem) {
@@ -37,26 +50,38 @@ export function TodoList({ items, courseNameById }: TodoListProps) {
             {items.map((item) => {
                 const isPastDue = item.dueAt ? new Date(item.dueAt).getTime() < Date.now() : false
                 const courseName = courseNameById?.get(item.courseId)
+                const Icon = ITEM_ICON[item.itemType]
+
                 return (
                     <Link
                         key={`${item.itemType}-${item.id}`}
                         href={hrefFor(item)}
-                        className="bg-surface rounded-md shadow-card p-5 flex items-center justify-between hover:shadow-card-hover"
+                        className="flex items-start gap-4 rounded-md bg-surface p-4 shadow-card hover:shadow-card-hover"
                     >
-                        <div>
+                        <div
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${ITEM_ICON_BG[item.itemType]}`}
+                            aria-hidden="true"
+                        >
+                            <Icon size={20} />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
                             <p className="text-caption text-text-secondary mb-1">
                                 {courseName ? `${courseName} · ${ITEM_LABEL[item.itemType]}` : ITEM_LABEL[item.itemType]}
                             </p>
-                            <span className="text-body-emphasis text-ink">{item.title}</span>
+                            <span className="block truncate text-body-emphasis text-ink">{item.title}</span>
                         </div>
-                        {item.dueAt ? (
-                            <span className={`text-caption ${isPastDue ? 'text-error' : 'text-text-secondary'}`}>
-                                {isPastDue ? 'Past due — ' : 'Due '}
-                                {new Date(item.dueAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                            </span>
-                        ) : (
-                            <span className="text-caption text-text-secondary">No due date</span>
-                        )}
+
+                        <div className="shrink-0">
+                            {item.dueAt ? (
+                                <span className={`text-caption whitespace-nowrap ${isPastDue ? 'text-error' : 'text-text-secondary'}`}>
+                                    {isPastDue ? 'Past due — ' : 'Due '}
+                                    {new Date(item.dueAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                </span>
+                            ) : (
+                                <span className="text-caption text-text-secondary whitespace-nowrap">No due date</span>
+                            )}
+                        </div>
                     </Link>
                 )
             })}

@@ -250,7 +250,7 @@ export function QuestionCard({ question, index }: { question: Question; index: n
                             type="button"
                             onClick={handleDelete}
                             disabled={isDeleting}
-                            className="text-caption font-semibold text-red hover:underline px-2 py-1 disabled:opacity-60"
+                            className="text-caption font-semibold text-error hover:underline px-2 py-1 disabled:opacity-60"
                         >
                             {isDeleting ? 'Deleting…' : 'Delete'}
                         </button>
@@ -280,7 +280,7 @@ export function QuestionCard({ question, index }: { question: Question; index: n
             className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6 border-l-4 border-l-brand"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-body-emphasis text-ink">Editing question {index + 1}</h2>
+                <h2 className="font-heading text-body-emphasis text-ink">Editing question {index + 1}</h2>
                 <select
                     aria-label="Question type"
                     value={questionType}
@@ -340,7 +340,7 @@ export function QuestionCard({ question, index }: { question: Question; index: n
                                     type="button"
                                     aria-label={`Remove option ${optIndex + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="text-text-secondary hover:text-red text-body-md px-2"
+                                    className="text-text-secondary hover:text-error text-body-md px-2"
                                 >
                                     ✕
                                 </button>
@@ -381,7 +381,7 @@ export function QuestionCard({ question, index }: { question: Question; index: n
                                     type="button"
                                     aria-label={`Remove option ${optIndex + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="text-text-secondary hover:text-red text-body-md px-2"
+                                    className="text-text-secondary hover:text-error text-body-md px-2"
                                 >
                                     ✕
                                 </button>
@@ -446,7 +446,7 @@ export function QuestionCard({ question, index }: { question: Question; index: n
             )}
 
             {error && (
-                <p className="text-caption text-red" role="alert">
+                <p className="text-caption text-error" role="alert">
                     {error}
                 </p>
             )}

@@ -457,7 +457,7 @@ export async function getQuizForTeacher(quizId: string) {
 
     const { data: quiz } = await supabase
         .from('quizzes')
-        .select('id, title, course_id, passing_score, is_published, time_limit_minutes, show_results_after, courses!inner(teacher_id, title)')
+        .select('id, title, course_id, passing_score, is_published, time_limit_minutes, show_results_after, grading_component, courses!inner(teacher_id, title)')
         .eq('id', quizId)
         .single()
 
@@ -510,6 +510,36 @@ export async function setPassingScore(quizId: string, passingScore: number) {
     }
 
     await supabase.from('quizzes').update({ passing_score: passingScore }).eq('id', quizId)
+
+    return { ok: true as const }
+}
+
+export type GradingComponent = 'written_work' | 'performance_task' | 'quarterly_assessment'
+
+// Lets a teacher set which DepEd Matatag component this quiz counts
+// toward (Written Work / Performance Task / Quarterly Assessment —
+// migration 057). Same ownership-check shape as setPassingScore,
+// setTimeLimit, setResultsVisibility. Defaults to 'quarterly_assessment'
+// at the column level (quizzes are usually the graded test at the end
+// of a unit), but that default is only a fallback for pre-057 rows —
+// this setter is how a teacher actually confirms/changes it, same as
+// grading_component was made a required field at creation for
+// assignments rather than left to the schema default.
+export async function setGradingComponent(quizId: string, gradingComponent: GradingComponent) {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+
+    const { data: quiz } = await supabase
+        .from('quizzes')
+        .select('id, courses!inner(teacher_id)')
+        .eq('id', quizId)
+        .single()
+
+    if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
+        return { ok: false as const }
+    }
+
+    await supabase.from('quizzes').update({ grading_component: gradingComponent }).eq('id', quizId)
 
     return { ok: true as const }
 }

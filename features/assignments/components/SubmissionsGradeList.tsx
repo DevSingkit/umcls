@@ -70,7 +70,7 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
 
     return (
         <div className="grid gap-3">
-            {error && <p className="text-caption text-red">{error}</p>}
+            {error && <p className="text-caption text-error">{error}</p>}
             {rows.map((row) => (
                 <div
                     key={row.studentId}
@@ -82,7 +82,7 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => handleDownload(row.submission!.id)}
-                                    className="text-caption text-text-secondary hover:underline"
+                                    className="text-caption text-brand underline hover:text-brand-hover"
                                 >
                                     {row.submission.file_name}
                                 </button>
@@ -132,7 +132,7 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
                                     </span>
                                     <button
                                         onClick={() => setEditingId(row.submission!.id)}
-                                        className="text-caption text-text-secondary hover:underline"
+                                        className="h-9 px-4 rounded-md border-[1.5px] border-hairline-strong text-caption font-semibold text-ink hover:bg-surface-sunken"
                                     >
                                         {row.submission.status === 'graded' || row.submission.status === 'returned'
                                             ? 'Edit'

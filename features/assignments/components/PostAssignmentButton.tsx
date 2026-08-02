@@ -26,7 +26,7 @@ export function PostAssignmentButton({
         startTransition(async () => {
             const result = await toggleAssignmentPublish(assignmentId, publish)
             if (!result.ok) {
-                setError('Could not update this assignment. Please try again.')
+                setError(result.error)
                 return
             }
             setPublished(publish)

@@ -12,6 +12,7 @@ export interface TeacherStreamItem {
     isPublished: boolean
     createdAt: string
     dueAt?: string | null // assignments only
+    ungradedCount?: number // assignments only for now — count of students still needing grading. Quiz grading flow not wired up yet.
 }
 
 /**
@@ -61,6 +62,28 @@ export async function getTeacherCourseStream(
         return { error: 'Failed to load course content.' }
     }
 
+    const assignmentIds = (assignmentsRes.data ?? []).map((a) => a.id)
+
+    // Ungraded submission counts per assignment, scoped to this course's
+    // own assignment ids — same query shape as teacher-dashboard.ts's
+    // cross-course version, just filtered down to one course. Quiz
+    // short-answer counting is intentionally not included yet — the quiz
+    // attempt/grading flow needs a separate review before its "N to
+    // grade" badge can link somewhere correct.
+    const submissionsRes =
+        assignmentIds.length === 0
+            ? { data: [] as { assignment_id: string }[] }
+            : await supabase
+                  .from('assignment_submissions')
+                  .select('assignment_id')
+                  .in('assignment_id', assignmentIds)
+                  .in('status', ['submitted', 'resubmitted'])
+
+    const ungradedByAssignment = new Map<string, number>()
+    for (const s of submissionsRes.data ?? []) {
+        ungradedByAssignment.set(s.assignment_id, (ungradedByAssignment.get(s.assignment_id) ?? 0) + 1)
+    }
+
     const items: TeacherStreamItem[] = [
         ...(lessonsRes.data ?? []).map((l: { id: string; title: string; is_published: boolean; created_at: string }) => ({
             id: l.id,
@@ -83,6 +106,7 @@ export async function getTeacherCourseStream(
             isPublished: a.is_published,
             createdAt: a.created_at,
             dueAt: a.due_at,
+            ungradedCount: ungradedByAssignment.get(a.id) ?? 0,
         })),
     ]
 

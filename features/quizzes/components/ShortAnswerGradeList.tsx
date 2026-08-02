@@ -124,7 +124,7 @@ export function ShortAnswerGradeList({
             ))}
 
             {error && (
-                <p className="text-caption text-red" role="alert">
+                <p className="text-caption text-error" role="alert">
                     {error}
                 </p>
             )}

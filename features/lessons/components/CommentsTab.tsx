@@ -67,7 +67,7 @@ export function CommentsTab({
                     Post
                 </button>
             </form>
-            {error && <p className="text-caption text-red">{error}</p>}
+            {error && <p className="text-caption text-error">{error}</p>}
 
             {comments.length === 0 ? (
                 <p className="text-body-md text-text-secondary">No comments yet.</p>
@@ -91,7 +91,7 @@ export function CommentsTab({
                                         <button
                                             onClick={() => handleDelete(comment.id)}
                                             disabled={isPending}
-                                            className="text-caption text-red font-medium hover:underline disabled:opacity-60"
+                                            className="text-caption text-error font-medium hover:underline disabled:opacity-60"
                                         >
                                             Delete
                                         </button>

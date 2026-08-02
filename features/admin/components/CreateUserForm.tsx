@@ -22,7 +22,7 @@ export function CreateUserForm() {
     return (
         <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
             <div>
-                <label htmlFor="fullName" className="text-label uppercase tracking-wide text-text-secondary block mb-2">
+                <label htmlFor="fullName" className="text-label text-text-secondary block mb-2">
                     Full name
                 </label>
                 <input
@@ -30,13 +30,13 @@ export function CreateUserForm() {
                     name="fullName"
                     type="text"
                     required
-                    className="w-full h-11 px-5 rounded-md border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="e.g. Maria Santos"
                 />
             </div>
 
             <div>
-                <label htmlFor="email" className="text-label uppercase tracking-wide text-text-secondary block mb-2">
+                <label htmlFor="email" className="text-label text-text-secondary block mb-2">
                     Email
                 </label>
                 <input
@@ -44,29 +44,30 @@ export function CreateUserForm() {
                     name="email"
                     type="email"
                     required
-                    className="w-full h-11 px-5 rounded-md border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="name@school.edu"
                 />
             </div>
 
             <div>
-                <label htmlFor="role" className="text-label uppercase tracking-wide text-text-secondary block mb-2">
+                <label htmlFor="role" className="text-label text-text-secondary block mb-2">
                     Role
                 </label>
                 <select
                     id="role"
                     name="role"
                     required
-                    className="w-full h-11 px-5 rounded-md border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     defaultValue="teacher"
                 >
                     <option value="teacher">Teacher</option>
                     <option value="student">Student</option>
+                    <option value="admin">Admin</option>
                 </select>
             </div>
 
             <div>
-                <label htmlFor="temporaryPassword" className="text-label uppercase tracking-wide text-text-secondary block mb-2">
+                <label htmlFor="temporaryPassword" className="text-label text-text-secondary block mb-2">
                     Temporary password
                 </label>
                 <input
@@ -75,7 +76,7 @@ export function CreateUserForm() {
                     type="text"
                     required
                     minLength={12}
-                    className="w-full h-11 px-5 rounded-md border border-hairline focus:border-ink focus:border-[1.5px] outline-none"
+                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="At least 12 characters, with upper, lower, and a number"
                 />
                 <p className="text-caption text-text-secondary mt-2">
@@ -90,7 +91,7 @@ export function CreateUserForm() {
             )}
 
             {state.ok && (
-                <p className="text-caption text-ink" role="status">
+                <p className="text-caption text-success" role="status">
                     Account created. The person can now log in with the email and temporary password above.
                 </p>
             )}
@@ -98,7 +99,7 @@ export function CreateUserForm() {
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-md bg-ink text-on-ink font-medium disabled:opacity-60"
+                className="w-full h-11 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
                 {isPending ? 'Creating account…' : 'Create account'}
             </button>

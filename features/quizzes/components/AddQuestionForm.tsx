@@ -154,7 +154,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
             className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6 border-l-4 border-l-brand"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-body-emphasis text-ink">Add a question</h2>
+                <h2 className="font-heading text-body-emphasis text-ink">Add a question</h2>
                 <select
                     aria-label="Question type"
                     value={questionType}
@@ -214,7 +214,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="text-text-secondary hover:text-red text-body-md px-2"
+                                    className="text-text-secondary hover:text-error text-body-md px-2"
                                 >
                                     ✕
                                 </button>
@@ -255,7 +255,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="text-text-secondary hover:text-red text-body-md px-2"
+                                    className="text-text-secondary hover:text-error text-body-md px-2"
                                 >
                                     ✕
                                 </button>
@@ -320,7 +320,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
             )}
 
             {error && (
-                <p className="text-caption text-red" role="alert">
+                <p className="text-caption text-error" role="alert">
                     {error}
                 </p>
             )}

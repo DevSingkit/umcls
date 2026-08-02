@@ -13,6 +13,13 @@ const assignmentSchema = z.object({
     dueAt: z.string().optional(), // datetime-local string, may be empty
     maxScore: z.coerce.number().min(1, 'Max score must be at least 1'),
     passingScore: z.coerce.number().min(0, 'Passing score cannot be negative'),
+    // DepEd Matatag component this assignment counts toward. Required,
+    // not defaulted in application code — the column-level default in
+    // migration 057 exists only for pre-existing rows, matching the
+    // is_published lesson from that same migration's comments.
+    gradingComponent: z.enum(['written_work', 'performance_task', 'quarterly_assessment'], {
+        errorMap: () => ({ message: 'Please choose a grading component.' }),
+    }),
 })
 
 export type AssignmentActionResult =
@@ -28,17 +35,23 @@ export async function createAssignment(courseId: string, formData: FormData): Pr
         dueAt: formData.get('dueAt'),
         maxScore: formData.get('maxScore'),
         passingScore: formData.get('passingScore'),
+        gradingComponent: formData.get('gradingComponent'),
     })
 
     if (!parsed.success) {
         return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form and try again.' }
     }
 
-    const { title, instructions, dueAt, maxScore, passingScore } = parsed.data
+    const { title, instructions, dueAt, maxScore, passingScore, gradingComponent } = parsed.data
 
     if (passingScore > maxScore) {
         return { ok: false, error: 'Passing score cannot be greater than max score.' }
     }
+
+    // Checkbox fields only appear in FormData when checked, so a missing
+    // entry means "off" — no zod coercion needed, same handling as the
+    // equivalent field in updateAssignment below.
+    const allowLate = formData.get('allowLate') === 'on'
 
     const supabase = await createClient()
 
@@ -63,7 +76,25 @@ export async function createAssignment(courseId: string, formData: FormData): Pr
             due_at: dueAt || null,
             max_score: maxScore,
             passing_score: passingScore,
-            is_published: true,
+            allow_late: allowLate,
+            grading_component: gradingComponent,
+            // Explicitly false (not omitted). This USED to rely on the
+            // schema default to create a draft row, with a comment here
+            // saying so — but migration 054 changed that same default
+            // to `true`, which silently broke this: the insert started
+            // creating an already-published row, making the
+            // toggle_assignment_publish call below a true -> true no-op
+            // instead of a real false -> true transition. Since
+            // notify_on_assignment_published() only fires on that exact
+            // transition, assignments were still ending up published
+            // (so they looked fine everywhere else — course stream,
+            // to-do list) but silently generated zero notifications.
+            // Found 2026-08-01 when a teacher's newly-created
+            // assignments weren't triggering a student notification.
+            // Setting this explicitly here means the two-step
+            // insert-then-publish pattern no longer depends on knowing
+            // what the current schema default happens to be.
+            is_published: false,
         })
         .select('id')
         .single()
@@ -73,6 +104,34 @@ export async function createAssignment(courseId: string, formData: FormData): Pr
     }
 
     const assignmentId = data.id
+
+    // Publishes immediately via the same RPC the Post button uses
+    // (toggle_assignment_publish, migration 053) — not a raw UPDATE.
+    // A raw UPDATE here would carry the exact silent-failure risk just
+    // fixed for toggleAssignmentPublish: if RLS's WITH CHECK rejects it,
+    // Postgres/PostgREST returns success with zero rows changed and no
+    // error, and the assignment would stay a draft with nobody the
+    // wiser. Going through the RPC also means this is a real UPDATE
+    // (insert -> separate update) starting from a guaranteed `false`,
+    // which is required for notify_on_assignment_published() to fire at
+    // all — it's an AFTER UPDATE trigger, never fires on INSERT, and
+    // only fires on an actual false -> true change, not true -> true.
+    const { data: published, error: publishError } = await supabase.rpc('toggle_assignment_publish', {
+        p_assignment_id: assignmentId,
+        p_publish: true,
+    })
+
+    if (publishError || !published) {
+        // The assignment row exists but may have stayed a draft. Not
+        // ideal, but better than losing the assignment entirely —
+        // surfaced in logs so it's traceable, and the teacher still has
+        // a manual fallback: PostAssignmentButton on the edit page.
+        console.error(
+            `createAssignment: assignment ${assignmentId} created but failed to auto-publish:`,
+            publishError
+        )
+    }
+
     const target = { type: 'assignment' as const, assignmentId }
 
     // Attach any uploaded files. Each file needs its own FormData since
@@ -116,7 +175,7 @@ export async function getAssignmentForEdit(assignmentId: string) {
 
     const { data: assignment } = await supabase
         .from('assignments')
-        .select('id, course_id, title, instructions, due_at, max_score, passing_score, is_published')
+        .select('id, course_id, title, instructions, due_at, max_score, passing_score, allow_late, is_published, grading_component')
         .eq('id', assignmentId)
         .is('deleted_at', null)
         .single()
@@ -146,6 +205,9 @@ const updateAssignmentSchema = z.object({
     dueAt: z.string().optional(),
     maxScore: z.coerce.number().min(1, 'Max score must be at least 1'),
     passingScore: z.coerce.number().min(0, 'Passing score cannot be negative'),
+    gradingComponent: z.enum(['written_work', 'performance_task', 'quarterly_assessment'], {
+        errorMap: () => ({ message: 'Please choose a grading component.' }),
+    }),
 })
 
 export type UpdateAssignmentResult = { ok: true } | { ok: false; error: string }
@@ -160,17 +222,21 @@ export async function updateAssignment(formData: FormData): Promise<UpdateAssign
         dueAt: formData.get('dueAt'),
         maxScore: formData.get('maxScore'),
         passingScore: formData.get('passingScore'),
+        gradingComponent: formData.get('gradingComponent'),
     })
 
     if (!parsed.success) {
         return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form and try again.' }
     }
 
-    const { assignmentId, title, instructions, dueAt, maxScore, passingScore } = parsed.data
+    const { assignmentId, title, instructions, dueAt, maxScore, passingScore, gradingComponent } = parsed.data
 
     if (passingScore > maxScore) {
         return { ok: false, error: 'Passing score cannot be greater than max score.' }
     }
+
+    // Same "missing checkbox field means off" handling as createAssignment.
+    const allowLate = formData.get('allowLate') === 'on'
 
     const supabase = await createClient()
 
@@ -204,6 +270,8 @@ export async function updateAssignment(formData: FormData): Promise<UpdateAssign
             due_at: dueAt || null,
             max_score: maxScore,
             passing_score: passingScore,
+            allow_late: allowLate,
+            grading_component: gradingComponent,
         })
         .eq('id', assignmentId)
 
@@ -214,30 +282,36 @@ export async function updateAssignment(formData: FormData): Promise<UpdateAssign
     return { ok: true }
 }
 
-export async function toggleAssignmentPublish(assignmentId: string, publish: boolean) {
-    const user = await requireRole(['teacher'])
+export type ToggleAssignmentPublishResult = { ok: true } | { ok: false; error: string }
+
+// Uses the toggle_assignment_publish() RPC (migration 053) instead of a
+// direct client-side UPDATE. The direct UPDATE this used to do could
+// silently "succeed" with zero rows actually changed if RLS's WITH
+// CHECK rejected it — no error, no exception, just a no-op response —
+// which is exactly the bug that made the Post button show "Posted"
+// while the assignment stayed unpublished underneath. Same root cause
+// and same fix shape as deleteMaterial's rewrite in materials.ts.
+export async function toggleAssignmentPublish(
+    assignmentId: string,
+    publish: boolean
+): Promise<ToggleAssignmentPublishResult> {
+    await requireRole(['teacher'])
     const supabase = await createClient()
 
-    const { data: assignment } = await supabase
-        .from('assignments')
-        .select('id, courses!inner(teacher_id)')
-        .eq('id', assignmentId)
-        .single()
-
-    if (!assignment || (assignment as any).courses.teacher_id !== user.id) {
-        return { ok: false as const }
-    }
-
-    const { error } = await supabase
-        .from('assignments')
-        .update({ is_published: publish })
-        .eq('id', assignmentId)
+    const { data: updated, error } = await supabase.rpc('toggle_assignment_publish', {
+        p_assignment_id: assignmentId,
+        p_publish: publish,
+    })
 
     if (error) {
-        return { ok: false as const }
+        return { ok: false, error: `Could not update this assignment: ${error.message}` }
     }
 
-    return { ok: true as const }
+    if (!updated) {
+        return { ok: false, error: 'Assignment not found, or you do not have permission to change it.' }
+    }
+
+    return { ok: true }
 }
 
 // Teacher's view: all assignments (draft + published) for a course.
@@ -292,7 +366,7 @@ export async function getAssignment(assignmentId: string) {
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('assignments')
-        .select('id, course_id, title, instructions, due_at, max_score, passing_score, allow_late, is_published')
+        .select('id, course_id, title, instructions, due_at, max_score, passing_score, allow_late, is_published, grading_component')
         .eq('id', assignmentId)
         .is('deleted_at', null)
         .single()

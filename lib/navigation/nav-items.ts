@@ -4,10 +4,8 @@ import {
     Users,
     ScrollText,
     Settings,
-    BookOpen,
-    ClipboardList,
     GraduationCap,
-    Sparkles,
+    Archive,
 } from "lucide-react";
 
 export type Role = "admin" | "teacher" | "student";
@@ -25,9 +23,9 @@ export interface NavItem {
     isV1: boolean;
     /**
      * Optional override for deciding whether this tab is "active." Needed
-     * when two tabs share the same href (e.g. "My Courses" and
-     * "Assignments" both point at /teacher/courses since assignments are
-     * nested under a course, not a standalone route) — the default
+     * when a tab's href doesn't match the current pathname exactly but
+     * should still show as active (e.g. a nested detail route under a
+     * tab whose own href is a shorter parent path) — the default
      * href-equality check can't tell them apart. When omitted, falls back
      * to the default pathname === href / startsWith(href + "/") check.
      */
@@ -39,13 +37,6 @@ export interface NavItem {
 export const NAV_ITEMS: Record<Role, NavItem[]> = {
     admin: [
         { label: "Dashboard", href: "/admin/dashboard", icon: Home, isV1: true },
-        { label: "Users", href: "/admin/users", icon: Users, isV1: true }, // PH2-002, trimmed
-        {
-            label: "Enroll",
-            href: "/admin/enroll",
-            icon: ClipboardList,
-            isV1: true, // PH2-002, trimmed — page existed but was never reachable from nav
-        },
         {
             label: "Audit Logs",
             href: "/admin/audit-logs",
@@ -58,10 +49,15 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
             icon: Users,
             isV1: true, // PH2-003 — now built
         },
+        {
+            label: "Backups",
+            href: "/admin/backups",
+            icon: Archive,
+            isV1: true, // users + grades CSV export
+        },
     ],
     teacher: [
         { label: "Dashboard", href: "/teacher/dashboard", icon: Home, isV1: true },
-        { label: "My Courses", href: "/teacher/courses", icon: BookOpen, isV1: true }, // PH3-001/002
         {
             label: "People",
             href: "/teacher/people",
@@ -83,7 +79,6 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     ],
     student: [
         { label: "Home", href: "/student/dashboard", icon: Home, isV1: true },
-        { label: "My Courses", href: "/student/courses", icon: BookOpen, isV1: true }, // PH4-002
         {
             label: "People",
             href: "/student/people",
@@ -95,12 +90,6 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
             href: "/student/grades",
             icon: GraduationCap,
             isV1: true, // Batch 8 — built
-        },
-        {
-            label: "Recommendations",
-            href: "/coming-soon?feature=Recommendations",
-            icon: Sparkles,
-            isV1: false, // PH7-002, V3
         },
     ],
 };

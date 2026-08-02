@@ -33,8 +33,9 @@ export function EditCourseForm({
     }
 
     return (
-        <form action={handleSubmit} className="grid max-w-xl gap-5">
-            {error && <p className="text-caption text-red">{error}</p>}
+        // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
+        <form action={handleSubmit} className="grid max-w-2xl gap-5">
+            {error && <p className="text-caption text-error">{error}</p>}
             <div>
                 <label htmlFor="title" className="mb-2 block text-label text-ink-soft">Title</label>
                 <input

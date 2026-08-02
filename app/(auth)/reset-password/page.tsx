@@ -2,7 +2,7 @@
 
 // app/reset-password/page.tsx
 //
-// Design system: DESIGN-LMS.md v1.0 (Auth Flow — Reset Password)
+// Design system: DESIGN-LMS.md v1.1 (Auth Flow — Reset Password)
 // Same card treatment as app/login/page.tsx and app/forgot-password/page.tsx.
 
 import { useState } from "react";
@@ -63,14 +63,14 @@ export default function ResetPasswordPage() {
                                 />
                             </div>
 
-                            <p className="mt-5 flex items-center justify-center gap-1.5 text-label uppercase tracking-wide text-text-secondary">
+                            <p className="mt-5 flex items-center justify-center gap-1.5 text-label text-text-secondary">
                                 <span aria-hidden="true" className="text-amber">
                                     •
                                 </span>
                                 Password updated
                             </p>
 
-                            <h1 className="mt-2 text-h3 text-ink">
+                            <h1 className="mt-2 font-heading text-h3 text-ink">
                                 You&apos;re all set
                             </h1>
 
@@ -80,14 +80,14 @@ export default function ResetPasswordPage() {
                         </div>
                     ) : (
                         <>
-                            <p className="mb-3 flex items-center gap-1.5 text-label uppercase tracking-wide text-text-secondary">
+                            <p className="mb-3 flex items-center gap-1.5 text-label text-text-secondary">
                                 <span aria-hidden="true" className="text-amber">
                                     •
                                 </span>
                                 Reset password
                             </p>
 
-                            <h1 className="text-h3 text-ink">
+                            <h1 className="font-heading text-h3 text-ink">
                                 Set a new password
                             </h1>
                             <p className="mb-8 mt-2 text-body-md text-text-secondary">
@@ -100,7 +100,7 @@ export default function ResetPasswordPage() {
                                 <div className="mb-5">
                                     <label
                                         htmlFor="password"
-                                        className="mb-2 block text-label uppercase tracking-wide text-text-secondary"
+                                        className="mb-2 block text-label text-text-secondary"
                                     >
                                         New password
                                     </label>
@@ -113,14 +113,14 @@ export default function ResetPasswordPage() {
                                         minLength={12}
                                         aria-describedby={error ? "reset-error" : undefined}
                                         aria-invalid={error ? true : undefined}
-                                        className="h-11 w-full rounded-md border border-hairline bg-surface px-5 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-ink focus:outline-none"
+                                        className="h-11 w-full rounded-md border border-hairline-strong bg-surface px-5 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                     />
                                 </div>
 
                                 <div className="mb-6">
                                     <label
                                         htmlFor="confirmPassword"
-                                        className="mb-2 block text-label uppercase tracking-wide text-text-secondary"
+                                        className="mb-2 block text-label text-text-secondary"
                                     >
                                         Confirm new password
                                     </label>
@@ -133,7 +133,7 @@ export default function ResetPasswordPage() {
                                         minLength={12}
                                         aria-describedby={error ? "reset-error" : undefined}
                                         aria-invalid={error ? true : undefined}
-                                        className="h-11 w-full rounded-md border border-hairline bg-surface px-5 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-ink focus:outline-none"
+                                        className="h-11 w-full rounded-md border border-hairline-strong bg-surface px-5 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                     />
                                 </div>
 
@@ -157,7 +157,7 @@ export default function ResetPasswordPage() {
                                 <button
                                     type="submit"
                                     disabled={isPending}
-                                    className="h-11 w-full rounded-md bg-ink text-body-md font-medium text-on-ink transition-colors hover:bg-ink-soft active:bg-ink disabled:bg-hairline disabled:text-text-muted"
+                                    className="h-11 w-full rounded-md bg-brand text-body-md font-medium text-on-ink transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:bg-hairline disabled:text-text-muted"
                                 >
                                     {isPending ? "Updating…" : "Update password"}
                                 </button>
@@ -165,7 +165,7 @@ export default function ResetPasswordPage() {
 
                             <Link
                                 href="/login"
-                                className="mt-6 block text-center text-body-md text-info hover:underline"
+                                className="mt-6 block text-center text-body-md text-brand hover:underline"
                             >
                                 Back to sign in
                             </Link>

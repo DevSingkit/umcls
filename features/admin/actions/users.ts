@@ -71,10 +71,25 @@ export async function deactivateUser(userId: string): Promise<ToggleActiveResult
     }
 
     const supabase = await createClient()
-    const { error } = await supabase.from('users').update({ is_active: false }).eq('id', userId)
+    const { data, error } = await supabase
+        .from('users')
+        .update({ is_active: false })
+        .eq('id', userId)
+        .select('id')
 
     if (error) {
+        console.error('deactivateUser update failed:', error.message, error.code, error.details)
         return { ok: false, error: 'Could not deactivate the account.' }
+    }
+
+    // A Supabase update() call reports error: null even when RLS's
+    // USING clause silently filters out every row — 0 rows changed
+    // looks identical to success unless we ask for the row back and
+    // check it actually came back. Same failure mode already
+    // documented for toggle_assignment_publish in SECURITY.md §3;
+    // this is the same class of bug on a different table.
+    if (!data || data.length === 0) {
+        return { ok: false, error: 'The account was not updated. You may not have permission to change this user.' }
     }
 
     await forceSignOutUser(userId)
@@ -96,10 +111,18 @@ export async function reactivateUser(userId: string): Promise<ToggleActiveResult
     }
 
     const supabase = await createClient()
-    const { error } = await supabase.from('users').update({ is_active: true }).eq('id', userId)
+    const { data, error } = await supabase
+        .from('users')
+        .update({ is_active: true })
+        .eq('id', userId)
+        .select('id')
 
     if (error) {
         return { ok: false, error: 'Could not reactivate the account.' }
+    }
+
+    if (!data || data.length === 0) {
+        return { ok: false, error: 'The account was not updated. You may not have permission to change this user.' }
     }
 
     await supabase.rpc('log_audit_event', {
@@ -153,6 +176,211 @@ export async function resetUserPassword(formData: FormData): Promise<ResetPasswo
         p_action: 'USER_PASSWORD_RESET',
         p_target_table: 'users',
         p_target_id: userId,
+    })
+
+    return { ok: true }
+}
+
+const updateUserProfileSchema = z.object({
+    userId: z.string().uuid(),
+    fullName: z.string().min(2, 'Name is too short'),
+    email: z.string().email('Enter a valid email'),
+})
+
+export type UpdateUserProfileResult = { ok: true } | { ok: false; error: string }
+
+// Edits a user's name/email. Email is the login identity in Supabase
+// Auth, not just a public.users column — updating it here must go
+// through the admin auth API (createAdminClient), same reasoning
+// createUser and resetUserPassword already use a service-role client
+// for anything touching auth.users, not just public.users. The
+// full_name update to public.users is a normal client call, no
+// elevated privilege needed for that half.
+export async function updateUserProfile(formData: FormData): Promise<UpdateUserProfileResult> {
+    const admin = await requireRole(['admin'])
+
+    const parsed = updateUserProfileSchema.safeParse({
+        userId: formData.get('userId'),
+        fullName: formData.get('fullName'),
+        email: formData.get('email'),
+    })
+    if (!parsed.success) {
+        return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form and try again.' }
+    }
+
+    const { userId, fullName, email } = parsed.data
+    const supabaseAdmin = createAdminClient()
+
+    // Update the auth.users email first — if this fails (e.g. email
+    // already in use by another account), nothing in public.users has
+    // changed yet, so there's no partial/inconsistent state to clean up.
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, { email })
+    if (authError) {
+        return { ok: false, error: authError.message || 'Could not update the email address.' }
+    }
+
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('users')
+        .update({ full_name: fullName, email })
+        .eq('id', userId)
+
+    if (error) {
+        return { ok: false, error: 'Email was updated, but the profile name could not be saved. Please try again.' }
+    }
+
+    await supabase.rpc('log_audit_event', {
+        p_action: 'USER_PROFILE_UPDATED',
+        p_target_table: 'users',
+        p_target_id: userId,
+        p_metadata: { updated_by: admin.id },
+    })
+
+    return { ok: true }
+}
+
+export type RoleChangeEligibility =
+    | { eligible: true }
+    | { eligible: false; reason: string }
+
+// Checked before showing (or before accepting a submit of) the change
+// role control. Deliberately conservative: a role change is only
+// allowed when the user has ZERO data tied to their CURRENT role —
+// no orphaned courses, no dangling submissions/attempts, no
+// grade history left behind with nothing pointing at it. This is a
+// blunt rule on purpose. A softer one (warn but allow anyway, or try
+// to migrate/reassign the data automatically) was considered and
+// rejected — see HANDOFF.md for the reasoning. If a teacher has taught
+// courses or a student has real submitted work, their role is
+// effectively permanent in this app; the fix path is to create a new
+// account with the new role, not to flip this one.
+export async function getUserRoleChangeEligibility(userId: string): Promise<RoleChangeEligibility> {
+    await requireRole(['admin'])
+    const supabase = await createClient()
+
+    const { data: user } = await supabase
+        .from('users')
+        .select('id, role')
+        .eq('id', userId)
+        .single()
+
+    if (!user) {
+        return { eligible: false, reason: 'User not found.' }
+    }
+
+    if (user.role === 'teacher') {
+        const { count } = await supabase
+            .from('courses')
+            .select('id', { count: 'exact', head: true })
+            .eq('teacher_id', userId)
+            .is('deleted_at', null)
+
+        if ((count ?? 0) > 0) {
+            return {
+                eligible: false,
+                reason: `This teacher owns ${count} course${count === 1 ? '' : 's'}. Reassign or archive ${count === 1 ? 'it' : 'them'} first, then the role can be changed.`,
+            }
+        }
+    }
+
+    if (user.role === 'student') {
+        const [{ count: submissionCount }, { count: attemptCount }, { count: enrollmentCount }] = await Promise.all([
+            supabase
+                .from('assignment_submissions')
+                .select('id', { count: 'exact', head: true })
+                .eq('student_id', userId),
+            supabase
+                .from('quiz_attempts')
+                .select('id', { count: 'exact', head: true })
+                .eq('student_id', userId),
+            supabase
+                .from('enrollments')
+                .select('id', { count: 'exact', head: true })
+                .eq('student_id', userId)
+                .eq('status', 'active'),
+        ])
+
+        const total = (submissionCount ?? 0) + (attemptCount ?? 0) + (enrollmentCount ?? 0)
+        if (total > 0) {
+            return {
+                eligible: false,
+                reason: 'This student has enrollments or submitted work. Their role cannot be changed while that history exists.',
+            }
+        }
+    }
+
+    // Admins own no courses/submissions directly, so there's no data
+    // check to run for them the way there is for teacher/student — but
+    // that must not mean "always eligible with no guard at all." The
+    // one real risk here is demoting the last remaining admin, which
+    // would lock the whole school out of admin functions with no way
+    // back in short of a direct database fix. Checked here rather than
+    // only in changeUserRole, so getUserRoleChangeEligibility (used to
+    // decide whether to even show the control) reflects this too.
+    if (user.role === 'admin') {
+        const { count: otherActiveAdmins } = await supabase
+            .from('users')
+            .select('id', { count: 'exact', head: true })
+            .eq('role', 'admin')
+            .eq('is_active', true)
+            .is('deleted_at', null)
+            .neq('id', userId)
+
+        if ((otherActiveAdmins ?? 0) === 0) {
+            return {
+                eligible: false,
+                reason: 'This is the only active admin account. Create another admin account first before changing this one\u2019s role.',
+            }
+        }
+    }
+
+    return { eligible: true }
+}
+
+export type ChangeUserRoleResult = { ok: true } | { ok: false; error: string }
+
+// Actually changes the role — always re-checks eligibility itself
+// rather than trusting a prior getUserRoleChangeEligibility call from
+// the client, since data could have changed in between (e.g. admin
+// opened the dialog, then in another tab created a course for that
+// teacher before submitting here).
+export async function changeUserRole(
+    userId: string,
+    newRole: 'admin' | 'teacher' | 'student'
+): Promise<ChangeUserRoleResult> {
+    const admin = await requireRole(['admin'])
+
+    if (userId === admin.id) {
+        return { ok: false, error: 'You cannot change your own role.' }
+    }
+
+    const eligibility = await getUserRoleChangeEligibility(userId)
+    if (!eligibility.eligible) {
+        return { ok: false, error: eligibility.reason }
+    }
+
+    const supabase = await createClient()
+    const { data: user } = await supabase.from('users').select('role').eq('id', userId).single()
+    const oldRole = user?.role ?? 'unknown'
+
+    const { error } = await supabase.from('users').update({ role: newRole }).eq('id', userId)
+
+    if (error) {
+        return { ok: false, error: 'Could not change the role. Please try again.' }
+    }
+
+    // Role changes take effect immediately at the RLS layer
+    // (auth_role() reads role directly) — forcing a sign-out here means
+    // the user's next request re-authenticates cleanly under the new
+    // role, rather than continuing on a stale session that assumed the
+    // old one. Same reasoning as deactivateUser's forceSignOutUser call.
+    await forceSignOutUser(userId)
+
+    await supabase.rpc('log_audit_event', {
+        p_action: 'USER_ROLE_CHANGED',
+        p_target_table: 'users',
+        p_target_id: userId,
+        p_metadata: { old_role: oldRole, new_role: newRole, changed_by: admin.id },
     })
 
     return { ok: true }

@@ -13,11 +13,6 @@ interface SidebarProps {
     fullName: string;
 }
 
-/**
- * Fixed left sidebar, desktop only (≥ 1024px — DESIGN-LMS.md §6.1).
- * Background is `ink` (#1F2A24) — a warm dark green-charcoal, not flat
- * black. Active item gets a brand-green pill behind the icon+label.
- */
 export function Sidebar({ role, fullName }: SidebarProps) {
     const pathname = usePathname();
     const items = NAV_ITEMS[role];
@@ -26,7 +21,7 @@ export function Sidebar({ role, fullName }: SidebarProps) {
     return (
         <aside
             aria-label="Main navigation"
-            className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-[240px] lg:flex-col lg:bg-ink"
+            className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-[240px] lg:flex-col lg:bg-sidebar"
         >
             <div className="flex items-center gap-2 px-5 py-6">
                 <Image src="/logo.png" alt="" width={32} height={32} className="shrink-0 rounded-md" />
@@ -48,8 +43,8 @@ export function Sidebar({ role, fullName }: SidebarProps) {
                                     aria-current={isActive ? "page" : undefined}
                                     className={cn(
                                         "flex h-12 items-center gap-3 rounded-pill px-4 text-body-md text-on-ink",
-                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink",
-                                        isActive ? "bg-brand font-semibold" : "opacity-80 hover:bg-white/5 hover:opacity-100"
+                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
+                                        isActive ? "bg-sidebar-active font-semibold" : "opacity-80 hover:bg-white/5 hover:opacity-100"
                                     )}
                                 >
                                     <Icon size={20} aria-hidden="true" className="shrink-0" />
@@ -77,7 +72,7 @@ export function Sidebar({ role, fullName }: SidebarProps) {
                         type="submit"
                         className={cn(
                             "flex h-12 w-full items-center gap-3 rounded-pill px-4 text-body-md text-on-ink opacity-80 hover:bg-white/5 hover:opacity-100",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
                         )}
                     >
                         <LogOut size={20} aria-hidden="true" className="shrink-0" />

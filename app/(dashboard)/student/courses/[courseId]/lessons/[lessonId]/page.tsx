@@ -43,12 +43,12 @@ export default async function StudentLessonViewPage({
                 youtubeUrl={lesson.youtube_url}
             />
 
-            <h2 className="text-body-emphasis text-ink mb-4 mt-8">Materials</h2>
+            <h2 className="font-heading text-body-emphasis text-ink mb-4 mt-8">Materials</h2>
             <div className="mb-8">
                 <MaterialList materials={lessonMaterials} canDelete={false} />
             </div>
 
-            <h2 className="text-body-emphasis text-ink mb-4">Simplify Lesson</h2>
+            <h2 className="font-heading text-body-emphasis text-ink mb-4">Simplify Lesson</h2>
             <div className="mb-8">
                 <SimplifyTab
                     lessonId={lessonId}
@@ -57,7 +57,7 @@ export default async function StudentLessonViewPage({
                 />
             </div>
 
-            <h2 className="text-body-emphasis text-ink mb-4">Comments</h2>
+            <h2 className="font-heading text-body-emphasis text-ink mb-4">Comments</h2>
             {user && (
                 <CommentsTab
                     lessonId={lessonId}

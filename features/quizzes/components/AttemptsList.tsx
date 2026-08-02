@@ -42,7 +42,7 @@ function groupByStudent(attempts: Attempt[]): StudentGroup[] {
 // A student is only "consistent" if they have 2+ scored attempts and every
 // scored attempt landed on the same side of the pass/fail line. One attempt
 // is never enough to call a pattern either way.
-function getPatternLabel(attempts: Attempt[]): { label: string; tone: 'brand' | 'red' | 'amber' | null } {
+function getPatternLabel(attempts: Attempt[]): { label: string; tone: 'brand' | 'error' | 'amber' | null } {
     const scored = attempts.filter((a) => a.isPassing !== null)
     if (scored.length < 2) return { label: '', tone: null }
 
@@ -50,7 +50,7 @@ function getPatternLabel(attempts: Attempt[]): { label: string; tone: 'brand' | 
     const allFailing = scored.every((a) => !a.isPassing)
 
     if (allPassing) return { label: 'Consistently passing', tone: 'brand' }
-    if (allFailing) return { label: 'Consistently struggling', tone: 'red' }
+    if (allFailing) return { label: 'Consistently struggling', tone: 'error' }
     return { label: 'Mixed results', tone: 'amber' }
 }
 
@@ -111,8 +111,8 @@ export function AttemptsList({
                                         className={`inline-flex items-center gap-1.5 rounded-pill text-caption font-semibold px-3 py-1 ${
                                             pattern.tone === 'brand'
                                                 ? 'bg-brand-soft text-brand'
-                                                : pattern.tone === 'red'
-                                                  ? 'bg-red-soft text-red'
+                                                : pattern.tone === 'error'
+                                                  ? 'bg-error-soft text-error'
                                                   : 'bg-amber-soft text-amber'
                                         }`}
                                     >
@@ -134,7 +134,7 @@ export function AttemptsList({
                                         attempt.isPassing === true
                                             ? 'bg-brand-soft text-brand border-transparent'
                                             : attempt.isPassing === false
-                                              ? 'bg-red-soft text-red border-transparent'
+                                              ? 'bg-error-soft text-error border-transparent'
                                               : 'bg-surface-sunken text-text-secondary border-transparent'
                                     }`}
                                 >

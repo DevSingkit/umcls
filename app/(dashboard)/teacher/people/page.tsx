@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BookOpen } from 'lucide-react'
 import { getMyCourses, getCourseRoster } from '@/features/courses/actions/courses'
 
 export default async function TeacherPeoplePage({
@@ -19,19 +20,35 @@ export default async function TeacherPeoplePage({
                     <p className="text-body-md text-text-secondary">You have not created a course yet.</p>
                 </div>
             ) : (
-                <div className="flex flex-wrap items-center gap-2 mb-6">
-                    {courses.map((course) => (
-                        <Link
-                            key={course.id}
-                            href={`/teacher/people?courseId=${course.id}`}
-                            className={`h-9 px-4 flex items-center rounded-pill text-caption font-medium ${course.id === courseId
-                                ? 'bg-brand text-on-ink'
-                                : 'bg-surface border border-hairline text-ink hover:bg-surface-sunken'
+                <div className="grid gap-3 mb-8">
+                    {courses.map((course) => {
+                        const isSelected = course.id === courseId
+                        return (
+                            <Link
+                                key={course.id}
+                                href={`/teacher/people?courseId=${course.id}`}
+                                className={`flex items-center gap-4 rounded-md p-5 shadow-card hover:shadow-card-hover ${
+                                    isSelected
+                                        ? 'bg-brand-soft border-[1.5px] border-brand'
+                                        : 'bg-surface'
                                 }`}
-                        >
-                            {course.title}
-                        </Link>
-                    ))}
+                            >
+                                <span
+                                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${
+                                        isSelected ? 'bg-brand text-on-ink' : 'bg-brand-soft text-brand'
+                                    }`}
+                                >
+                                    <BookOpen size={20} aria-hidden="true" />
+                                </span>
+                                <div>
+                                    <p className="text-body-emphasis text-ink">{course.title}</p>
+                                    {course.description && (
+                                        <p className="text-caption text-text-secondary mt-1">{course.description}</p>
+                                    )}
+                                </div>
+                            </Link>
+                        )
+                    })}
                 </div>
             )}
 

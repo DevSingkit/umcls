@@ -49,11 +49,11 @@ export function BulkImportForm() {
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <button
                     onClick={downloadTemplate}
-                    className="h-11 px-6 flex items-center justify-center rounded-md border border-hairline font-medium"
+                    className="h-11 px-6 flex items-center justify-center rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     Download template
                 </button>
-                <label className="h-11 px-6 flex items-center justify-center rounded-md bg-ink text-on-ink font-medium cursor-pointer">
+                <label className="h-11 px-6 flex items-center justify-center rounded-md bg-brand text-on-ink font-medium cursor-pointer hover:bg-brand-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-brand focus-within:ring-offset-2">
                     {isLoading ? 'Checking file...' : 'Upload filled-in CSV'}
                     <input
                         type="file"

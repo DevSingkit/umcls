@@ -1,10 +1,25 @@
 import Link from 'next/link'
+import { FileText, ClipboardList, HelpCircle } from 'lucide-react'
 import type { StreamItem } from '@/features/courses/actions/get-course-stream'
 
 const KIND_LABEL: Record<StreamItem['kind'], string> = {
     lesson: 'Lesson',
     quiz: 'Quiz',
     assignment: 'Assignment',
+}
+
+// Same fixed icon + color mapping as TeacherCourseStream.tsx — one mapping,
+// used everywhere a lesson/quiz/assignment type is shown (DESIGN-LMS.md §8.7a).
+const KIND_ICON: Record<StreamItem['kind'], typeof FileText> = {
+    lesson: FileText,
+    quiz: HelpCircle,
+    assignment: ClipboardList,
+}
+
+const KIND_ICON_BG: Record<StreamItem['kind'], string> = {
+    lesson: 'bg-brand-soft text-brand',
+    quiz: 'bg-info-soft text-info',
+    assignment: 'bg-amber-soft text-amber',
 }
 
 function Badge({ tone, children }: { tone: 'success' | 'neutral' | 'info' | 'error'; children: React.ReactNode }) {
@@ -16,7 +31,7 @@ function Badge({ tone, children }: { tone: 'success' | 'neutral' | 'info' | 'err
     }[tone]
 
     return (
-        <span className={`inline-flex items-center rounded-pill px-3 py-1 text-caption font-semibold ${toneClass}`}>
+        <span className={`inline-flex items-center rounded-pill px-3 py-1 text-caption font-semibold whitespace-nowrap ${toneClass}`}>
             {children}
         </span>
     )
@@ -91,22 +106,38 @@ export function CourseStream({ courseId, items }: { courseId: string; items: Str
     }
 
     return (
-        <div className="grid gap-4">
-            {items.map((item) => (
-                <Link
-                    key={`${item.kind}-${item.id}`}
-                    href={hrefFor(courseId, item)}
-                    className="bg-surface rounded-md shadow-card p-6 flex items-center justify-between hover:shadow-card-hover"
-                >
-                    <div>
-                        <p className="text-caption text-text-secondary mb-1">
-                            {KIND_LABEL[item.kind]}
-                        </p>
-                        <span className="text-body-emphasis text-ink">{item.title}</span>
-                    </div>
-                    <StatusBadge item={item} />
-                </Link>
-            ))}
+        <div className="grid gap-3">
+            {items.map((item) => {
+                const Icon = KIND_ICON[item.kind]
+
+                return (
+                    <Link
+                        key={`${item.kind}-${item.id}`}
+                        href={hrefFor(courseId, item)}
+                        className="flex items-start gap-4 rounded-md bg-surface p-4 shadow-card hover:shadow-card-hover"
+                    >
+                        <div
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${KIND_ICON_BG[item.kind]}`}
+                            aria-hidden="true"
+                        >
+                            <Icon size={20} />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                            <p className="text-caption font-semibold text-text-secondary">
+                                {KIND_LABEL[item.kind]}
+                            </p>
+                            <span className="block truncate text-body-emphasis text-ink">
+                                {item.title}
+                            </span>
+                        </div>
+
+                        <div className="shrink-0">
+                            <StatusBadge item={item} />
+                        </div>
+                    </Link>
+                )
+            })}
         </div>
     )
 }

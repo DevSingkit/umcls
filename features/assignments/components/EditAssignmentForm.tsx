@@ -15,8 +15,10 @@ export function EditAssignmentForm({
     initialDueAt,
     initialMaxScore,
     initialPassingScore,
+    initialAllowLate,
     initialIsPublished,
     initialMaterials,
+    initialGradingComponent,
 }: {
     courseId: string
     assignmentId: string
@@ -25,8 +27,10 @@ export function EditAssignmentForm({
     initialDueAt: string // already formatted for datetime-local input, or ''
     initialMaxScore: number
     initialPassingScore: number
+    initialAllowLate: boolean
     initialIsPublished: boolean
     initialMaterials: Material[]
+    initialGradingComponent: 'written_work' | 'performance_task' | 'quarterly_assessment'
 }) {
     const router = useRouter()
     const [error, setError] = useState<string | null>(null)
@@ -86,7 +90,8 @@ export function EditAssignmentForm({
     }
 
     return (
-        <div className="max-w-xl mx-auto pb-16">
+        // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
+        <div className="max-w-2xl mx-auto pb-16">
             <h1 className="font-heading text-h1 text-ink mb-8">Edit assignment</h1>
 
             <form action={handleSave} className="bg-surface rounded-md shadow-card p-8 space-y-6 mb-8">
@@ -135,6 +140,27 @@ export function EditAssignmentForm({
                     />
                 </div>
 
+                <div>
+                    <label htmlFor="gradingComponent" className="block text-label text-ink mb-2">
+                        Grading component
+                    </label>
+                    <select
+                        id="gradingComponent"
+                        name="gradingComponent"
+                        required
+                        defaultValue={initialGradingComponent}
+                        className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
+                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    >
+                        <option value="written_work">Written Work</option>
+                        <option value="performance_task">Performance Task</option>
+                        <option value="quarterly_assessment">Quarterly Assessment</option>
+                    </select>
+                    <p className="mt-2 text-caption text-text-secondary">
+                        Determines how much this assignment counts toward the student's DepEd quarterly grade.
+                    </p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="maxScore" className="block text-label text-ink mb-2">
@@ -168,8 +194,25 @@ export function EditAssignmentForm({
                     </div>
                 </div>
 
+                <div className="flex items-center gap-3">
+                    <input
+                        id="allowLate"
+                        name="allowLate"
+                        type="checkbox"
+                        defaultChecked={initialAllowLate}
+                        className="h-5 w-5 rounded border-[1.5px] border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                    />
+                    <label htmlFor="allowLate" className="text-body-md text-ink">
+                        Allow submissions after the due date
+                    </label>
+                </div>
+                <p className="-mt-4 text-caption text-text-secondary">
+                    If off, students can no longer submit or edit their
+                    submission once the due date passes.
+                </p>
+
                 {error && (
-                    <p className="text-caption text-red" role="alert">
+                    <p className="text-caption text-error" role="alert">
                         {error}
                     </p>
                 )}
@@ -229,7 +272,7 @@ export function EditAssignmentForm({
                     </button>
                 </form>
 
-                {uploadError && <p className="text-caption text-red">{uploadError}</p>}
+                {uploadError && <p className="text-caption text-error">{uploadError}</p>}
             </div>
 
             <div className="mb-8">
@@ -269,7 +312,7 @@ function MaterialListWithDelete({
                     <span className="text-body-emphasis text-ink truncate">{material.file_name}</span>
                     <button
                         onClick={() => onDelete(material.id)}
-                        className="text-caption font-medium text-red hover:underline shrink-0"
+                        className="text-caption font-medium text-error hover:underline shrink-0"
                     >
                         Remove
                     </button>

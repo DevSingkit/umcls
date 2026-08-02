@@ -80,7 +80,7 @@ export function MaterialList({
                         <button
                             onClick={() => handleDelete(material.id)}
                             disabled={isPending && pendingId === material.id}
-                            className="text-caption font-medium text-red hover:underline disabled:opacity-60"
+                            className="text-caption font-medium text-error hover:underline disabled:opacity-60"
                         >
                             Remove
                         </button>

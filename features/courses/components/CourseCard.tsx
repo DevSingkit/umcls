@@ -31,7 +31,7 @@ export function CourseCard({ id, title, subject, href }: CourseCardProps) {
         >
             <div className={`h-20 ${band} px-5 py-4 flex flex-col justify-end`}>
                 {subject && (
-                    <span className="text-caption font-semibold text-on-ink/80 uppercase tracking-wide mb-1">
+                    <span className="text-caption font-semibold text-on-ink/80 mb-1">
                         {subject}
                     </span>
                 )}

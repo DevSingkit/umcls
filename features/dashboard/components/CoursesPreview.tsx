@@ -1,8 +1,10 @@
 // features/dashboard/components/CoursesPreview.tsx
 // A short preview grid (not the full list) with a "View all" link, used
-// on both teacher and student dashboards. Centers a sparse grid instead
-// of left-aligning into empty space (§8.6 low-count rule), so 1-2
-// courses never look like a page that loaded wrong.
+// on both teacher and student dashboards.
+//
+// Low-count handling per DESIGN-LMS.md §8.6 (v1.1 correction): a single
+// course stays left-aligned, same as any other count — verified against
+// real Google Classroom behavior, which never centers a sparse grid.
 import Link from 'next/link'
 import { CourseCard } from '@/features/courses/components/CourseCard'
 
@@ -33,8 +35,6 @@ export function CoursesPreview({
         )
     }
 
-    const soloCourse = courses.length === 1 ? courses[0] : null
-
     return (
         <div>
             <div className="flex items-center justify-between mb-4">
@@ -43,40 +43,17 @@ export function CoursesPreview({
                     View all
                 </Link>
             </div>
-            {soloCourse ? (
-                // A single card in a grid still sits left-aligned inside its
-                // own cell — centering the grid container isn't the same as
-                // centering the card. Flex + a fixed width actually centers
-                // the card itself.
-                <div className="flex justify-center">
-                    <div className="w-full max-w-xs">
-                        <CourseCard
-                            id={soloCourse.id}
-                            title={soloCourse.title}
-                            subject={soloCourse.subject}
-                            href={`${courseHrefBase}/${soloCourse.id}`}
-                        />
-                    </div>
-                </div>
-            ) : (
-                <div
-                    className={
-                        courses.length === 2
-                            ? 'grid gap-4 grid-cols-2 max-w-xl mx-auto'
-                            : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-4'
-                    }
-                >
-                    {courses.map((course) => (
-                        <CourseCard
-                            key={course.id}
-                            id={course.id}
-                            title={course.title}
-                            subject={course.subject}
-                            href={`${courseHrefBase}/${course.id}`}
-                        />
-                    ))}
-                </div>
-            )}
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {courses.map((course) => (
+                    <CourseCard
+                        key={course.id}
+                        id={course.id}
+                        title={course.title}
+                        subject={course.subject}
+                        href={`${courseHrefBase}/${course.id}`}
+                    />
+                ))}
+            </div>
         </div>
     )
 }

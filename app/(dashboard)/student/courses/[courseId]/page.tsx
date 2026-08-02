@@ -60,7 +60,7 @@ export default async function StudentCourseDetailPage({
                     </div>
                     <div className="h-2 w-full rounded-pill bg-hairline overflow-hidden">
                         <div
-                            className="h-full bg-success rounded-pill"
+                            className="h-full bg-info rounded-pill"
                             style={{ width: `${progressPercent}%` }}
                         />
                     </div>

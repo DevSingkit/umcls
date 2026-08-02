@@ -46,7 +46,7 @@ export function ChangePasswordForm() {
                         type="password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     />
                 </div>
 
@@ -59,7 +59,7 @@ export function ChangePasswordForm() {
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     />
                     <p className="text-caption text-text-secondary mt-1">
                         At least 12 characters, with an uppercase letter, a lowercase letter, and a number.
@@ -75,7 +75,7 @@ export function ChangePasswordForm() {
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     />
                 </div>
 

@@ -24,7 +24,8 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
     }
 
     return (
-        <div className="max-w-xl mx-auto pb-16">
+        // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
+        <div className="max-w-2xl mx-auto pb-16">
             <h1 className="font-heading text-h1 text-ink mb-2">
                 Create a new lesson
             </h1>
@@ -111,7 +112,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                     <button
                                         type="button"
                                         onClick={() => removeLinkRow(id)}
-                                        className="text-caption text-red font-medium hover:underline"
+                                        className="text-caption text-error font-medium hover:underline"
                                     >
                                         Remove
                                     </button>
@@ -129,7 +130,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                 </div>
 
                 {!state.ok && state.error && (
-                    <p className="text-caption text-red" role="alert">
+                    <p className="text-caption text-error" role="alert">
                         {state.error}
                     </p>
                 )}

@@ -49,7 +49,7 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     />
                 </div>
 
@@ -80,7 +80,7 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
                         value={avatarUrl}
                         onChange={(e) => setAvatarUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     />
                 </div>
 

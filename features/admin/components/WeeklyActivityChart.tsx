@@ -7,15 +7,18 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import type { DailyLoginCount } from '@/features/admin/actions/dashboard-stats'
 export function WeeklyActivityChart({ data }: { data: DailyLoginCount[] }) {
     // Read the actual --brand token from CSS so the chart matches
-    // the rest of the app instead of guessing a hex value.
+    // the rest of the app instead of guessing a hex value. Fallback
+    // updated to #128630, the current institution green (DESIGN-LMS.md
+    // §2) — the old #2E7D46 was retired when the palette moved to the
+    // uniform-based colors.
     const brandColor =
         typeof window !== 'undefined'
             ? getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() ||
-            '#2E7D46'
-            : '#2E7D46'
+            '#128630'
+            : '#128630'
     return (
         <div className="bg-surface rounded-md shadow-card p-6">
-            <p className="text-label uppercase tracking-wide text-text-secondary mb-4">
+            <p className="text-label text-text-secondary mb-4">
                 Logins this week
             </p>
             <div style={{ width: '100%', height: 220 }}>

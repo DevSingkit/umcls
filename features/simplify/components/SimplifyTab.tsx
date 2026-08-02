@@ -99,7 +99,7 @@ export function SimplifyTab({
                     </button>
                 </div>
 
-                {error && <p className="text-caption text-red">{error}</p>}
+                {error && <p className="text-caption text-error">{error}</p>}
 
                 {simplification && (
                     <>
@@ -140,8 +140,8 @@ export function SimplifyTab({
                                 <button
                                     onClick={handleUnpublish}
                                     disabled={isPending}
-                                    className="h-11 px-6 rounded-md bg-surface text-red border-[1.5px] border-red text-body-md font-semibold
-                                               hover:bg-red-soft disabled:opacity-60 transition-colors"
+                                    className="h-11 px-6 rounded-md bg-surface text-error border-[1.5px] border-error text-body-md font-semibold
+                                               hover:bg-error-soft disabled:opacity-60 transition-colors"
                                 >
                                     {isPending ? 'Unpublishing…' : 'Unpublish'}
                                 </button>

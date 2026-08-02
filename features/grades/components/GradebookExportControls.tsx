@@ -49,7 +49,7 @@ export function GradebookExportControls({ courseId }: { courseId: string }) {
                     type="date"
                     value={from}
                     onChange={(e) => setFrom(e.target.value)}
-                    className="h-9 px-3 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink"
+                    className="h-9 px-3 rounded-md border-[1.5px] border-hairline-strong bg-surface text-body-md text-ink focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 />
             </div>
             <div>
@@ -61,7 +61,7 @@ export function GradebookExportControls({ courseId }: { courseId: string }) {
                     type="date"
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
-                    className="h-9 px-3 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink"
+                    className="h-9 px-3 rounded-md border-[1.5px] border-hairline-strong bg-surface text-body-md text-ink focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 />
             </div>
             <a
@@ -71,7 +71,7 @@ export function GradebookExportControls({ courseId }: { courseId: string }) {
             >
                 Export CSV
             </a>
-            {error && <p className="text-caption text-red w-full">{error}</p>}
+            {error && <p className="text-caption text-error w-full">{error}</p>}
         </div>
     )
 }
