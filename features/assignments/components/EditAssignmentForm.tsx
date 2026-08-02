@@ -7,6 +7,21 @@ import { PostAssignmentButton } from '@/features/assignments/components/PostAssi
 
 type Material = Awaited<ReturnType<typeof listMaterials>>[number]
 
+// BUG FIX (2026-08-03): converts a real UTC ISO timestamp (from the
+// database) into the "YYYY-MM-DDTHH:mm" format a datetime-local input
+// needs, using the BROWSER's actual local timezone — not a naive string
+// slice, which was the previous approach and silently mislabeled UTC
+// wall-clock digits as if they were already local time. Uses the local
+// getters (getFullYear/getMonth/etc, not getUTCFullYear/etc) precisely
+// because those are what return values already adjusted to the
+// environment's local timezone.
+function toDatetimeLocalValue(iso: string | null): string {
+    if (!iso) return ''
+    const d = new Date(iso)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export function EditAssignmentForm({
     courseId,
     assignmentId,
@@ -24,7 +39,7 @@ export function EditAssignmentForm({
     assignmentId: string
     initialTitle: string
     initialInstructions: string
-    initialDueAt: string // already formatted for datetime-local input, or ''
+    initialDueAt: string | null // raw ISO timestamp from the database, or null — NOT pre-formatted, see toDatetimeLocalValue above
     initialMaxScore: number
     initialPassingScore: number
     initialAllowLate: boolean
@@ -43,6 +58,20 @@ export function EditAssignmentForm({
 
     function handleSave(formData: FormData) {
         setError(null)
+        // BUG FIX (2026-08-03): the datetime-local input gives back a
+        // naive "YYYY-MM-DDTHH:mm" string with no timezone marker. Sent
+        // as-is, that string would land in a `timestamptz` column and
+        // get interpreted using the database's session timezone (UTC),
+        // not the teacher's actual local time — the exact bug fixed in
+        // NewAssignmentForm.tsx. Same fix here: `new Date(rawString)`
+        // (no trailing "Z"/offset) is parsed as LOCAL time by the JS
+        // engine, so converting it to ISO here produces a real,
+        // unambiguous UTC instant before the form data ever reaches the
+        // server action.
+        const rawDueAt = formData.get('dueAt')
+        if (typeof rawDueAt === 'string' && rawDueAt) {
+            formData.set('dueAt', new Date(rawDueAt).toISOString())
+        }
         startTransition(async () => {
             const result = await updateAssignment(formData)
             if (!result.ok) {
@@ -134,7 +163,7 @@ export function EditAssignmentForm({
                         id="dueAt"
                         name="dueAt"
                         type="datetime-local"
-                        defaultValue={initialDueAt}
+                        defaultValue={toDatetimeLocalValue(initialDueAt)}
                         className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
@@ -157,7 +186,7 @@ export function EditAssignmentForm({
                         <option value="quarterly_assessment">Quarterly Assessment</option>
                     </select>
                     <p className="mt-2 text-caption text-text-secondary">
-                        Determines how much this assignment counts toward the student's DepEd quarterly grade.
+                        Determines how much this assignment counts toward the student&apos;s DepEd quarterly grade.
                     </p>
                 </div>
 

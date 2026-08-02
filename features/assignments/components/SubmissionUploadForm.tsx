@@ -139,7 +139,7 @@ export function SubmissionUploadForm({
             {isLocked ? (
                 <div className="bg-surface-sunken rounded-md p-4">
                     <p className="text-caption text-text-secondary">
-                        The due date has passed and late submissions aren't allowed for this
+                        The due date has passed and late submissions aren&apos;t allowed for this
                         assignment.
                         {existing ? ' Your submission above is final.' : ' You can no longer submit.'}
                     </p>

@@ -35,11 +35,19 @@ export default async function StudentAssignmentPage({
             )}
 
             {isPastDue && (
-                <p className="text-caption text-error mb-4">
-                    This one&apos;s past due, but don&apos;t worry — go ahead and turn it in whenever you&apos;re ready.
+                <p className={`text-caption mb-4 ${assignment.allow_late ? 'text-text-secondary' : 'text-error'}`}>
+                    {assignment.allow_late
+                        ? "This one's past due, but don't worry — go ahead and turn it in whenever you're ready."
+                        : 'This one is past due. Your teacher has turned off late submissions, so it can no longer be submitted or edited.'}
                 </p>
             )}
-            <SubmissionUploadForm assignmentId={assignmentId} maxScore={assignment.max_score} existing={existing} />
+            <SubmissionUploadForm
+                assignmentId={assignmentId}
+                maxScore={assignment.max_score}
+                existing={existing}
+                dueAt={assignment.due_at}
+                allowLate={assignment.allow_late}
+            />
         </div>
     )
 }

@@ -165,7 +165,31 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                         className="h-11 w-full px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
-                <input type="hidden" name="dueAt" value={dueDate ? `${dueDate}T${dueTime || '23:59'}` : ''} />
+                {/*
+                    BUG FIX (2026-08-03): previously this hidden input sent
+                    a naive "YYYY-MM-DDTHH:mm" string straight through, with
+                    no timezone marker at all. due_at is a `timestamptz`
+                    column, so Postgres interpreted those digits using its
+                    own session timezone (UTC on Supabase), not the
+                    teacher's actual local time (Manila, UTC+8) — an "Aug 2,
+                    11:59 PM" due date silently became "Aug 3, 7:59 AM" once
+                    stored, letting students submit 8 hours past when the
+                    teacher actually meant to cut them off.
+
+                    Fix: `new Date("YYYY-MM-DDTHH:mm")` (no trailing "Z" or
+                    offset) is parsed by the JS engine as LOCAL time — i.e.
+                    the browser's own timezone, which for this school is
+                    the only timezone that matters. Calling .toISOString()
+                    on that then converts it to a real, unambiguous UTC
+                    instant before it ever leaves the browser, so the server
+                    and database no longer have to guess what timezone the
+                    naive digits were supposed to mean.
+                */}
+                <input
+                    type="hidden"
+                    name="dueAt"
+                    value={dueDate ? new Date(`${dueDate}T${dueTime || '23:59'}`).toISOString() : ''}
+                />
             </div>
             <div>
                 <label htmlFor="gradingComponent" className="text-label text-ink-soft">Grading component</label>
@@ -182,7 +206,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     <option value="quarterly_assessment">Quarterly Assessment</option>
                 </select>
                 <p className="mt-1 text-caption text-text-secondary">
-                    Determines how much this assignment counts toward the student's DepEd quarterly grade.
+                    Determines how much this assignment counts toward the student&apos;s DepEd quarterly grade.
                 </p>
             </div>
             <div className="grid grid-cols-2 gap-4">

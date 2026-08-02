@@ -58,7 +58,7 @@ export function GradingComponentSetting({
                     ))}
                 </select>
                 <span className="text-body-md text-text-secondary">
-                    Counts toward this quiz's DepEd grading weight
+                    Counts toward this quiz&apos;s DepEd grading weight
                 </span>
                 <button
                     onClick={handleSave}
