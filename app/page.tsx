@@ -1,13 +1,13 @@
 // app/page.tsx
 //
-// Landing page — UMCLS LMS
-// Design system: DESIGN-LMS.md v1.0 (UMCLS Classroom Design System)
+// Landing page — UMCLSI LMS
+// Design system: DESIGN-LMS.md v1.0 (UMCLSI Classroom Design System)
 //
 // Redesigned 2026-07-16: shifted from a "product/system" pitch to a
 // school-story pitch. Removed the feature grid (lessons/quizzes/AI/etc.
 // as software capabilities) and the "one system, three roles" section
 // entirely — those framed the page around the LMS as a product. Replaced
-// with content about the school itself: who UMCLS is, how its teachers
+// with content about the school itself: who UMCLSI is, how its teachers
 // actually teach, and what a family can expect. Header sign-in, permit
 // badges, and footer are unchanged.
 
@@ -65,7 +65,7 @@ export default function LandingPage() {
           <Link href="/" className="inline-flex min-h-[44px] items-center">
             <Image
               src="/logo.png"
-              alt="UMCLS LMS"
+              alt="UMCLSI LMS"
               width={112}
               height={34}
               priority
@@ -95,7 +95,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
-            &ldquo;At UMCLS, every child in elementary gets a teacher who
+            &ldquo;At UMCLSI, every child in elementary gets a teacher who
             knows them by name, and a lesson that meets them where they
             are.&rdquo;
           </p>
@@ -127,7 +127,7 @@ export default function LandingPage() {
             <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
               <HandHeart className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
               DepEd NCR Recognized
-            </span>       
+            </span>
           </div>
         </div>
       </section>
@@ -142,7 +142,7 @@ export default function LandingPage() {
           </h2>
 
           <p className="mt-6 text-body-lg leading-relaxed text-ink-soft">
-            United Methodist Cooperative Learning System has been teaching
+            United Methodist Cooperative Learning System, Inc. has been teaching
             children in Tala since our doors first opened, built on a simple
             belief: every child deserves a teacher who has the time to notice
             them. We&rsquo;re small on purpose. That means a student isn&rsquo;t
@@ -169,7 +169,7 @@ export default function LandingPage() {
           </h2>
 
           <p className="mt-4 max-w-lg text-body-md text-text-secondary">
-            Every teacher at UMCLS is trained to spot the moment a lesson
+            Every teacher at UMCLSI is trained to spot the moment a lesson
             isn&rsquo;t landing, and to do something about it before a
             student falls behind.
           </p>
@@ -202,11 +202,11 @@ export default function LandingPage() {
         <div className="mx-auto max-w-[1200px]">
           <div className="rounded-md bg-ink px-8 py-16 text-center md:px-16">
             <h2 className="font-heading text-h2 text-on-ink">
-              Already a UMCLS family?
+              Already a UMCLSI family?
             </h2>
 
             <p className="mx-auto mt-4 max-w-md text-body-md text-on-ink/70">
-              If you&rsquo;re a teacher or parent at UMCLS, your account has
+              If you&rsquo;re a teacher or parent at UMCLSI, your account has
               already been created. Sign in with the credentials sent to your
               email.
             </p>
@@ -229,7 +229,7 @@ export default function LandingPage() {
             <div>
               <Image
                 src="/logo.png"
-                alt="UMCLS LMS"
+                alt="UMCLSI LMS"
                 width={100}
                 height={30}
                 className="h-8 w-auto object-contain"

@@ -25,7 +25,7 @@ export function TopNav({ role, fullName, userId }: TopNavProps) {
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-sidebar px-4 lg:hidden">
             <div className="flex items-center gap-2">
                 <Image src="/logo.png" alt="" width={24} height={24} className="shrink-0 rounded-md" />
-                <span className="font-heading text-body-emphasis text-on-ink">UMCLS</span>
+                <span className="font-heading text-body-emphasis text-on-ink">UMCLSI</span>
                 <span className="text-caption text-on-ink/70">{ROLE_LABELS[role]}</span>
             </div>
 

@@ -25,7 +25,7 @@ export function Sidebar({ role, fullName }: SidebarProps) {
         >
             <div className="flex items-center gap-2 px-5 py-6">
                 <Image src="/logo.png" alt="" width={32} height={32} className="shrink-0 rounded-md" />
-                <span className="font-heading text-h3 text-on-ink">UMCLS</span>
+                <span className="font-heading text-h3 text-on-ink">UMCLSI</span>
             </div>
 
             <nav aria-label="Primary" className="flex-1 px-3">

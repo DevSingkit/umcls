@@ -6,6 +6,7 @@ import {
     Settings,
     GraduationCap,
     Archive,
+    BookOpen,
 } from "lucide-react";
 
 export type Role = "admin" | "teacher" | "student";
@@ -55,6 +56,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
             icon: Archive,
             isV1: true, // users + grades CSV export
         },
+        {
+            label: "Courses",
+            href: "/admin/courses",
+            icon: BookOpen,
+            isV1: true, // course archiving
+        },
     ],
     teacher: [
         { label: "Dashboard", href: "/teacher/dashboard", icon: Home, isV1: true },
@@ -76,6 +83,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
             icon: Settings,
             isV1: true, // built — profile, password, notifications, text size
         },
+        {
+            label: "Archived",
+            href: "/teacher/archived",
+            icon: Archive,
+            isV1: true, // course archiving (admin-triggered)
+        },
     ],
     student: [
         { label: "Home", href: "/student/dashboard", icon: Home, isV1: true },
@@ -90,6 +103,12 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
             href: "/student/grades",
             icon: GraduationCap,
             isV1: true, // Batch 8 — built
+        },
+        {
+            label: "Archived",
+            href: "/student/archived",
+            icon: Archive,
+            isV1: true, // course archiving (admin-triggered)
         },
     ],
 };

@@ -457,7 +457,7 @@ export async function getQuizForTeacher(quizId: string) {
 
     const { data: quiz } = await supabase
         .from('quizzes')
-        .select('id, title, course_id, passing_score, is_published, time_limit_minutes, show_results_after, grading_component, courses!inner(teacher_id, title)')
+        .select('id, title, course_id, passing_score, is_published, time_limit_minutes, available_until, allow_late, show_results_after, grading_component, courses!inner(teacher_id, title)')
         .eq('id', quizId)
         .single()
 
@@ -493,9 +493,11 @@ export async function getQuizForTeacher(quizId: string) {
     return { quiz, questions: questionsWithSortedOptions }
 }
 
+export type SetQuizFieldResult = { ok: true } | { ok: false; error: string }
+
 // Lets a teacher set the passing score, once they know how many
 // questions the quiz actually has.
-export async function setPassingScore(quizId: string, passingScore: number) {
+export async function setPassingScore(quizId: string, passingScore: number): Promise<SetQuizFieldResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
@@ -506,12 +508,23 @@ export async function setPassingScore(quizId: string, passingScore: number) {
         .single()
 
     if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
-        return { ok: false as const }
+        return { ok: false, error: 'You do not have access to this quiz.' }
     }
 
-    await supabase.from('quizzes').update({ passing_score: passingScore }).eq('id', quizId)
+    const { data: updated, error } = await supabase
+        .from('quizzes')
+        .update({ passing_score: passingScore })
+        .eq('id', quizId)
+        .select('id')
 
-    return { ok: true as const }
+    if (error) {
+        return { ok: false, error: `Could not save the passing score: ${error.message}` }
+    }
+    if (!updated || updated.length === 0) {
+        return { ok: false, error: 'Could not save the passing score — the update did not apply.' }
+    }
+
+    return { ok: true }
 }
 
 export type GradingComponent = 'written_work' | 'performance_task' | 'quarterly_assessment'
@@ -525,7 +538,7 @@ export type GradingComponent = 'written_work' | 'performance_task' | 'quarterly_
 // this setter is how a teacher actually confirms/changes it, same as
 // grading_component was made a required field at creation for
 // assignments rather than left to the schema default.
-export async function setGradingComponent(quizId: string, gradingComponent: GradingComponent) {
+export async function setGradingComponent(quizId: string, gradingComponent: GradingComponent): Promise<SetQuizFieldResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
@@ -536,17 +549,28 @@ export async function setGradingComponent(quizId: string, gradingComponent: Grad
         .single()
 
     if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
-        return { ok: false as const }
+        return { ok: false, error: 'You do not have access to this quiz.' }
     }
 
-    await supabase.from('quizzes').update({ grading_component: gradingComponent }).eq('id', quizId)
+    const { data: updated, error } = await supabase
+        .from('quizzes')
+        .update({ grading_component: gradingComponent })
+        .eq('id', quizId)
+        .select('id')
 
-    return { ok: true as const }
+    if (error) {
+        return { ok: false, error: `Could not save the grading component: ${error.message}` }
+    }
+    if (!updated || updated.length === 0) {
+        return { ok: false, error: 'Could not save the grading component — the update did not apply.' }
+    }
+
+    return { ok: true }
 }
 
 // Lets a teacher turn the timer on/off, or change the minutes, after
 // the quiz already exists. null means no timer.
-export async function setTimeLimit(quizId: string, timeLimitMinutes: number | null) {
+export async function setTimeLimit(quizId: string, timeLimitMinutes: number | null): Promise<SetQuizFieldResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
@@ -557,12 +581,23 @@ export async function setTimeLimit(quizId: string, timeLimitMinutes: number | nu
         .single()
 
     if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
-        return { ok: false as const }
+        return { ok: false, error: 'You do not have access to this quiz.' }
     }
 
-    await supabase.from('quizzes').update({ time_limit_minutes: timeLimitMinutes }).eq('id', quizId)
+    const { data: updated, error } = await supabase
+        .from('quizzes')
+        .update({ time_limit_minutes: timeLimitMinutes })
+        .eq('id', quizId)
+        .select('id')
 
-    return { ok: true as const }
+    if (error) {
+        return { ok: false, error: `Could not save the time limit: ${error.message}` }
+    }
+    if (!updated || updated.length === 0) {
+        return { ok: false, error: 'Could not save the time limit — the update did not apply.' }
+    }
+
+    return { ok: true }
 }
 
 export type ResultsVisibility = 'immediately' | 'after_grading' | 'never'
@@ -572,7 +607,7 @@ export type ResultsVisibility = 'immediately' | 'after_grading' | 'never'
 // only changes what grade-quiz-submission.ts includes in its response
 // going forward — it doesn't rewrite anything for attempts already
 // submitted.
-export async function setResultsVisibility(quizId: string, visibility: ResultsVisibility) {
+export async function setResultsVisibility(quizId: string, visibility: ResultsVisibility): Promise<SetQuizFieldResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
@@ -583,16 +618,88 @@ export async function setResultsVisibility(quizId: string, visibility: ResultsVi
         .single()
 
     if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
-        return { ok: false as const }
+        return { ok: false, error: 'You do not have access to this quiz.' }
     }
 
-    await supabase.from('quizzes').update({ show_results_after: visibility }).eq('id', quizId)
+    const { data: updated, error } = await supabase
+        .from('quizzes')
+        .update({ show_results_after: visibility })
+        .eq('id', quizId)
+        .select('id')
 
-    return { ok: true as const }
+    if (error) {
+        return { ok: false, error: `Could not save results visibility: ${error.message}` }
+    }
+    if (!updated || updated.length === 0) {
+        return { ok: false, error: 'Could not save results visibility — the update did not apply.' }
+    }
+
+    return { ok: true }
+}
+
+export type SetQuizDeadlineResult = { ok: true } | { ok: false; error: string }
+
+// Lets a teacher set (or clear) the quiz's deadline and whether late
+// starts/submissions are allowed past it. `availableUntil` must already
+// be a real UTC ISO string (or null) — conversion from the teacher's
+// local time happens client-side, in QuizDeadlineSetting.tsx, the same
+// pattern established for assignments (see NewAssignmentForm.tsx /
+// EditAssignmentForm.tsx's 2026-08-03 fixes). Once saved, the actual
+// enforcement lives in two other places, not here: the
+// prevent_response_after_expiry trigger (migration 060) cuts off
+// in-progress attempts, and startQuizAttempt/gradeQuizSubmission both
+// re-check before letting a new attempt start or a submission finalize.
+//
+// NOTE (2026-08-03): the silent-failure risk flagged here for
+// setPassingScore, setTimeLimit, setResultsVisibility,
+// setGradingComponent, and toggleQuizPublish — a plain `.update()`
+// with no `.select()` and no error check, so an RLS WITH CHECK
+// rejection looked identical to success — is now fixed for all five,
+// same session, following setQuizDeadline's own already-correct
+// pattern below. Same root cause class as toggle_assignment_publish
+// (migration 053) and, most recently, the users_self_update RLS
+// recursion bug (migration 058) — three different tables, same
+// underlying lesson: a Supabase update() reporting no error is not
+// the same thing as a row actually changing.
+export async function setQuizDeadline(
+    quizId: string,
+    availableUntil: string | null,
+    allowLate: boolean
+): Promise<SetQuizDeadlineResult> {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+
+    const { data: quiz } = await supabase
+        .from('quizzes')
+        .select('id, courses!inner(teacher_id)')
+        .eq('id', quizId)
+        .single()
+
+    if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
+        return { ok: false, error: 'You do not have access to this quiz.' }
+    }
+
+    const { data: updated, error } = await supabase
+        .from('quizzes')
+        .update({ available_until: availableUntil, allow_late: allowLate })
+        .eq('id', quizId)
+        .select('id')
+
+    if (error) {
+        return { ok: false, error: `Could not save the deadline: ${error.message}` }
+    }
+    if (!updated || updated.length === 0) {
+        return {
+            ok: false,
+            error: 'Could not save the deadline — the update did not apply. Please try again.',
+        }
+    }
+
+    return { ok: true }
 }
 
 // Lets a teacher publish or unpublish a quiz.
-export async function toggleQuizPublish(quizId: string, publish: boolean) {
+export async function toggleQuizPublish(quizId: string, publish: boolean): Promise<SetQuizFieldResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
@@ -603,10 +710,21 @@ export async function toggleQuizPublish(quizId: string, publish: boolean) {
         .single()
 
     if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
-        return { ok: false as const }
+        return { ok: false, error: 'You do not have access to this quiz.' }
     }
 
-    await supabase.from('quizzes').update({ is_published: publish }).eq('id', quizId)
+    const { data: updated, error } = await supabase
+        .from('quizzes')
+        .update({ is_published: publish })
+        .eq('id', quizId)
+        .select('id')
 
-    return { ok: true as const }
+    if (error) {
+        return { ok: false, error: `Could not update this quiz: ${error.message}` }
+    }
+    if (!updated || updated.length === 0) {
+        return { ok: false, error: 'Could not update this quiz — the update did not apply.' }
+    }
+
+    return { ok: true }
 }

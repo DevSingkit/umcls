@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
                 <div className="mb-8 flex justify-center">
                     <Image
                         src="/logo.png"
-                        alt="UMCLS LMS"
+                        alt="UMCLSI LMS"
                         width={140}
                         height={44}
                         priority

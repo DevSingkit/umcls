@@ -3,6 +3,7 @@ import { getQuizForTeacher } from '@/features/quizzes/actions/create-quiz'
 import { AddQuestionForm } from '@/features/quizzes/components/AddQuestionForm'
 import { PassingScoreSetting } from '@/features/quizzes/components/PassingScoreSetting'
 import { TimeLimitSetting } from '@/features/quizzes/components/TimeLimitSetting'
+import { QuizDeadlineSetting } from '@/features/quizzes/components/QuizDeadlineSetting'
 import { ResultsVisibilitySetting } from '@/features/quizzes/components/ResultsVisibilitySetting'
 import { GradingComponentSetting } from '@/features/quizzes/components/GradingComponentSetting'
 import { QuestionCard } from '@/features/quizzes/components/QuestionCard'
@@ -64,6 +65,12 @@ export default async function QuizEditPage({
                 />
 
                 <TimeLimitSetting quizId={quiz.id} currentTimeLimitMinutes={quiz.time_limit_minutes} />
+
+                <QuizDeadlineSetting
+                    quizId={quiz.id}
+                    currentAvailableUntil={quiz.available_until}
+                    currentAllowLate={quiz.allow_late}
+                />
 
                 {questions.length > 0 && (
                     <PassingScoreSetting

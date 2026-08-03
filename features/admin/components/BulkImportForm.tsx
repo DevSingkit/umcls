@@ -10,7 +10,7 @@ function downloadTemplate() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'umcls-user-import-template.csv'
+    link.download = 'UMCLSI-user-import-template.csv'
     link.click()
     URL.revokeObjectURL(url)
 }

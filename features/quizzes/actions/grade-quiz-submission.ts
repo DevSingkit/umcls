@@ -41,7 +41,7 @@ export async function gradeQuizSubmission(
     // cannot grade a quiz they have no access to.
     const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
-        .select('id, passing_score, available_until, show_results_after')
+        .select('id, passing_score, available_until, allow_late, show_results_after')
         .eq('id', quizId)
         .single()
     if (quizError || !quiz) {
@@ -71,12 +71,17 @@ export async function gradeQuizSubmission(
         throw new Error('This attempt has already been submitted.')
     }
 
-    // Belt-and-suspenders: prevent_response_after_expiry (§7.8) blocks
-    // quiz_responses writes past the time limit, but nothing at the DB
-    // layer stops a submission arriving after available_until closes.
-    // Re-check it here rather than trusting the client's countdown.
-    if (quiz.available_until && new Date() > new Date(quiz.available_until)) {
-        throw new Error('The availability window for this quiz has closed.')
+    // Belt-and-suspenders: prevent_response_after_expiry (§7.8, extended
+    // 2026-08-03 by migration 060 to also cover available_until) blocks
+    // quiz_responses writes past the deadline or time limit, but nothing
+    // else at the DB layer stops the final gradeQuizSubmission call
+    // itself from arriving after available_until closes. Re-check here
+    // rather than trusting the client's countdown — and respect
+    // allow_late, same as the trigger does, so a teacher who explicitly
+    // allowed late submissions isn't blocked by this second check after
+    // already passing the first one.
+    if (quiz.available_until && !quiz.allow_late && new Date() > new Date(quiz.available_until)) {
+        throw new Error('The deadline for this quiz has passed and late submissions are not allowed.')
     }
 
     const questionIds = studentAnswers.map((a) => a.questionId)

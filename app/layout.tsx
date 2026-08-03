@@ -51,7 +51,7 @@ const robotoBody = Roboto({
 })
 
 export const metadata: Metadata = {
-  title: 'UMCLS',
+  title: 'UMCLSI',
   description: 'School Learning Management System',
 }
 

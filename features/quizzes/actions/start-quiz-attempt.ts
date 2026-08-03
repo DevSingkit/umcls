@@ -31,6 +31,7 @@ export type StartQuizAttemptResult =
         startedAt: string
         timeLimitMinutes: number | null
         availableUntil: string | null
+        allowLate: boolean
         savedAnswers: SavedAnswer[]
     }
     | { ok: false; error: string }
@@ -42,7 +43,7 @@ export async function startQuizAttempt(quizId: string): Promise<StartQuizAttempt
 
     const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
-        .select('id, time_limit_minutes, available_until')
+        .select('id, time_limit_minutes, available_until, allow_late')
         .eq('id', quizId)
         .single()
 
@@ -59,6 +60,15 @@ export async function startQuizAttempt(quizId: string): Promise<StartQuizAttempt
         .maybeSingle()
 
     if (existing) {
+        // Resuming an already-started attempt is allowed even past the
+        // deadline — same as how a resumed attempt past its timer limit
+        // is allowed today. The actual cutoff happens where it already
+        // did: prevent_response_after_expiry blocks further autosave
+        // writes, and gradeQuizSubmission re-checks before finalizing.
+        // Blocking the resume itself here would just show a confusing
+        // "not available" error instead of letting the student see their
+        // own in-progress work and whatever expiry message the write
+        // path gives them.
         const savedAnswers = await loadSavedAnswers(supabase, existing.id)
         return {
             ok: true,
@@ -66,8 +76,16 @@ export async function startQuizAttempt(quizId: string): Promise<StartQuizAttempt
             startedAt: existing.started_at,
             timeLimitMinutes: quiz.time_limit_minutes,
             availableUntil: quiz.available_until,
+            allowLate: quiz.allow_late,
             savedAnswers,
         }
+    }
+
+    // Gate for a genuinely NEW attempt only — mirrors submitAssignment's
+    // due-date/allow_late gate (features/assignments/actions/submissions.ts).
+    // Added 2026-08-03, migration 060.
+    if (quiz.available_until && !quiz.allow_late && new Date() > new Date(quiz.available_until)) {
+        return { ok: false, error: 'The deadline for this quiz has passed and it can no longer be started.' }
     }
 
     const { data: attempt, error: insertError } = await supabase
@@ -93,6 +111,7 @@ export async function startQuizAttempt(quizId: string): Promise<StartQuizAttempt
         startedAt: attempt.started_at,
         timeLimitMinutes: quiz.time_limit_minutes,
         availableUntil: quiz.available_until,
+        allowLate: quiz.allow_late,
         // Brand new attempt — nothing autosaved yet.
         savedAnswers: [],
     }

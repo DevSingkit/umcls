@@ -3,7 +3,7 @@
 **Status:** V1 interim process — manual only, no UI.
 **Supersedes:** none. Will itself be superseded by PH2-SEC-01's self-service
 admin UI in V2 (button + confirmation modal + audit trail).
-**Legal basis:** Philippine Data Privacy Act of 2012 (RA 10173). UMCLS
+**Legal basis:** Philippine Data Privacy Act of 2012 (RA 10173). UMCLSI
 operates in the Philippines and its students are minors — see
 `SECURITY.md` NFR-SEC-11/NFR-SEC-12. This obligation exists the moment
 one real student's data is stored, independent of what's shipped in

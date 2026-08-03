@@ -37,7 +37,7 @@ export default function LoginPage() {
                 <div className="mb-8 flex justify-center">
                     <Image
                         src="/logo.png"
-                        alt="UMCLS LMS"
+                        alt="UMCLSI LMS"
                         width={140}
                         height={44}
                         priority
@@ -59,7 +59,7 @@ export default function LoginPage() {
                         United Methodist
                     </h1>
                     <h1 className="mb-3 font-heading text-h3 text-ink">
-                        Cooperative Learning System
+                        Cooperative Learning System, Inc.
                     </h1>
                     <p className="mb-5 text-caption text-text-secondary">
                         &ldquo;Teaching every child with patience, and the belief

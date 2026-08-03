@@ -28,7 +28,7 @@ export function PostQuizButton({
         startTransition(async () => {
             const result = await toggleQuizPublish(quizId, publish)
             if (!result.ok) {
-                setError('Could not update this quiz. Please try again.')
+                setError(result.error)
                 return
             }
             setPublished(publish)

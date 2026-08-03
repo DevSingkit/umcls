@@ -131,10 +131,39 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
                 return
             }
             setAttemptId(result.attemptId)
-            if (result.timeLimitMinutes) {
-                const startedAtMs = new Date(result.startedAt).getTime()
-                setDeadline(startedAtMs + result.timeLimitMinutes * 60_000)
+            // DEADLINE FEATURE (2026-08-03): the lock mechanism below
+            // (deadline -> countdown tick -> isLocked) previously only
+            // ever came from the per-attempt timer. It now also factors
+            // in the quiz's deadline (available_until), when the
+            // teacher hasn't allowed late attempts — reusing the exact
+            // same countdown/lock effect rather than adding a second,
+            // parallel one, per explicit product decision: a deadline
+            // should cut off an in-progress attempt "the same way the
+            // timer already does." Whichever cutoff comes first wins.
+            // If allowLate is true, the deadline is deliberately left
+            // out of this calculation — late attempts should never be
+            // client-locked by it (the server still permits them; see
+            // migration 060 / prevent_response_after_expiry).
+            const startedAtMs = new Date(result.startedAt).getTime()
+            const timerDeadlineMs = result.timeLimitMinutes
+                ? startedAtMs + result.timeLimitMinutes * 60_000
+                : null
+            const quizDeadlineMs =
+                result.availableUntil && !result.allowLate
+                    ? new Date(result.availableUntil).getTime()
+                    : null
+
+            if (timerDeadlineMs !== null && quizDeadlineMs !== null) {
+                setDeadline(Math.min(timerDeadlineMs, quizDeadlineMs))
+            } else {
+                setDeadline(timerDeadlineMs ?? quizDeadlineMs)
             }
+            // Note: if quizDeadlineMs is already in the past (e.g. a
+            // student resumes an in-progress attempt after the deadline
+            // already passed), the countdown effect's very first tick()
+            // computes a negative remaining time and locks immediately —
+            // no special-casing needed here for that, same as how a
+            // resumed attempt past its timer already behaves today.
 
             let orderedQuestions = quiz.questions
             if (quiz.shuffle_questions) {
@@ -409,7 +438,8 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
 
             {isLocked && (
                 <p className="text-caption text-error mb-3">
-                    Time&apos;s up — you can no longer change your answers. Click below to submit.
+                    Time&apos;s up — either your time limit or this quiz&apos;s deadline has passed.
+                    You can no longer change your answers. Click below to submit.
                 </p>
             )}
 

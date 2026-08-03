@@ -197,6 +197,9 @@ export async function toggleShowClassmates(courseId: string, show: boolean) {
 }
 
 // Returns only the courses belonging to the logged in teacher.
+// Excludes archived courses (migration 059) — archived ones move to
+// getMyArchivedCourses below, reached via the "Archived" nav item
+// instead of showing up here / on the dashboard.
 export async function getMyCourses() {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
@@ -205,6 +208,28 @@ export async function getMyCourses() {
         .select('id, title, description, subject, is_published, created_at')
         .eq('teacher_id', user.id)
         .is('deleted_at', null)
+        .is('archived_at', null)
+        .order('created_at', { ascending: false })
+    if (error) {
+        return []
+    }
+    return data
+}
+
+// Courses belonging to the logged-in teacher that an admin has
+// archived. Still fully readable/editable — archiving only removes a
+// course from the main list/dashboard, it doesn't touch access — so
+// this intentionally selects the same columns as getMyCourses, not a
+// stripped-down read-only view.
+export async function getMyArchivedCourses() {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('courses')
+        .select('id, title, description, subject, is_published, created_at')
+        .eq('teacher_id', user.id)
+        .is('deleted_at', null)
+        .not('archived_at', 'is', null)
         .order('created_at', { ascending: false })
     if (error) {
         return []

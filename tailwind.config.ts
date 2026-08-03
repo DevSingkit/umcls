@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-// Tokens pulled directly from DESIGN-LMS.md v1.0 (the "UMCLS Classroom
+// Tokens pulled directly from DESIGN-LMS.md v1.0 (the "UMCLSI Classroom
 // Design System"), sections 2-4. This replaces the old Mastercard-style
 // palette entirely. Do not hand-tune these — if a token is wrong, fix it
 // in DESIGN-LMS.md first, then mirror the change here.
