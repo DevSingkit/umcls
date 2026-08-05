@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { OptionBullet } from '@/features/quizzes/components/OptionBullet'
-import { updateQuestion, deleteQuestion } from '@/features/quizzes/actions/create-quiz'
+import { updateQuestion, deleteQuestion, resetQuizAttempts } from '@/features/quizzes/actions/create-quiz'
 
 const QUESTION_TYPE_LABEL: Record<string, string> = {
     multiple_choice_single: 'Multiple choice',
@@ -43,7 +43,18 @@ function makeEmptyOption() {
     return { key: nextOptionKey(), text: '' }
 }
 
-export function QuestionCard({ question, index }: { question: Question; index: number }) {
+export function QuestionCard({
+    question,
+    index,
+    quizId,
+}: {
+    question: Question
+    index: number
+    // Needed only to call resetQuizAttempts after an edit/delete on an
+    // already-posted quiz — see handleSave/handleDelete below. The
+    // question row itself doesn't carry its parent quiz's id.
+    quizId: string
+}) {
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
@@ -144,6 +155,33 @@ export function QuestionCard({ question, index }: { question: Question; index: n
         })
     }
 
+    // Shared by handleSave and handleDelete: this question's quiz was
+    // already live when the change was made, so ask whether students
+    // who already attempted it should get a clean slate against the
+    // updated question set. resetQuizAttempts (migration 062 RPC)
+    // deletes real submitted/graded rows, so it needs an explicit yes
+    // rather than happening silently, same as any other
+    // button-danger-shaped action in this app.
+    async function maybeOfferAttemptReset(quizPublished: boolean, verb: 'edited' | 'deleted') {
+        if (!quizPublished) return
+
+        const shouldReset = window.confirm(
+            `This quiz is already posted. Students who already took it will keep their old results unless you let them retake it now that a question was ${verb}. Reset everyone's attempts so they can retake it?`
+        )
+        if (!shouldReset) return
+
+        const resetResult = await resetQuizAttempts(quizId)
+        if (!resetResult.ok) {
+            window.alert(resetResult.error)
+        } else {
+            window.alert(
+                resetResult.attemptsCleared > 0
+                    ? `Done — ${resetResult.attemptsCleared} attempt${resetResult.attemptsCleared === 1 ? '' : 's'} cleared. Students can retake the quiz now.`
+                    : 'Done — no one had attempted this quiz yet.'
+            )
+        }
+    }
+
     async function handleSave(e: React.FormEvent) {
         e.preventDefault()
         setError('')
@@ -212,6 +250,7 @@ export function QuestionCard({ question, index }: { question: Question; index: n
 
         setIsEditing(false)
         router.refresh()
+        await maybeOfferAttemptReset(result.quizPublished, 'edited')
     }
 
     async function handleDelete() {
@@ -228,6 +267,7 @@ export function QuestionCard({ question, index }: { question: Question; index: n
         }
 
         router.refresh()
+        await maybeOfferAttemptReset(result.quizPublished, 'deleted')
     }
 
     if (!isEditing) {

@@ -109,7 +109,7 @@ export function TeacherCourseStream({
                             </div>
 
                             <div className="shrink-0 flex items-center gap-2">
-                                {item.type === 'assignment' && !!item.ungradedCount && item.ungradedCount > 0 && (
+                                {!!item.ungradedCount && item.ungradedCount > 0 && (
                                     <span className="inline-flex items-center rounded-pill bg-info-soft text-info text-caption font-semibold px-3 py-1 whitespace-nowrap">
                                         {item.ungradedCount} to grade
                                     </span>

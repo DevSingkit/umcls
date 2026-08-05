@@ -1,6 +1,6 @@
 'use client'
-// Edits an existing course's title/description/subject. Mirrors the
-// create-course form fields but calls updateCourse instead.
+// Edits an existing course's title/description/subject/grade level.
+// Mirrors the create-course form fields but calls updateCourse instead.
 import { useState, useTransition } from 'react'
 import { updateCourse } from '@/features/courses/actions/courses'
 import { ClassmatesVisibilityToggle } from '@/features/courses/components/ClassmatesVisibilityToggle'
@@ -11,12 +11,14 @@ export function EditCourseForm({
     initialDescription,
     initialSubject,
     initialShowClassmates,
+    initialGradeLevel,
 }: {
     courseId: string
     initialTitle: string
     initialDescription: string | null
     initialSubject: string | null
     initialShowClassmates: boolean
+    initialGradeLevel: number | null
 }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
@@ -54,6 +56,27 @@ export function EditCourseForm({
                     defaultValue={initialSubject ?? ''}
                     className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand"
                 />
+            </div>
+            <div>
+                <label htmlFor="gradeLevel" className="mb-2 block text-label text-ink-soft">Grade level</label>
+                <select
+                    id="gradeLevel"
+                    name="gradeLevel"
+                    defaultValue={initialGradeLevel ?? ''}
+                    className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand bg-surface"
+                >
+                    <option value="">Not set</option>
+                    <option value="1">Grade 1</option>
+                    <option value="2">Grade 2</option>
+                    <option value="3">Grade 3</option>
+                    <option value="4">Grade 4</option>
+                    <option value="5">Grade 5</option>
+                    <option value="6">Grade 6</option>
+                </select>
+                <p className="mt-1.5 text-caption text-text-secondary">
+                    Used so Simplify explanations match your students&apos; reading level. Set this once —
+                    you won&apos;t need to pick it again when generating a Simplify version.
+                </p>
             </div>
             <div>
                 <label htmlFor="description" className="mb-2 block text-label text-ink-soft">Description</label>

@@ -1,23 +1,43 @@
 'use server'
 // Simplify-lesson actions. A student can open this anytime, not gated
 // by quiz failure (unlike the removed reteach feature). Teacher
-// generates via Gemini, reviews/edits, then publishes; student reads
-// the published version only. RLS in 045_lesson_simplifications.sql
-// enforces who can read/write, but we re-check role/ownership here too
-// per AUTH_NOTES.md — same pattern as materials.ts/lesson-comments.ts.
+// generates via Gemini in a chosen language, reviews/edits, then
+// publishes; student reads the published version in their preferred
+// language. RLS in 045_lesson_simplifications.sql enforces who can
+// read/write, but we re-check role/ownership here too per
+// AUTH_NOTES.md — same pattern as materials.ts/lesson-comments.ts.
+//
+// As of migration 067, a lesson can have up to two simplification
+// rows: one English, one Tagalog (unique on lesson_id + language).
+// Every read/write below is scoped by BOTH lesson_id and language —
+// scoping by lesson_id alone would silently touch or return the wrong
+// row now that two can exist for the same lesson.
 import { requireRole, requireUser } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
-import { generateSimplifiedLesson, AiGenerationError } from '@/lib/ai/provider'
+import { generateSimplifiedLesson, AiGenerationError, type SimplifyLanguage } from '@/lib/ai/provider'
 import { aiRateLimit } from '@/lib/security/rate-limit'
 
 export type SimplifyActionResult = { ok: true } | { ok: false; error: string }
 
-// Generates a simplified version of a lesson via Gemini and writes it
-// as an unpublished draft. Teacher must own the lesson's course.
-// Overwrites any existing draft for this lesson (one row per lesson,
-// see the unique constraint on lesson_id).
-export async function generateSimplifiedLessonForTeacher(lessonId: string): Promise<SimplifyActionResult> {
+function isValidLanguage(language: string): language is SimplifyLanguage {
+    return language === 'english' || language === 'tagalog'
+}
+
+// Generates a simplified version of a lesson via Gemini, in the given
+// language, and writes it as an unpublished draft. Teacher must own
+// the lesson's course. Overwrites any existing draft for this exact
+// lesson + language pair — the other language's row (if any) is left
+// untouched.
+export async function generateSimplifiedLessonForTeacher(
+    lessonId: string,
+    language: SimplifyLanguage
+): Promise<SimplifyActionResult> {
     const user = await requireRole(['teacher'])
+
+    if (!isValidLanguage(language)) {
+        return { ok: false, error: 'Invalid language.' }
+    }
+
     const supabase = await createClient()
 
     const { data: lesson, error: lessonError } = await supabase
@@ -46,6 +66,7 @@ export async function generateSimplifiedLessonForTeacher(lessonId: string): Prom
         result = await generateSimplifiedLesson({
             lessonTitle: lesson.title,
             lessonContent,
+            language,
         })
     } catch (err) {
         await supabase.from('ai_generation_logs').insert({
@@ -75,11 +96,12 @@ export async function generateSimplifiedLessonForTeacher(lessonId: string): Prom
         .upsert(
             {
                 lesson_id: lessonId,
+                language,
                 content: result.output.content,
                 is_published: false,
                 updated_at: new Date().toISOString(),
             },
-            { onConflict: 'lesson_id' }
+            { onConflict: 'lesson_id,language' }
         )
 
     if (upsertError) {
@@ -90,10 +112,18 @@ export async function generateSimplifiedLessonForTeacher(lessonId: string): Prom
 }
 
 // Teacher edits the draft/published content directly (manual touch-up
-// after generation, or a fully hand-written simplification).
-export async function editSimplifiedLesson(lessonId: string, content: string): Promise<SimplifyActionResult> {
+// after generation, or a fully hand-written simplification), for one
+// specific language version.
+export async function editSimplifiedLesson(
+    lessonId: string,
+    language: SimplifyLanguage,
+    content: string
+): Promise<SimplifyActionResult> {
     const user = await requireRole(['teacher'])
 
+    if (!isValidLanguage(language)) {
+        return { ok: false, error: 'Invalid language.' }
+    }
     if (content.trim().length === 0) {
         return { ok: false, error: 'Content cannot be empty.' }
     }
@@ -113,20 +143,30 @@ export async function editSimplifiedLesson(lessonId: string, content: string): P
         return { ok: false, error: 'Lesson not found.' }
     }
 
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
         .from('lesson_simplifications')
         .update({ content: content.trim(), updated_at: new Date().toISOString() })
         .eq('lesson_id', lessonId)
+        .eq('language', language)
+        .select('id')
 
-    if (error) {
+    if (error || !updated || updated.length === 0) {
         return { ok: false, error: 'Could not save changes. Please try again.' }
     }
 
     return { ok: true }
 }
 
-export async function publishSimplifiedLesson(lessonId: string): Promise<SimplifyActionResult> {
+export async function publishSimplifiedLesson(
+    lessonId: string,
+    language: SimplifyLanguage
+): Promise<SimplifyActionResult> {
     const user = await requireRole(['teacher'])
+
+    if (!isValidLanguage(language)) {
+        return { ok: false, error: 'Invalid language.' }
+    }
+
     const supabase = await createClient()
 
     const { data: lesson } = await supabase
@@ -139,20 +179,30 @@ export async function publishSimplifiedLesson(lessonId: string): Promise<Simplif
         return { ok: false, error: 'Lesson not found.' }
     }
 
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
         .from('lesson_simplifications')
         .update({ is_published: true, updated_at: new Date().toISOString() })
         .eq('lesson_id', lessonId)
+        .eq('language', language)
+        .select('id')
 
-    if (error) {
+    if (error || !updated || updated.length === 0) {
         return { ok: false, error: 'Could not publish. Please try again.' }
     }
 
     return { ok: true }
 }
 
-export async function unpublishSimplifiedLesson(lessonId: string): Promise<SimplifyActionResult> {
+export async function unpublishSimplifiedLesson(
+    lessonId: string,
+    language: SimplifyLanguage
+): Promise<SimplifyActionResult> {
     const user = await requireRole(['teacher'])
+
+    if (!isValidLanguage(language)) {
+        return { ok: false, error: 'Invalid language.' }
+    }
+
     const supabase = await createClient()
 
     const { data: lesson } = await supabase
@@ -165,21 +215,24 @@ export async function unpublishSimplifiedLesson(lessonId: string): Promise<Simpl
         return { ok: false, error: 'Lesson not found.' }
     }
 
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
         .from('lesson_simplifications')
         .update({ is_published: false, updated_at: new Date().toISOString() })
         .eq('lesson_id', lessonId)
+        .eq('language', language)
+        .select('id')
 
-    if (error) {
+    if (error || !updated || updated.length === 0) {
         return { ok: false, error: 'Could not unpublish. Please try again.' }
     }
 
     return { ok: true }
 }
 
-// Teacher view: sees the draft/published content regardless of
-// publish state, so they can review before publishing.
-export async function getSimplifiedLessonForTeacher(lessonId: string) {
+// Teacher view: sees BOTH language versions (if they exist) regardless
+// of publish state, so they can review each before publishing. Returns
+// an array instead of a single row now, keyed by language.
+export async function getSimplifiedLessonsForTeacher(lessonId: string) {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
@@ -190,28 +243,35 @@ export async function getSimplifiedLessonForTeacher(lessonId: string) {
         .single()
 
     if (!lesson || (lesson as any).courses.teacher_id !== user.id) {
-        return null
+        return []
     }
 
     const { data, error } = await supabase
         .from('lesson_simplifications')
-        .select('id, content, is_published, created_at, updated_at')
+        .select('id, language, content, is_published, created_at, updated_at')
         .eq('lesson_id', lessonId)
         .is('deleted_at', null)
-        .maybeSingle()
+        .order('language', { ascending: true })
 
     if (error) {
-        return null
+        return []
     }
     return data
 }
 
-// Student view: published content only, checked server-side too (not
-// just relying on RLS), same as get-reteach-lesson-for-student.ts used
-// to do. Returns null if not published, not found, or student isn't
-// enrolled/active.
-export async function getSimplifiedLessonForStudent(lessonId: string) {
+// Student view: published content only, in the requested language,
+// checked server-side too (not just relying on RLS), same as
+// get-reteach-lesson-for-student.ts used to do. Returns null if that
+// language isn't published, not found, or the student isn't
+// enrolled/active — the UI shows a plain "not available in this
+// language yet" message rather than an error in that case.
+export async function getSimplifiedLessonForStudent(lessonId: string, language: SimplifyLanguage) {
     const user = await requireUser()
+
+    if (!isValidLanguage(language)) {
+        return null
+    }
+
     const supabase = await createClient()
 
     const { data: lesson } = await supabase
@@ -239,8 +299,9 @@ export async function getSimplifiedLessonForStudent(lessonId: string) {
 
     const { data, error } = await supabase
         .from('lesson_simplifications')
-        .select('id, content, updated_at')
+        .select('id, language, content, updated_at')
         .eq('lesson_id', lessonId)
+        .eq('language', language)
         .eq('is_published', true)
         .is('deleted_at', null)
         .maybeSingle()
@@ -249,4 +310,24 @@ export async function getSimplifiedLessonForStudent(lessonId: string) {
         return null
     }
     return data
+}
+
+// Lightweight check for which languages are actually published for a
+// lesson, so the student-facing toggle can grey out / disable a
+// language that has nothing to show yet, instead of the student
+// picking it and hitting an empty state with no context.
+export async function getAvailableSimplifyLanguages(lessonId: string): Promise<SimplifyLanguage[]> {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+        .from('lesson_simplifications')
+        .select('language')
+        .eq('lesson_id', lessonId)
+        .eq('is_published', true)
+        .is('deleted_at', null)
+
+    if (error || !data) {
+        return []
+    }
+    return data.map((row) => row.language as SimplifyLanguage)
 }

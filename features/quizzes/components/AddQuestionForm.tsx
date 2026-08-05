@@ -6,7 +6,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { addQuestion } from '@/features/quizzes/actions/create-quiz'
+import { addQuestion, resetQuizAttempts } from '@/features/quizzes/actions/create-quiz'
 
 type QuestionType = 'multiple_choice_single' | 'true_false' | 'checklist' | 'short_answer'
 
@@ -145,6 +145,31 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
 
         resetForm()
         router.refresh()
+
+        // This quiz was already live when the question was added — ask
+        // whether students who already attempted it should get a clean
+        // slate against the updated question set. See create-quiz.ts's
+        // resetQuizAttempts (migration 062 RPC) for why this can't just
+        // happen silently: it deletes real submitted/graded rows, so it
+        // needs an explicit yes, same as any other button-danger-shaped
+        // action in this app.
+        if (result.quizPublished) {
+            const shouldReset = window.confirm(
+                "This quiz is already posted. Students who already took it will keep their old results unless you let them retake it with this new question. Reset everyone's attempts so they can retake it?"
+            )
+            if (shouldReset) {
+                const resetResult = await resetQuizAttempts(quizId)
+                if (!resetResult.ok) {
+                    window.alert(resetResult.error)
+                } else {
+                    window.alert(
+                        resetResult.attemptsCleared > 0
+                            ? `Done — ${resetResult.attemptsCleared} attempt${resetResult.attemptsCleared === 1 ? '' : 's'} cleared. Students can retake the quiz now.`
+                            : 'Done — no one had attempted this quiz yet.'
+                    )
+                }
+            }
+        }
     }
 
     return (

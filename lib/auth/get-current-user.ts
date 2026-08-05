@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { isSessionInactive } from '@/lib/security/guards'
 
 type Role = 'admin' | 'teacher' | 'student'
+type SimplifyLanguage = 'english' | 'tagalog'
 
 /**
  * Gets the current logged in user, or null if nobody is logged in.
@@ -27,7 +28,7 @@ export async function getCurrentUser() {
     }
     const { data: profile } = await supabase
         .from('users')
-        .select('id, role, is_active, full_name, last_seen_at')
+        .select('id, role, is_active, full_name, last_seen_at, preferred_simplify_language')
         .eq('id', user.id)
         .single()
     if (!profile || !profile.is_active) {
@@ -39,6 +40,7 @@ export async function getCurrentUser() {
         role: profile.role as Role,
         fullName: profile.full_name,
         lastSeenAt: profile.last_seen_at as string | null,
+        preferredSimplifyLanguage: (profile.preferred_simplify_language as SimplifyLanguage | null) ?? 'english',
     }
 }
 

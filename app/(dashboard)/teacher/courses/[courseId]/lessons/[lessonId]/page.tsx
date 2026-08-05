@@ -6,7 +6,7 @@ import { listMaterials } from '@/features/materials/actions/materials'
 import { CommentsTab } from '@/features/lessons/components/CommentsTab'
 import { listLessonComments } from '@/features/lessons/actions/lesson-comments'
 import { SimplifyTab } from '@/features/simplify/components/SimplifyTab'
-import { getSimplifiedLessonForTeacher } from '@/features/simplify/actions/simplify'
+import { getSimplifiedLessonsForTeacher } from '@/features/simplify/actions/simplify'
 import { extractYoutubeVideoId, toYoutubeEmbedUrl } from '@/lib/utils/youtube'
 
 export default async function LessonViewPage({
@@ -28,7 +28,11 @@ export default async function LessonViewPage({
     const allMaterials = await listMaterials(courseId, { type: 'lesson', lessonId })
     const lessonMaterials = allMaterials.filter((m) => m.lesson_id === lessonId)
     const comments = await listLessonComments(lessonId)
-    const simplification = user?.role === 'teacher' ? await getSimplifiedLessonForTeacher(lessonId) : null
+
+    // Returns an array now — up to one row per language (English,
+    // Tagalog, or both) — instead of a single simplification object.
+    // See features/simplify/actions/simplify.ts.
+    const simplifications = user?.role === 'teacher' ? await getSimplifiedLessonsForTeacher(lessonId) : []
 
     const videoId = lesson.youtube_url ? extractYoutubeVideoId(lesson.youtube_url) : null
 
@@ -68,7 +72,7 @@ export default async function LessonViewPage({
                     <h2 className="font-heading text-h3 text-ink mb-4">Simplify Lesson</h2>
                     <SimplifyTab
                         lessonId={lessonId}
-                        initialSimplification={simplification}
+                        initialSimplifications={simplifications}
                         isTeacher={true}
                     />
                 </section>

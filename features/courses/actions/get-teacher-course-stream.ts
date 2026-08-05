@@ -12,7 +12,7 @@ export interface TeacherStreamItem {
     isPublished: boolean
     createdAt: string
     dueAt?: string | null // assignments only
-    ungradedCount?: number // assignments only for now — count of students still needing grading. Quiz grading flow not wired up yet.
+    ungradedCount?: number // assignments and quizzes now — count of students still needing grading.
 }
 
 /**
@@ -63,25 +63,56 @@ export async function getTeacherCourseStream(
     }
 
     const assignmentIds = (assignmentsRes.data ?? []).map((a) => a.id)
+    const quizIds = (quizzesRes.data ?? []).map((q) => q.id)
 
     // Ungraded submission counts per assignment, scoped to this course's
     // own assignment ids — same query shape as teacher-dashboard.ts's
-    // cross-course version, just filtered down to one course. Quiz
-    // short-answer counting is intentionally not included yet — the quiz
-    // attempt/grading flow needs a separate review before its "N to
-    // grade" badge can link somewhere correct.
+    // cross-course version, just filtered down to one course.
     const submissionsRes =
         assignmentIds.length === 0
-            ? { data: [] as { assignment_id: string }[] }
+            ? { data: [] as { assignment_id: string }[], error: null }
             : await supabase
                   .from('assignment_submissions')
                   .select('assignment_id')
                   .in('assignment_id', assignmentIds)
                   .in('status', ['submitted', 'resubmitted'])
 
+    // Ungraded quiz attempts per quiz — now wired up (was previously
+    // not, per this file's own earlier comment). status = 'submitted'
+    // means "not yet graded": compute_quiz_score() (migration 016/017)
+    // auto-flips a fully auto-gradable attempt straight to 'graded' on
+    // submit, so an attempt staying at 'submitted' means it has at
+    // least one short_answer response still waiting on a teacher —
+    // same real-world meaning as teacher-dashboard.ts's stricter
+    // per-response check, just counted at the attempt level instead of
+    // the response level, since that's simpler and matches in practice.
+    const quizAttemptsRes =
+        quizIds.length === 0
+            ? { data: [] as { quiz_id: string }[], error: null }
+            : await supabase
+                  .from('quiz_attempts')
+                  .select('quiz_id')
+                  .in('quiz_id', quizIds)
+                  .eq('status', 'submitted')
+
+    // Same silent-swallow gap as teacher-dashboard.ts — logging the
+    // real error instead of letting it look identical to "zero
+    // ungraded" via the ?? [] fallback below.
+    if (submissionsRes.error) {
+        console.error('getTeacherCourseStream submissionsRes error:', submissionsRes.error.message, submissionsRes.error.code, submissionsRes.error.details)
+    }
+    if (quizAttemptsRes.error) {
+        console.error('getTeacherCourseStream quizAttemptsRes error:', quizAttemptsRes.error.message, quizAttemptsRes.error.code, quizAttemptsRes.error.details)
+    }
+
     const ungradedByAssignment = new Map<string, number>()
     for (const s of submissionsRes.data ?? []) {
         ungradedByAssignment.set(s.assignment_id, (ungradedByAssignment.get(s.assignment_id) ?? 0) + 1)
+    }
+
+    const ungradedByQuiz = new Map<string, number>()
+    for (const a of quizAttemptsRes.data ?? []) {
+        ungradedByQuiz.set(a.quiz_id, (ungradedByQuiz.get(a.quiz_id) ?? 0) + 1)
     }
 
     const items: TeacherStreamItem[] = [
@@ -98,6 +129,7 @@ export async function getTeacherCourseStream(
             title: q.title,
             isPublished: q.is_published,
             createdAt: q.created_at,
+            ungradedCount: ungradedByQuiz.get(q.id) ?? 0,
         })),
         ...(assignmentsRes.data ?? []).map((a: { id: string; title: string; is_published: boolean; due_at: string | null; created_at: string }) => ({
             id: a.id,

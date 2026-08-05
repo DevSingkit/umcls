@@ -76,6 +76,17 @@ export async function getTeacherDashboardData() {
             .eq('status', 'active'),
     ])
 
+    // Same silent-swallow risk as the submissions/short-answer queries
+    // below — if assignmentIds ends up empty when it shouldn't, this is
+    // the query to check first, since everything else short-circuits
+    // off of it.
+    if (assignmentsResult.error) {
+        console.error('teacher-dashboard assignmentsResult error:', assignmentsResult.error.message, assignmentsResult.error.code, assignmentsResult.error.details)
+    }
+    if (quizzesResult.error) {
+        console.error('teacher-dashboard quizzesResult error:', quizzesResult.error.message, quizzesResult.error.code, quizzesResult.error.details)
+    }
+
     const assignmentById = new Map((assignmentsResult.data ?? []).map((a) => [a.id, a]))
     const quizById = new Map((quizzesResult.data ?? []).map((q) => [q.id, q]))
     const assignmentIds = [...assignmentById.keys()]
@@ -85,7 +96,7 @@ export async function getTeacherDashboardData() {
         // Ungraded assignment submissions, scoped to this teacher's
         // assignment ids directly.
         assignmentIds.length === 0
-            ? Promise.resolve({ data: [] as any[] })
+            ? Promise.resolve({ data: [] as any[], error: null })
             : supabase
                   .from('assignment_submissions')
                   .select(
@@ -100,17 +111,45 @@ export async function getTeacherDashboardData() {
         // no course_id of its own, so it's still nested here for the
         // "any ungraded short_answer" check, but the outer filter is on
         // quiz_id, not on a joined column.
+        //
+        // FIX: previously filtered .eq('status', 'submitted'), on the
+        // assumption an attempt with a still-ungraded short-answer
+        // response always sits at status = 'submitted' until a teacher
+        // grades it. That assumption is wrong in practice — an attempt
+        // can already show status = 'graded' (and even a computed
+        // score) while a short-answer response on it still has
+        // is_correct = null, which silently dropped it off this list.
+        // The real, reliable signal is the response's own is_correct,
+        // same source of truth already used by grade-short-answer.ts's
+        // listAttemptsForQuiz — status is not. Broadened to both
+        // 'submitted' and 'graded' rather than dropping the filter
+        // entirely, so a quiz still genuinely in_progress (student
+        // hasn't finished yet, autosaved rows with no grading decided
+        // either way) doesn't show up here prematurely.
         quizIds.length === 0
-            ? Promise.resolve({ data: [] as any[] })
+            ? Promise.resolve({ data: [] as any[], error: null })
             : supabase
                   .from('quiz_attempts')
                   .select(
                       'id, submitted_at, quiz_id, users!quiz_attempts_student_id_fkey(full_name), quiz_responses(is_correct, questions(question_type))'
                   )
                   .in('quiz_id', quizIds)
-                  .eq('status', 'submitted')
+                  .in('status', ['submitted', 'graded'])
                   .order('submitted_at', { ascending: false }),
     ])
+
+    // Was silently swallowed via ?? [] with no error check at all —
+    // same class of bug as the deactivateUser/toggleQuizPublish fixes
+    // found earlier this session, just on the read side instead of
+    // write. Logging here so a real query error (as opposed to a
+    // genuinely empty result) is visible instead of looking identical
+    // to "nothing needs grading."
+    if (submissionsResult.error) {
+        console.error('teacher-dashboard submissionsResult error:', submissionsResult.error.message, submissionsResult.error.code, submissionsResult.error.details)
+    }
+    if (shortAnswerResult.error) {
+        console.error('teacher-dashboard shortAnswerResult error:', shortAnswerResult.error.message, shortAnswerResult.error.code, shortAnswerResult.error.details)
+    }
 
     const distinctStudentIds = new Set((studentsResult.data ?? []).map((e) => e.student_id))
 

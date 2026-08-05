@@ -11,10 +11,12 @@ import { toggleQuizPublish } from '@/features/quizzes/actions/create-quiz'
 
 export function PostQuizButton({
     quizId,
+    courseId,
     isPublished,
     hasQuestions,
 }: {
     quizId: string
+    courseId: string
     isPublished: boolean
     hasQuestions: boolean
 }) {
@@ -32,7 +34,16 @@ export function PostQuizButton({
                 return
             }
             setPublished(publish)
-            router.refresh()
+            // Posting is the "I'm done" action — send the teacher back
+            // to the course page to see it live, same as how posting an
+            // assignment/lesson already returns to the Stream. Unposting
+            // stays on this page (router.refresh() only) since that's a
+            // "keep editing" action, not a "done" one.
+            if (publish) {
+                router.push(`/teacher/courses/${courseId}`)
+            } else {
+                router.refresh()
+            }
         })
     }
 

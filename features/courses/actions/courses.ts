@@ -7,10 +7,22 @@ import { z } from 'zod'
 import { redirect } from 'next/navigation'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
+
+// grade_level is optional on create — a teacher may not know or want
+// to set it right away, same reasoning the migration used for making
+// the column nullable. It's used to scope what grade level Simplify
+// generation targets, once set.
 const createCourseSchema = z.object({
     title: z.string().min(2, 'Title is too short'),
     description: z.string().optional(),
     subject: z.string().optional(),
+    gradeLevel: z
+        .string()
+        .optional()
+        .transform((val) => (val ? parseInt(val, 10) : undefined))
+        .refine((val) => val === undefined || (val >= 1 && val <= 6), {
+            message: 'Grade level must be between 1 and 6.',
+        }),
 })
 export type CreateCourseResult =
     | { ok: true }
@@ -22,17 +34,19 @@ export async function createCourse(formData: FormData): Promise<CreateCourseResu
         title: formData.get('title'),
         description: formData.get('description'),
         subject: formData.get('subject'),
+        gradeLevel: formData.get('gradeLevel'),
     })
     if (!parsed.success) {
         return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form and try again.' }
     }
-    const { title, description, subject } = parsed.data
+    const { title, description, subject, gradeLevel } = parsed.data
     const supabase = await createClient()
     const { error } = await supabase.from('courses').insert({
         teacher_id: user.id,
         title,
         description: description || null,
         subject: subject || null,
+        grade_level: gradeLevel ?? null,
     })
     if (error) {
         return { ok: false, error: 'Could not create the course. Please try again.' }
@@ -40,8 +54,9 @@ export async function createCourse(formData: FormData): Promise<CreateCourseResu
     redirect('/teacher/courses')
 }
 
-// Lets a teacher edit their own course's title/description/subject.
-// Same ownership check as toggleCoursePublish — see AUTH_NOTES.md.
+// Lets a teacher edit their own course's title/description/subject/
+// grade level. Same ownership check as toggleCoursePublish — see
+// AUTH_NOTES.md.
 export async function updateCourse(courseId: string, formData: FormData): Promise<CreateCourseResult> {
     const user = await requireRole(['teacher'])
 
@@ -49,11 +64,12 @@ export async function updateCourse(courseId: string, formData: FormData): Promis
         title: formData.get('title'),
         description: formData.get('description'),
         subject: formData.get('subject'),
+        gradeLevel: formData.get('gradeLevel'),
     })
     if (!parsed.success) {
         return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form and try again.' }
     }
-    const { title, description, subject } = parsed.data
+    const { title, description, subject, gradeLevel } = parsed.data
     const supabase = await createClient()
 
     const { data: course } = await supabase
@@ -69,7 +85,12 @@ export async function updateCourse(courseId: string, formData: FormData): Promis
 
     const { error } = await supabase
         .from('courses')
-        .update({ title, description: description || null, subject: subject || null })
+        .update({
+            title,
+            description: description || null,
+            subject: subject || null,
+            grade_level: gradeLevel ?? null,
+        })
         .eq('id', courseId)
 
     if (error) {
@@ -86,7 +107,7 @@ export async function getCourseForEdit(courseId: string) {
     const supabase = await createClient()
     const { data } = await supabase
         .from('courses')
-        .select('id, title, description, subject, show_classmates')
+        .select('id, title, description, subject, show_classmates, grade_level')
         .eq('id', courseId)
         .eq('teacher_id', user.id)
         .is('deleted_at', null)
@@ -205,7 +226,7 @@ export async function getMyCourses() {
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('courses')
-        .select('id, title, description, subject, is_published, created_at')
+        .select('id, title, description, subject, is_published, created_at, grade_level')
         .eq('teacher_id', user.id)
         .is('deleted_at', null)
         .is('archived_at', null)
@@ -226,7 +247,7 @@ export async function getMyArchivedCourses() {
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('courses')
-        .select('id, title, description, subject, is_published, created_at')
+        .select('id, title, description, subject, is_published, created_at, grade_level')
         .eq('teacher_id', user.id)
         .is('deleted_at', null)
         .not('archived_at', 'is', null)

@@ -112,18 +112,31 @@ export async function gradeShortAnswer(
     const maxPoints = (response as any).questions.points ?? 1
     const clampedPoints = Math.max(0, Math.min(pointsAwarded, maxPoints))
 
-    const { error: updateError } = await supabaseAdmin
-        .from('quiz_responses')
-        .update({
-            points_awarded: clampedPoints,
-            is_correct: clampedPoints > 0,
-            feedback: feedback?.trim() || null,
-        })
-        .eq('attempt_id', attemptId)
-        .eq('question_id', questionId)
+    // FIX (migration 063): this used to be a raw supabaseAdmin
+    // .update() on quiz_responses. That looked safe (service-role
+    // bypasses RLS) but missed that trg_prevent_late_response
+    // (migration 060) requires quiz_attempts.status = 'in_progress'
+    // for ANY update to quiz_responses, regardless of which client
+    // issues it — service-role bypasses RLS, not triggers. By the time
+    // a teacher grades a short-answer response the attempt is always
+    // 'submitted'/'graded', so that update was silently rejected every
+    // time, surfacing only as this function's generic error message.
+    // grade_short_answer_response() sets a session-local flag the
+    // trigger now checks for and skips its check when set — same
+    // pattern as archive_delete_audit_logs()'s bypass of
+    // prevent_audit_log_mutation(). Must go through the regular
+    // (session-bound) client, not supabaseAdmin — the RPC's own
+    // ownership check relies on auth.uid(), which resolves to null
+    // under the service-role key.
+    const { error: updateError } = await supabase.rpc('grade_short_answer_response', {
+        p_attempt_id: attemptId,
+        p_question_id: questionId,
+        p_points_awarded: clampedPoints,
+        p_feedback: feedback?.trim() || null,
+    })
 
     if (updateError) {
-        return { ok: false, error: 'Could not save the grade.' }
+        return { ok: false, error: `Could not save the grade: ${updateError.message}` }
     }
 
     await computeAttemptTotal(attemptId, supabase, supabaseAdmin)

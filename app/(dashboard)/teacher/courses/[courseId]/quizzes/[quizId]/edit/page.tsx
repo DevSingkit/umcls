@@ -1,11 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getQuizForTeacher } from '@/features/quizzes/actions/create-quiz'
 import { AddQuestionForm } from '@/features/quizzes/components/AddQuestionForm'
-import { PassingScoreSetting } from '@/features/quizzes/components/PassingScoreSetting'
-import { TimeLimitSetting } from '@/features/quizzes/components/TimeLimitSetting'
-import { QuizDeadlineSetting } from '@/features/quizzes/components/QuizDeadlineSetting'
-import { ResultsVisibilitySetting } from '@/features/quizzes/components/ResultsVisibilitySetting'
-import { GradingComponentSetting } from '@/features/quizzes/components/GradingComponentSetting'
+import { QuizSettingsForm } from '@/features/quizzes/components/QuizSettingsForm'
 import { QuestionCard } from '@/features/quizzes/components/QuestionCard'
 import { PostQuizButton } from '@/features/quizzes/components/PostQuizButton'
 import { QuizTitleField } from '@/features/quizzes/components/QuizTitleField'
@@ -49,40 +45,18 @@ export default async function QuizEditPage({
 
     return (
         <div className="max-w-2xl">
-            <div className="mb-8">
+            <h1 className="font-heading text-h1 text-ink mb-6">
+                {quiz.title ? 'Edit Quiz' : 'Create Quiz'}
+            </h1>
+
+            <div className="mb-2">
                 <QuizTitleField quizId={quiz.id} initialTitle={quiz.title} />
-                <p className="text-caption text-text-secondary mt-1">
-                    {questions.length === 0
-                        ? 'No questions yet — add your first one below.'
-                        : `${questions.length} question${questions.length === 1 ? '' : 's'} drafted`}
-                </p>
             </div>
-
-            <div className="space-y-6 mb-6">
-                <GradingComponentSetting
-                    quizId={quiz.id}
-                    currentGradingComponent={quiz.grading_component}
-                />
-
-                <TimeLimitSetting quizId={quiz.id} currentTimeLimitMinutes={quiz.time_limit_minutes} />
-
-                <QuizDeadlineSetting
-                    quizId={quiz.id}
-                    currentAvailableUntil={quiz.available_until}
-                    currentAllowLate={quiz.allow_late}
-                />
-
-                {questions.length > 0 && (
-                    <PassingScoreSetting
-                        quizId={quiz.id}
-                        totalQuestions={questions.length}
-                        currentPassingScore={quiz.passing_score}
-                    />
-                )}
-
-                <ResultsVisibilitySetting quizId={quiz.id} currentVisibility={quiz.show_results_after} />
-            </div>
-
+            <p className="text-caption text-text-secondary mb-6">
+                {questions.length === 0
+                    ? 'No questions yet — add your first one below.'
+                    : `${questions.length} question${questions.length === 1 ? '' : 's'} drafted`}
+            </p>
             {questions.length > 0 && (
                 <div className="flex flex-wrap items-center gap-3 mb-8 bg-surface rounded-md border border-hairline p-4">
                     <Link
@@ -100,10 +74,25 @@ export default async function QuizEditPage({
                 </div>
             )}
 
+            <div className="mb-6">
+                <QuizSettingsForm
+                    quizId={quiz.id}
+                    currentGradingComponent={quiz.grading_component}
+                    currentTimeLimitMinutes={quiz.time_limit_minutes}
+                    currentAvailableUntil={quiz.available_until}
+                    currentAllowLate={quiz.allow_late}
+                    totalQuestions={questions.length}
+                    currentPassingScore={quiz.passing_score}
+                    currentVisibility={quiz.show_results_after}
+                />
+            </div>
+
+            
+
             {questions.length > 0 && (
                 <div className="space-y-4 mb-8">
                     {questions.map((question, index) => (
-                        <QuestionCard key={question.id} question={question} index={index} />
+                        <QuestionCard key={question.id} question={question} index={index} quizId={quiz.id} />
                     ))}
                 </div>
             )}
@@ -113,6 +102,7 @@ export default async function QuizEditPage({
             <div className="mt-8">
                 <PostQuizButton
                     quizId={quiz.id}
+                    courseId={courseId}
                     isPublished={quiz.is_published}
                     hasQuestions={questions.length > 0}
                 />

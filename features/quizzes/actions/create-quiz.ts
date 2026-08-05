@@ -18,10 +18,13 @@ export type CreateQuizResult =
     | { ok: false; error: string }
 
 // Skips the separate "title first" page entirely — a teacher clicking
-// Create > Quiz gets a draft quiz immediately (title "Untitled quiz")
-// and is sent straight to the edit page, where the title is just
-// another editable field (same pattern as lesson/assignment edit
-// pages), rather than a one-time-only creation step.
+// Create > Quiz gets a draft quiz immediately and is sent straight to
+// the edit page, where the title is just another editable field (same
+// pattern as lesson/assignment edit pages), rather than a one-time-only
+// creation step. Starts genuinely blank (not "Untitled quiz") — the
+// edit page's QuizTitleField now visibly marks an empty title as
+// required, which only works if it actually starts empty rather than
+// pre-filled with a placeholder that reads as a real name.
 export async function createDraftQuiz(courseId: string): Promise<CreateQuizResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
@@ -47,7 +50,7 @@ export async function createDraftQuiz(courseId: string): Promise<CreateQuizResul
         .insert({
             course_id: courseId,
             created_by: user.id,
-            title: 'Untitled quiz',
+            title: '',
             passing_score: 1,
             max_attempts: 1,
         })
@@ -95,10 +98,17 @@ export async function updateQuizTitle(formData: FormData): Promise<UpdateQuizTit
         return { ok: false, error: 'You do not have access to this quiz.' }
     }
 
-    const { error } = await supabase.from('quizzes').update({ title }).eq('id', quizId)
+    const { data: updated, error } = await supabase
+        .from('quizzes')
+        .update({ title })
+        .eq('id', quizId)
+        .select('id')
 
     if (error) {
-        return { ok: false, error: 'Could not save the title. Please try again.' }
+        return { ok: false, error: `Could not save the title: ${error.message}` }
+    }
+    if (!updated || updated.length === 0) {
+        return { ok: false, error: 'Could not save the title — the update did not apply.' }
     }
 
     return { ok: true }
@@ -162,7 +172,7 @@ const addQuestionSchema = z.object({
 })
 
 export type AddQuestionResult =
-    | { ok: true }
+    | { ok: true; quizPublished: boolean }
     | { ok: false; error: string }
 
 // Adds one question, plus its answer options (if any), to a quiz.
@@ -190,7 +200,7 @@ export async function addQuestion(formData: FormData): Promise<AddQuestionResult
 
     const { data: quiz } = await supabase
         .from('quizzes')
-        .select('id, course_id, courses!inner(teacher_id)')
+        .select('id, course_id, is_published, courses!inner(teacher_id)')
         .eq('id', quizId)
         .single()
 
@@ -235,7 +245,7 @@ export async function addQuestion(formData: FormData): Promise<AddQuestionResult
 
     // Short answer has no answer options at all.
     if (questionType === 'short_answer') {
-        return { ok: true }
+        return { ok: true, quizPublished: (quiz as any).is_published }
     }
 
     let optionRows: { question_id: string; option_text: string; is_correct: boolean; order_index: number }[] = []
@@ -288,7 +298,7 @@ export async function addQuestion(formData: FormData): Promise<AddQuestionResult
         return { ok: false, error: 'Could not save the answer options.' }
     }
 
-    return { ok: true }
+    return { ok: true, quizPublished: (quiz as any).is_published }
 }
 
 const updateQuestionSchema = z.object({
@@ -300,7 +310,7 @@ const updateQuestionSchema = z.object({
 })
 
 export type UpdateQuestionResult =
-    | { ok: true }
+    | { ok: true; quizPublished: boolean }
     | { ok: false; error: string }
 
 // Edits an existing question in place. Answer options are replaced
@@ -328,7 +338,7 @@ export async function updateQuestion(formData: FormData): Promise<UpdateQuestion
 
     const { data: question } = await supabase
         .from('questions')
-        .select('id, quizzes!inner(courses!inner(teacher_id))')
+        .select('id, quizzes!inner(is_published, courses!inner(teacher_id))')
         .eq('id', questionId)
         .single()
 
@@ -360,7 +370,7 @@ export async function updateQuestion(formData: FormData): Promise<UpdateQuestion
     }
 
     if (questionType === 'short_answer') {
-        return { ok: true }
+        return { ok: true, quizPublished: (question as any).quizzes.is_published }
     }
 
     let optionRows: { question_id: string; option_text: string; is_correct: boolean; order_index: number }[] = []
@@ -410,11 +420,11 @@ export async function updateQuestion(formData: FormData): Promise<UpdateQuestion
         return { ok: false, error: 'Could not save the answer options.' }
     }
 
-    return { ok: true }
+    return { ok: true, quizPublished: (question as any).quizzes.is_published }
 }
 
 export type DeleteQuestionResult =
-    | { ok: true }
+    | { ok: true; quizPublished: boolean }
     | { ok: false; error: string }
 
 // Deletes a question and its answer options (FK cascade handles the
@@ -432,7 +442,7 @@ export async function deleteQuestion(questionId: string): Promise<DeleteQuestion
 
     const { data: question } = await supabase
         .from('questions')
-        .select('id, quizzes!inner(courses!inner(teacher_id))')
+        .select('id, quizzes!inner(is_published, courses!inner(teacher_id))')
         .eq('id', questionId)
         .single()
 
@@ -446,7 +456,49 @@ export async function deleteQuestion(questionId: string): Promise<DeleteQuestion
         return { ok: false, error: 'Could not delete the question. Please try again.' }
     }
 
-    return { ok: true }
+    return { ok: true, quizPublished: (question as any).quizzes.is_published }
+}
+
+export type ResetQuizAttemptsResult =
+    | { ok: true; attemptsCleared: number }
+    | { ok: false; error: string }
+
+// Wipes every existing attempt (and response) for a quiz via the
+// migration-062 RPC, so students who already took it can take the
+// corrected version. Called from the edit page after a question
+// add/edit/delete on a quiz that was already published — see
+// AddQuestionForm.tsx / QuestionCard.tsx, which prompt the teacher
+// with a confirm dialog before calling this. Not gated on
+// is_published here — a teacher might reasonably want to clear stray
+// attempts on a quiz that's since been unpublished too, and baking
+// that check into this function would just be a second place for "is
+// this quiz live" to drift from the actual column.
+export async function resetQuizAttempts(quizId: string): Promise<ResetQuizAttemptsResult> {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+
+    const parsedId = z.string().uuid().safeParse(quizId)
+    if (!parsedId.success) {
+        return { ok: false, error: 'Invalid quiz.' }
+    }
+
+    const { data: quiz } = await supabase
+        .from('quizzes')
+        .select('id, courses!inner(teacher_id)')
+        .eq('id', quizId)
+        .single()
+
+    if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
+        return { ok: false, error: 'You do not have access to this quiz.' }
+    }
+
+    const { data, error } = await supabase.rpc('reset_quiz_attempts', { p_quiz_id: quizId })
+
+    if (error) {
+        return { ok: false, error: `Could not reset attempts: ${error.message}` }
+    }
+
+    return { ok: true, attemptsCleared: (data as number) ?? 0 }
 }
 
 // Loads a quiz and its questions, including each question's answer

@@ -23,6 +23,7 @@ export default async function EditCoursePage({
                 initialDescription={course.description}
                 initialSubject={course.subject}
                 initialShowClassmates={course.show_classmates}
+                initialGradeLevel={course.grade_level}
             />
         </div>
     )

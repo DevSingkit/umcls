@@ -7,7 +7,12 @@ import { listMaterials } from '@/features/materials/actions/materials'
 import { CommentsTab } from '@/features/lessons/components/CommentsTab'
 import { listLessonComments } from '@/features/lessons/actions/lesson-comments'
 import { SimplifyTab } from '@/features/simplify/components/SimplifyTab'
-import { getSimplifiedLessonForStudent } from '@/features/simplify/actions/simplify'
+import {
+    getSimplifiedLessonForStudent,
+    getAvailableSimplifyLanguages,
+} from '@/features/simplify/actions/simplify'
+
+type SimplifyLanguage = 'english' | 'tagalog'
 
 // Shows the lesson content to a student. Only works if the lesson is
 // published and the student is enrolled in that course. Both checks
@@ -16,10 +21,14 @@ import { getSimplifiedLessonForStudent } from '@/features/simplify/actions/simpl
 // read/write (comments) or read-only (materials) below the reader.
 export default async function StudentLessonViewPage({
     params,
+    searchParams,
 }: {
     params: Promise<{ courseId: string; lessonId: string }>
+    searchParams: Promise<{ lang?: string }>
 }) {
     const { courseId, lessonId } = await params
+    const { lang } = await searchParams
+
     const result = await getLesson(lessonId)
     if (!result) {
         notFound()
@@ -31,7 +40,18 @@ export default async function StudentLessonViewPage({
     const allMaterials = await listMaterials(courseId, { type: 'lesson', lessonId })
     const lessonMaterials = allMaterials.filter((m) => m.lesson_id === lessonId)
     const comments = await listLessonComments(lessonId)
-    const simplification = await getSimplifiedLessonForStudent(lessonId)
+
+    // Language resolution order: explicit ?lang= in the URL (set by
+    // clicking the toggle) > the student's saved preference
+    // (users.preferred_simplify_language, migration 067, returned by
+    // getCurrentUser() as preferredSimplifyLanguage) > English.
+    const requestedLanguage: SimplifyLanguage =
+        lang === 'tagalog' ? 'tagalog' : lang === 'english' ? 'english' : (user?.preferredSimplifyLanguage ?? 'english')
+
+    const [simplification, availableLanguages] = await Promise.all([
+        getSimplifiedLessonForStudent(lessonId, requestedLanguage),
+        getAvailableSimplifyLanguages(lessonId),
+    ])
 
     return (
         <div className="max-w-2xl">
@@ -52,8 +72,10 @@ export default async function StudentLessonViewPage({
             <div className="mb-8">
                 <SimplifyTab
                     lessonId={lessonId}
-                    initialSimplification={simplification}
                     isTeacher={false}
+                    initialContent={simplification?.content ?? null}
+                    initialLanguage={requestedLanguage}
+                    availableLanguages={availableLanguages}
                 />
             </div>
 
