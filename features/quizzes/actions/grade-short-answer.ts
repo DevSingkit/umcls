@@ -33,26 +33,16 @@ async function computeAttemptTotal(attemptId: string, supabase: any, supabaseAdm
 
     const totalPoints = responses.reduce((sum: number, r: any) => sum + (r.points_awarded ?? 0), 0)
 
-    const { data: attempt } = await supabase
-        .from('quiz_attempts')
-        .select('quiz_id, quizzes(passing_score)')
-        .eq('id', attemptId)
-        .single()
-
-    const passingScore = (attempt as any)?.quizzes?.passing_score ?? 0
-    const isPassing = totalPoints >= passingScore
-    // Score shown to the student is still 0-100, consistent with
-    // grade-quiz-submission.ts — total questions doubles as "max points"
-    // since every question is worth 1 point today.
-    const maxPoints = responses.length
-    const score = maxPoints > 0 ? Math.round((totalPoints / maxPoints) * 100) : 0
-
+    // Score is the raw point total now, not a 0-100 percentage —
+    // matches gradeQuizSubmission's auto-graded path, and matches the
+    // school's own gradebook, which shows raw scores like "8/10", not
+    // a converted percentage. No pass/fail anymore either — removed
+    // per product decision, quizzes no longer have a passing_score.
     const { data: gradedAttempt } = await supabase
         .from('quiz_attempts')
         .update({
             status: 'graded',
-            score,
-            is_passing: isPassing,
+            score: totalPoints,
             graded_at: new Date().toISOString(),
         })
         .eq('id', attemptId)
@@ -78,13 +68,17 @@ async function computeAttemptTotal(attemptId: string, supabase: any, supabaseAdm
 
 export type GradeShortAnswerResult = { ok: true } | { ok: false; error: string }
 
+// Admin can grade any attempt, same as the owning teacher — the
+// underlying RPC (grade_short_answer_response, migration 070) was
+// updated to accept admin too, this app-layer check just needs to stop
+// blocking admin before it ever reaches the RPC.
 export async function gradeShortAnswer(
     attemptId: string,
     questionId: string,
     pointsAwarded: number,
     feedback?: string
 ): Promise<GradeShortAnswerResult> {
-    const user = await requireRole(['teacher'])
+    const user = await requireRole(['teacher', 'admin'])
     const supabase = await createClient()
     const supabaseAdmin = createAdminClient()
 
@@ -94,7 +88,8 @@ export async function gradeShortAnswer(
         .eq('id', attemptId)
         .single()
 
-    if (!attempt || (attempt as any).quizzes.courses.teacher_id !== user.id) {
+    const isOwningTeacher = (attempt as any)?.quizzes?.courses?.teacher_id === user.id
+    if (!attempt || (!isOwningTeacher && user.role !== 'admin')) {
         return { ok: false, error: 'You do not have access to this attempt.' }
     }
 
@@ -171,7 +166,7 @@ export async function listAttemptsForQuiz(quizId: string) {
     const { data: attempts } = await supabase
         .from('quiz_attempts')
         .select(
-            'id, status, score, is_passing, submitted_at, attempt_number, users!quiz_attempts_student_id_fkey(full_name), quiz_responses(is_correct, questions(question_type))'
+            'id, status, score, submitted_at, attempt_number, users!quiz_attempts_student_id_fkey(full_name), quiz_responses(is_correct, questions(question_type))'
         )
         .eq('quiz_id', quizId)
         .order('submitted_at', { ascending: false })
@@ -181,7 +176,6 @@ export async function listAttemptsForQuiz(quizId: string) {
         studentName: a.users?.full_name ?? 'Unknown student',
         status: a.status,
         score: a.score,
-        isPassing: a.is_passing,
         submittedAt: a.submitted_at,
         attemptNumber: a.attempt_number,
         needsGrading: (a.quiz_responses ?? []).some(
@@ -198,7 +192,7 @@ export async function getAttemptForGrading(attemptId: string) {
     const { data: attempt } = await supabase
         .from('quiz_attempts')
         .select(
-            'id, quiz_id, status, score, is_passing, users!quiz_attempts_student_id_fkey(full_name), quizzes!inner(title, course_id, courses!inner(teacher_id))'
+            'id, quiz_id, status, score, users!quiz_attempts_student_id_fkey(full_name), quizzes!inner(title, course_id, courses!inner(teacher_id))'
         )
         .eq('id', attemptId)
         .single()
@@ -220,7 +214,6 @@ export async function getAttemptForGrading(attemptId: string) {
             studentName: (attempt as any).users?.full_name ?? 'Unknown student',
             status: attempt.status,
             score: attempt.score,
-            isPassing: attempt.is_passing,
         },
         responses: (responses ?? []).map((r: any) => ({
             id: r.id,

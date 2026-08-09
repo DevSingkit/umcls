@@ -32,7 +32,6 @@ type Quiz = {
     title: string
     description: string | null
     course_id: string
-    passing_score: number
     shuffle_questions: boolean
     shuffle_options: boolean
     questions: Question[]

@@ -51,7 +51,6 @@ export async function createDraftQuiz(courseId: string): Promise<CreateQuizResul
             course_id: courseId,
             created_by: user.id,
             title: '',
-            passing_score: 1,
             max_attempts: 1,
         })
         .select('id')
@@ -146,7 +145,6 @@ export async function createQuiz(formData: FormData): Promise<CreateQuizResult> 
             course_id: courseId,
             created_by: user.id,
             title,
-            passing_score: 1,
             max_attempts: 1,
         })
         .select('id')
@@ -509,7 +507,7 @@ export async function getQuizForTeacher(quizId: string) {
 
     const { data: quiz } = await supabase
         .from('quizzes')
-        .select('id, title, course_id, passing_score, is_published, time_limit_minutes, available_until, allow_late, show_results_after, grading_component, courses!inner(teacher_id, title)')
+        .select('id, title, course_id, is_published, time_limit_minutes, max_attempts, available_until, allow_late, show_results_after, courses!inner(teacher_id, title)')
         .eq('id', quizId)
         .single()
 
@@ -547,79 +545,6 @@ export async function getQuizForTeacher(quizId: string) {
 
 export type SetQuizFieldResult = { ok: true } | { ok: false; error: string }
 
-// Lets a teacher set the passing score, once they know how many
-// questions the quiz actually has.
-export async function setPassingScore(quizId: string, passingScore: number): Promise<SetQuizFieldResult> {
-    const user = await requireRole(['teacher'])
-    const supabase = await createClient()
-
-    const { data: quiz } = await supabase
-        .from('quizzes')
-        .select('id, courses!inner(teacher_id)')
-        .eq('id', quizId)
-        .single()
-
-    if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
-        return { ok: false, error: 'You do not have access to this quiz.' }
-    }
-
-    const { data: updated, error } = await supabase
-        .from('quizzes')
-        .update({ passing_score: passingScore })
-        .eq('id', quizId)
-        .select('id')
-
-    if (error) {
-        return { ok: false, error: `Could not save the passing score: ${error.message}` }
-    }
-    if (!updated || updated.length === 0) {
-        return { ok: false, error: 'Could not save the passing score — the update did not apply.' }
-    }
-
-    return { ok: true }
-}
-
-export type GradingComponent = 'written_work' | 'performance_task' | 'quarterly_assessment'
-
-// Lets a teacher set which DepEd Matatag component this quiz counts
-// toward (Written Work / Performance Task / Quarterly Assessment —
-// migration 057). Same ownership-check shape as setPassingScore,
-// setTimeLimit, setResultsVisibility. Defaults to 'quarterly_assessment'
-// at the column level (quizzes are usually the graded test at the end
-// of a unit), but that default is only a fallback for pre-057 rows —
-// this setter is how a teacher actually confirms/changes it, same as
-// grading_component was made a required field at creation for
-// assignments rather than left to the schema default.
-export async function setGradingComponent(quizId: string, gradingComponent: GradingComponent): Promise<SetQuizFieldResult> {
-    const user = await requireRole(['teacher'])
-    const supabase = await createClient()
-
-    const { data: quiz } = await supabase
-        .from('quizzes')
-        .select('id, courses!inner(teacher_id)')
-        .eq('id', quizId)
-        .single()
-
-    if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
-        return { ok: false, error: 'You do not have access to this quiz.' }
-    }
-
-    const { data: updated, error } = await supabase
-        .from('quizzes')
-        .update({ grading_component: gradingComponent })
-        .eq('id', quizId)
-        .select('id')
-
-    if (error) {
-        return { ok: false, error: `Could not save the grading component: ${error.message}` }
-    }
-    if (!updated || updated.length === 0) {
-        return { ok: false, error: 'Could not save the grading component — the update did not apply.' }
-    }
-
-    return { ok: true }
-}
-
 // Lets a teacher turn the timer on/off, or change the minutes, after
 // the quiz already exists. null means no timer.
 export async function setTimeLimit(quizId: string, timeLimitMinutes: number | null): Promise<SetQuizFieldResult> {
@@ -652,7 +577,49 @@ export async function setTimeLimit(quizId: string, timeLimitMinutes: number | nu
     return { ok: true }
 }
 
-export type ResultsVisibility = 'immediately' | 'after_grading' | 'never'
+// Sets how many times a student may attempt this quiz. Defaults to 1
+// at creation (createDraftQuiz/createQuiz) — this lets the teacher
+// raise or lower it afterward from the quiz settings UI. Lowering it
+// below a student's current attempt_number does NOT retroactively
+// block anything already in progress; it only affects whether a new
+// attempt can be started going forward, same as every other quiz
+// setting change.
+export async function setMaxAttempts(quizId: string, maxAttempts: number): Promise<SetQuizFieldResult> {
+    const user = await requireRole(['teacher'])
+
+    if (!Number.isInteger(maxAttempts) || maxAttempts < 1) {
+        return { ok: false, error: 'Max attempts must be at least 1.' }
+    }
+
+    const supabase = await createClient()
+
+    const { data: quiz } = await supabase
+        .from('quizzes')
+        .select('id, courses!inner(teacher_id)')
+        .eq('id', quizId)
+        .single()
+
+    if (!quiz || (quiz as any).courses.teacher_id !== user.id) {
+        return { ok: false, error: 'You do not have access to this quiz.' }
+    }
+
+    const { data: updated, error } = await supabase
+        .from('quizzes')
+        .update({ max_attempts: maxAttempts })
+        .eq('id', quizId)
+        .select('id')
+
+    if (error) {
+        return { ok: false, error: `Could not save max attempts: ${error.message}` }
+    }
+    if (!updated || updated.length === 0) {
+        return { ok: false, error: 'Could not save max attempts — the update did not apply.' }
+    }
+
+    return { ok: true }
+}
+
+export type ResultsVisibility = 'submission' | 'grading' | 'never'
 
 // Lets a teacher control whether students see per-question correctness
 // after submitting. See migration 033 for what each value means. This
@@ -703,14 +670,17 @@ export type SetQuizDeadlineResult = { ok: true } | { ok: false; error: string }
 // re-check before letting a new attempt start or a submission finalize.
 //
 // NOTE (2026-08-03): the silent-failure risk flagged here for
-// setPassingScore, setTimeLimit, setResultsVisibility,
-// setGradingComponent, and toggleQuizPublish — a plain `.update()`
+// setTimeLimit and setResultsVisibility — a plain `.update()`
 // with no `.select()` and no error check, so an RLS WITH CHECK
-// rejection looked identical to success — is now fixed for all five,
-// same session, following setQuizDeadline's own already-correct
-// pattern below. Same root cause class as toggle_assignment_publish
-// (migration 053) and, most recently, the users_self_update RLS
-// recursion bug (migration 058) — three different tables, same
+// rejection looked identical to success — is now fixed for all
+// remaining setters, same session, following setQuizDeadline's own
+// already-correct pattern below. (setPassingScore and
+// setGradingComponent, also fixed at the time, no longer exist —
+// removed along with passing_score/grading_component entirely, see
+// migrations 071 and 077.) Same root cause class as
+// toggle_assignment_publish (migration 053) and, most recently, the
+// users_self_update RLS recursion bug (migration 058) — three
+// different tables, same
 // underlying lesson: a Supabase update() reporting no error is not
 // the same thing as a row actually changing.
 export async function setQuizDeadline(

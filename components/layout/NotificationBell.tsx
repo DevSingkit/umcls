@@ -5,7 +5,7 @@ import { Bell } from 'lucide-react'
 import { useNotifications } from '@/features/notifications/hooks/useNotifications'
 
 export function NotificationBell({ userId }: { userId: string }) {
-    const { notifications, unreadCount, markAsRead } = useNotifications(userId)
+    const { notifications, unreadCount, markAsRead, clearBadge } = useNotifications(userId)
     const [isOpen, setIsOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
@@ -20,6 +20,17 @@ export function NotificationBell({ userId }: { userId: string }) {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
+    function handleBellClick() {
+        setIsOpen((prev) => {
+            const next = !prev
+            // Clear the badge only on the transition into "open" — not on
+            // every click, and not on close. Individual highlights
+            // (is_read) are untouched here; only the badge count resets.
+            if (next) clearBadge()
+            return next
+        })
+    }
+
     async function handleNotificationClick(id: string, link: string | null) {
         await markAsRead(id)
         setIsOpen(false)
@@ -30,7 +41,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         <div ref={containerRef} className="relative lg:fixed lg:right-4 lg:top-4 lg:z-40">
             <button
                 aria-label="Notifications"
-                onClick={() => setIsOpen((prev) => !prev)}
+                onClick={handleBellClick}
                 className="relative flex h-11 w-11 items-center justify-center rounded-pill bg-white/10 shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:bg-surface"
             >
                 <Bell size={20} className="text-on-ink lg:text-ink" aria-hidden="true" />

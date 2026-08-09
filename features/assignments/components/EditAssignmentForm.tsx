@@ -29,11 +29,9 @@ export function EditAssignmentForm({
     initialInstructions,
     initialDueAt,
     initialMaxScore,
-    initialPassingScore,
     initialAllowLate,
     initialIsPublished,
     initialMaterials,
-    initialGradingComponent,
 }: {
     courseId: string
     assignmentId: string
@@ -41,11 +39,9 @@ export function EditAssignmentForm({
     initialInstructions: string
     initialDueAt: string | null // raw ISO timestamp from the database, or null — NOT pre-formatted, see toDatetimeLocalValue above
     initialMaxScore: number
-    initialPassingScore: number
     initialAllowLate: boolean
     initialIsPublished: boolean
     initialMaterials: Material[]
-    initialGradingComponent: 'written_work' | 'performance_task' | 'quarterly_assessment'
 }) {
     const router = useRouter()
     const [error, setError] = useState<string | null>(null)
@@ -170,57 +166,19 @@ export function EditAssignmentForm({
                 </div>
 
                 <div>
-                    <label htmlFor="gradingComponent" className="block text-label text-ink mb-2">
-                        Grading component
+                    <label htmlFor="maxScore" className="block text-label text-ink mb-2">
+                        Max score
                     </label>
-                    <select
-                        id="gradingComponent"
-                        name="gradingComponent"
+                    <input
+                        id="maxScore"
+                        name="maxScore"
+                        type="number"
+                        min={1}
                         required
-                        defaultValue={initialGradingComponent}
+                        defaultValue={initialMaxScore}
                         className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                    >
-                        <option value="written_work">Written Work</option>
-                        <option value="performance_task">Performance Task</option>
-                        <option value="quarterly_assessment">Quarterly Assessment</option>
-                    </select>
-                    <p className="mt-2 text-caption text-text-secondary">
-                        Determines how much this assignment counts toward the student&apos;s DepEd quarterly grade.
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="maxScore" className="block text-label text-ink mb-2">
-                            Max score
-                        </label>
-                        <input
-                            id="maxScore"
-                            name="maxScore"
-                            type="number"
-                            min={1}
-                            required
-                            defaultValue={initialMaxScore}
-                            className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
-                                       focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="passingScore" className="block text-label text-ink mb-2">
-                            Passing score
-                        </label>
-                        <input
-                            id="passingScore"
-                            name="passingScore"
-                            type="number"
-                            min={0}
-                            required
-                            defaultValue={initialPassingScore}
-                            className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
-                                       focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                        />
-                    </div>
+                    />
                 </div>
 
                 <div className="flex items-center gap-3">

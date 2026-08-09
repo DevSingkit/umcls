@@ -1,41 +1,36 @@
 'use client'
-// One "Save changes" button for every quiz setting, replacing five
-// separate self-saving cards (GradingComponentSetting, TimeLimitSetting,
-// QuizDeadlineSetting, PassingScoreSetting, ResultsVisibilitySetting) —
-// explicit request: too many individual save buttons on one page.
+// One "Save changes" button for the quiz settings still here: time
+// limit, max attempts, deadline, and results visibility. Grading
+// component and passing score were both removed — grading component
+// because it's no longer read anywhere (a manual gradebook column now
+// carries its own component, see gradebook-items.ts and migration
+// 077), passing score because quizzes no longer have pass/fail
+// (migration 071).
 // Question content itself (adding/editing individual questions via
 // AddQuestionForm/QuestionCard) stays separate on the edit page — that's
 // content, not a setting, and each question already has its own
 // dedicated save action per card.
 //
-// All five setters run in parallel via Promise.all rather than
+// The remaining setters run in parallel via Promise.all rather than
 // sequentially — they're independent columns on the same `quizzes` row,
 // so there's no ordering dependency, and running them together means
-// one combined "Saving…" state instead of five staggered ones.
+// one combined "Saving…" state instead of separate ones.
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Clock } from 'lucide-react'
 import {
-    setGradingComponent,
     setTimeLimit,
+    setMaxAttempts,
     setQuizDeadline,
-    setPassingScore,
     setResultsVisibility,
-    type GradingComponent,
     type ResultsVisibility,
 } from '@/features/quizzes/actions/create-quiz'
 
-const COMPONENT_LABEL: Record<GradingComponent, string> = {
-    written_work: 'Written Work',
-    performance_task: 'Performance Task',
-    quarterly_assessment: 'Quarterly Assessment',
-}
-
 const VISIBILITY_OPTIONS: { value: ResultsVisibility; label: string }[] = [
-    { value: 'immediately', label: 'Right after submitting' },
-    { value: 'after_grading', label: 'Only after grading is complete' },
-    { value: 'never', label: "Never — just show pass/fail, no per-question detail" },
+    { value: 'submission', label: 'Right after submitting' },
+    { value: 'grading', label: 'Only after grading is complete' },
+    { value: 'never', label: 'Never — just show the score, no per-question detail' },
 ]
 
 // Same local-time-parsing trick as QuizDeadlineSetting.tsx originally
@@ -50,21 +45,19 @@ function toDatetimeLocalValue(iso: string | null): string {
 
 export function QuizSettingsForm({
     quizId,
-    currentGradingComponent,
     currentTimeLimitMinutes,
+    currentMaxAttempts,
     currentAvailableUntil,
     currentAllowLate,
     totalQuestions,
-    currentPassingScore,
     currentVisibility,
 }: {
     quizId: string
-    currentGradingComponent: GradingComponent
     currentTimeLimitMinutes: number | null
+    currentMaxAttempts: number
     currentAvailableUntil: string | null
     currentAllowLate: boolean
     totalQuestions: number
-    currentPassingScore: number
     currentVisibility: ResultsVisibility
 }) {
     const router = useRouter()
@@ -72,15 +65,13 @@ export function QuizSettingsForm({
     const [saved, setSaved] = useState(false)
     const [errors, setErrors] = useState<string[]>([])
 
-    const [gradingComponent, setGradingComponentValue] = useState<GradingComponent>(currentGradingComponent)
-
     const [timerEnabled, setTimerEnabled] = useState(currentTimeLimitMinutes !== null)
     const [timeLimitMinutes, setTimeLimitMinutes] = useState(currentTimeLimitMinutes?.toString() ?? '')
 
+    const [maxAttempts, setMaxAttemptsValue] = useState(currentMaxAttempts)
+
     const [dueAt, setDueAt] = useState(toDatetimeLocalValue(currentAvailableUntil))
     const [allowLate, setAllowLate] = useState(currentAllowLate)
-
-    const [passingScore, setPassingScoreValue] = useState(currentPassingScore)
 
     const [visibility, setVisibility] = useState<ResultsVisibility>(currentVisibility)
 
@@ -94,14 +85,18 @@ export function QuizSettingsForm({
             return
         }
 
+        if (!Number.isInteger(maxAttempts) || maxAttempts < 1) {
+            setErrors(['Max attempts must be at least 1.'])
+            return
+        }
+
         const dueAtISO = dueAt ? new Date(dueAt).toISOString() : null
 
         startTransition(async () => {
             const results = await Promise.all([
-                setGradingComponent(quizId, gradingComponent),
                 setTimeLimit(quizId, parsedTimeLimit),
+                setMaxAttempts(quizId, maxAttempts),
                 setQuizDeadline(quizId, dueAtISO, allowLate),
-                totalQuestions > 0 ? setPassingScore(quizId, passingScore) : Promise.resolve({ ok: true as const }),
                 setResultsVisibility(quizId, visibility),
             ])
 
@@ -120,29 +115,6 @@ export function QuizSettingsForm({
     return (
         <div className="bg-surface rounded-md border border-hairline shadow-card p-6 mb-8 space-y-8">
             <div>
-                <label htmlFor="gradingComponentSetting" className="text-label text-ink-soft block mb-2">
-                    Grading component
-                </label>
-                <div className="flex flex-wrap items-center gap-3">
-                    <select
-                        id="gradingComponentSetting"
-                        value={gradingComponent}
-                        onChange={(e) => setGradingComponentValue(e.target.value as GradingComponent)}
-                        className="h-11 px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                    >
-                        {(Object.keys(COMPONENT_LABEL) as GradingComponent[]).map((key) => (
-                            <option key={key} value={key}>
-                                {COMPONENT_LABEL[key]}
-                            </option>
-                        ))}
-                    </select>
-                    <span className="text-body-md text-text-secondary">
-                        Counts toward this quiz&apos;s DepEd grading weight
-                    </span>
-                </div>
-            </div>
-
-            <div className="border-t border-hairline pt-6">
                 <div className="flex items-center justify-between gap-4 mb-4">
                     <div className="flex items-center gap-3">
                         <span className="h-9 w-9 rounded-pill bg-info-soft flex items-center justify-center shrink-0">
@@ -190,6 +162,27 @@ export function QuizSettingsForm({
             </div>
 
             <div className="border-t border-hairline pt-6">
+                <label htmlFor="maxAttemptsSetting" className="text-label text-ink-soft block mb-2">
+                    Attempts allowed
+                </label>
+                <div className="flex flex-wrap items-center gap-3">
+                    <input
+                        id="maxAttemptsSetting"
+                        type="number"
+                        min={1}
+                        value={maxAttempts}
+                        onChange={(e) => setMaxAttemptsValue(Number(e.target.value))}
+                        className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    />
+                    <span className="text-body-md text-text-secondary">
+                        {maxAttempts === 1
+                            ? 'A student may take this quiz once'
+                            : `A student may take this quiz up to ${maxAttempts} times — the most recent attempt is always the one that counts`}
+                    </span>
+                </div>
+            </div>
+
+            <div className="border-t border-hairline pt-6">
                 <p className="text-body-emphasis text-ink mb-1">Deadline</p>
                 <p className="text-caption text-text-secondary mb-4">
                     After this time, students can no longer start the quiz — and if late submissions
@@ -225,26 +218,6 @@ export function QuizSettingsForm({
                     </label>
                 </div>
             </div>
-
-            {totalQuestions > 0 && (
-                <div className="border-t border-hairline pt-6">
-                    <label htmlFor="passingScoreSetting" className="text-label text-ink-soft block mb-2">
-                        How many correct answers are needed to pass
-                    </label>
-                    <div className="flex flex-wrap items-center gap-3">
-                        <input
-                            id="passingScoreSetting"
-                            type="number"
-                            min={0}
-                            max={totalQuestions}
-                            value={passingScore}
-                            onChange={(e) => setPassingScoreValue(Number(e.target.value))}
-                            className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                        />
-                        <span className="text-body-md text-text-secondary">out of {totalQuestions} questions</span>
-                    </div>
-                </div>
-            )}
 
             <div className="border-t border-hairline pt-6">
                 <label htmlFor="resultsVisibilitySetting" className="text-label text-ink-soft block mb-2">

@@ -109,7 +109,7 @@ function TeacherSimplifyView({
             <p className="text-body-md text-text-secondary">
                 Generate an elementary-reading-level version of this lesson for students who need extra
                 support. Available to any enrolled student once published — not tied to a quiz. Build
-                English, Tagalog, or both — a student sees whichever language they've picked.
+                English, Tagalog, or both — a student sees whichever language they&apos;ve picked.
             </p>
 
             {/* Language sub-tabs, DESIGN-LMS.md §6.3 in-page tab pattern */}

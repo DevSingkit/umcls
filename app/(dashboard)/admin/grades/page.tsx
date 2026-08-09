@@ -1,13 +1,16 @@
 import Link from 'next/link'
 import { BookOpen } from 'lucide-react'
-import { getAllCoursesForAdmin, getDepEdGradesForCourseAsAdmin } from '@/features/admin/actions/admin-grades'
+import { getAllCoursesForAdmin } from '@/features/admin/actions/admin-grades'
+import { getGradebookForCourseGrid, getLinkableItemsForCourse } from '@/features/grades/actions/gradebook-items'
+import { GradebookGrid } from '@/features/grades/components/GradebookGrid'
+import { GradesVisibilityToggle } from '@/features/grades/components/GradesVisibilityToggle'
 
-// Read-only, cross-section grade view for admin — every teacher's
-// course, every student's DepEd grade. No mutation anywhere on this
-// page or in its action file: the client was explicit that admin sees
-// everything but edits nothing, so there is deliberately no equivalent
-// of SubmissionsGradeList or ShortAnswerGradeList here, and no "edit"
-// affordance on any row.
+// Admin gradebook — no longer read-only. Admin edits the same
+// underlying gradebook_scores rows a teacher would, through the same
+// GradebookGrid component and the same setGradebookScore/
+// createGradebookItem/pullLinkedScores actions, which already accept
+// admin (see gradebook-items.ts). One grading system, one write path,
+// for both roles — not a separate admin override.
 export default async function AdminGradesPage({
     searchParams,
 }: {
@@ -15,13 +18,15 @@ export default async function AdminGradesPage({
 }) {
     const { courseId } = await searchParams
     const courses = await getAllCoursesForAdmin()
-    const result = courseId ? await getDepEdGradesForCourseAsAdmin(courseId) : null
+    const gridData = courseId ? await getGradebookForCourseGrid(courseId) : null
+    const linkable = courseId ? await getLinkableItemsForCourse(courseId) : null
+    const selectedCourse = courses.find((c) => c.id === courseId)
 
     return (
         <div>
             <h1 className="font-heading text-h1 text-ink mb-2">Grades</h1>
             <p className="text-body-md text-text-secondary mb-8">
-                View-only. Grades are entered and edited by each course&apos;s teacher.
+                Admin can view and edit any course&apos;s gradebook, the same as its teacher.
             </p>
 
             {courses.length === 0 ? (
@@ -37,9 +42,7 @@ export default async function AdminGradesPage({
                                 key={course.id}
                                 href={`/admin/grades?courseId=${course.id}`}
                                 className={`flex items-center gap-4 rounded-md p-5 shadow-card hover:shadow-card-hover ${
-                                    isSelected
-                                        ? 'bg-brand-soft border-[1.5px] border-brand'
-                                        : 'bg-surface'
+                                    isSelected ? 'bg-brand-soft border-[1.5px] border-brand' : 'bg-surface'
                                 }`}
                             >
                                 <span
@@ -64,72 +67,39 @@ export default async function AdminGradesPage({
             )}
 
             {!courseId && courses.length > 0 && (
-                <p className="text-body-md text-text-secondary">Pick a course above to see its grades.</p>
+                <p className="text-body-md text-text-secondary">Pick a course above to see its gradebook.</p>
             )}
 
-            {courseId && result === null && (
+            {courseId && gridData === null && (
                 <p className="text-body-md text-error">That course could not be found.</p>
             )}
 
-            {courseId && result !== null && (
-                <div>
-                    <div className="flex items-center justify-between mb-3">
-                        <div>
-                            <h2 className="font-heading text-body-emphasis text-ink">{result.courseTitle}</h2>
-                            <p className="text-caption text-text-secondary">Taught by {result.teacherName}</p>
-                        </div>
-                        {result.rows.length > 0 && (
-                            <span className="text-caption text-text-secondary">
-                                Weights: {result.rows[0]?.weightProfile === 'mapeh' ? 'MAPEH (20/60/20)' : 'Standard (20/50/30)'}
-                            </span>
+            {courseId && gridData !== null && (
+                <>
+                    <div className="mb-3">
+                        <h2 className="font-heading text-body-emphasis text-ink">{selectedCourse?.title}</h2>
+                        {selectedCourse && (
+                            <p className="text-caption text-text-secondary">Taught by {selectedCourse.teacherName}</p>
                         )}
                     </div>
 
-                    {result.rows.length === 0 ? (
+                    {gridData.students.length === 0 ? (
                         <div className="bg-surface rounded-md shadow-card p-8 text-center">
                             <p className="text-body-md text-text-secondary">No students enrolled in this course yet.</p>
                         </div>
                     ) : (
-                        <div className="bg-surface rounded-md shadow-card overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="border-b border-hairline">
-                                        <th className="px-6 py-4 text-label text-text-secondary">Student</th>
-                                        <th className="px-6 py-4 text-label text-text-secondary">Written Work</th>
-                                        <th className="px-6 py-4 text-label text-text-secondary">Performance Task</th>
-                                        <th className="px-6 py-4 text-label text-text-secondary">Quarterly Assessment</th>
-                                        <th className="px-6 py-4 text-label text-text-secondary">Final Grade</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {result.rows.map((row) => (
-                                        <tr key={row.studentId} className="border-b border-hairline last:border-0">
-                                            <td className="px-6 py-4 text-body-emphasis text-ink">{row.studentName}</td>
-                                            <td className="px-6 py-4 text-body-md text-ink">
-                                                {row.writtenWorkAvg !== null ? `${row.writtenWorkAvg}%` : '—'}
-                                            </td>
-                                            <td className="px-6 py-4 text-body-md text-ink">
-                                                {row.performanceTaskAvg !== null ? `${row.performanceTaskAvg}%` : '—'}
-                                            </td>
-                                            <td className="px-6 py-4 text-body-md text-ink">
-                                                {row.quarterlyAssessmentAvg !== null ? `${row.quarterlyAssessmentAvg}%` : '—'}
-                                            </td>
-                                            <td className="px-6 py-4 text-body-emphasis text-ink">
-                                                {row.initialGrade !== null ? (
-                                                    <span className="inline-flex items-center rounded-pill bg-brand-soft text-brand text-caption font-semibold px-3 py-1">
-                                                        {row.initialGrade}%
-                                                    </span>
-                                                ) : (
-                                                    '—'
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <>
+                            <GradesVisibilityToggle courseId={courseId} initialVisible={gridData.gradesVisible} />
+                            <GradebookGrid
+                                courseId={courseId}
+                                initialData={gridData}
+                                canEdit
+                                assignmentOptions={linkable?.assignments ?? []}
+                                quizOptions={linkable?.quizzes ?? []}
+                            />
+                        </>
                     )}
-                </div>
+                </>
             )}
         </div>
     )

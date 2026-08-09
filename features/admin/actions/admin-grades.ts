@@ -1,16 +1,13 @@
 'use server'
-// Admin, read-only view across every teacher's courses and grades. No
-// mutation of any kind lives in this file, on purpose — the client
-// asked specifically for admin to see everything but edit nothing.
-// Reuses computeDepEdGradesForCourse from gradebook.ts (the same
-// DepEd Matatag weighted computation the teacher gradebook and student
-// grades page already use) rather than a second copy of that logic —
-// see that function's own comment for why it's factored out
-// role-agnostic in the first place.
+// Admin course listing for the grades section. Actual grade viewing
+// and editing now goes through the shared gradebook-items.ts actions
+// (getGradebookForCourseGrid, setGradebookScore, etc.), which already
+// accept admin the same as the owning teacher — see migration 072 and
+// the "admin edits underlying scores, same as teacher" decision. This
+// file only supplies the course picker list.
 
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
-import { computeDepEdGradesForCourse, type DepEdGradeRow } from '@/features/grades/queries/gradebook'
 
 export type AdminCourseRow = {
     id: string
@@ -57,36 +54,4 @@ export async function getAllCoursesForAdmin(): Promise<AdminCourseRow[]> {
         teacherName: c.users?.full_name ?? 'Unknown',
         studentCount: studentCountByCourseId.get(c.id) ?? 0,
     }))
-}
-
-// DepEd grade breakdown for one course, any teacher's — admin can view
-// any course's grades, not just their own (there's no "their own" for
-// an admin). Returns null only if the course itself doesn't exist;
-// unlike the teacher-scoped getDepEdGradesForCourse, there's no
-// ownership check to fail here, since admin has no ownership
-// restriction on this data by design.
-export async function getDepEdGradesForCourseAsAdmin(courseId: string): Promise<{
-    courseTitle: string
-    teacherName: string
-    rows: DepEdGradeRow[]
-} | null> {
-    await requireRole(['admin'])
-    const supabase = await createClient()
-
-    const { data: course } = await supabase
-        .from('courses')
-        .select('id, title, subject, users!courses_teacher_id_fkey(full_name)')
-        .eq('id', courseId)
-        .is('deleted_at', null)
-        .single()
-
-    if (!course) return null
-
-    const rows = await computeDepEdGradesForCourse(courseId, (course as any).subject)
-
-    return {
-        courseTitle: course.title,
-        teacherName: (course as any).users?.full_name ?? 'Unknown',
-        rows,
-    }
 }

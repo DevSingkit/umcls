@@ -36,7 +36,6 @@ export default async function QuizPreviewPage({
                 id: quiz.id,
                 title: quiz.title,
                 description: null,
-                passing_score: quiz.passing_score,
                 time_limit_minutes: quiz.time_limit_minutes,
                 questions: previewQuestions,
             }}

@@ -174,16 +174,16 @@ export async function bulkImportUsers(rows: BulkImportRow[]): Promise<BulkImport
     })
 
     if (finalizeError) {
-        // Roll back every Auth account created in step 2.
-        for (const c of created) {
-            await supabaseAdmin.auth.admin.deleteUser(c.authId)
-        }
-        return {
-            ok: false,
-            error: 'Something went wrong saving the accounts. Nothing was created, please try again.',
-        }
+    console.error('bulk_finalize_users failed:', finalizeError)
+    // Roll back every Auth account created in step 2.
+    for (const c of created) {
+        await supabaseAdmin.auth.admin.deleteUser(c.authId)
     }
-
+    return {
+        ok: false,
+        error: 'Something went wrong saving the accounts. Nothing was created, please try again.',
+    }
+}
     return {
         ok: true,
         created: created.map((c) => ({

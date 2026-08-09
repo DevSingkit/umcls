@@ -18,7 +18,7 @@ export async function getQuizForStudent(quizId: string) {
 
     const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
-        .select('id, title, description, course_id, passing_score, shuffle_questions, shuffle_options')
+        .select('id, title, description, course_id, shuffle_questions, shuffle_options')
         .eq('id', quizId)
         .single()
 
@@ -63,7 +63,7 @@ export type QuizAttemptSummary = {
     id: string
     status: string
     score: number | null
-    isPassing: boolean | null
+    maxScore: number
     submittedAt: string | null
     // Per-question detail, gated by the quiz's show_results_after
     // setting (migration 033) — same rule as grade-quiz-submission.ts.
@@ -114,7 +114,7 @@ export async function getQuizOverviewForStudent(quizId: string): Promise<QuizOve
 
     const { data: attempts, error: attemptsError } = await supabase
         .from('quiz_attempts')
-        .select('id, status, score, is_passing, submitted_at, attempt_number')
+        .select('id, status, score, submitted_at, attempt_number')
         .eq('quiz_id', quizId)
         .order('attempt_number', { ascending: false })
 
@@ -125,13 +125,19 @@ export async function getQuizOverviewForStudent(quizId: string): Promise<QuizOve
     const attemptRows = attempts ?? []
     const latest = attemptRows[0] ?? null
 
+    // Total possible points for this quiz — quiz_attempts.score is a
+    // raw point total now, not a 0-100 percentage (migration 071), so
+    // the page needs this to show "8 / 10" instead of a bare number.
+    const { data: questions } = await supabase.from('questions').select('points').eq('quiz_id', quizId)
+    const maxScore = (questions ?? []).reduce((sum, q) => sum + (q.points ?? 0), 0)
+
     let latestAttempt: QuizAttemptSummary | null = null
 
     if (latest) {
         const isFullyGraded = latest.status === 'graded'
         const showDetail =
-            quiz.show_results_after === 'immediately' ||
-            (quiz.show_results_after === 'after_grading' && isFullyGraded)
+            quiz.show_results_after === 'submission' ||
+            (quiz.show_results_after === 'grading' && isFullyGraded)
         const neverShow = quiz.show_results_after === 'never'
 
         let questionResults: { questionId: string; isCorrect?: boolean }[] = []
@@ -148,7 +154,7 @@ export async function getQuizOverviewForStudent(quizId: string): Promise<QuizOve
             questionResults = (responses ?? []).map((r) => {
                 // is_correct is null for short_answer questions until a
                 // teacher grades them, and for every question if this
-                // whole attempt isn't graded yet under 'after_grading'.
+                // whole attempt isn't graded yet under 'grading'.
                 if (!showDetail || r.is_correct === null) {
                     return { questionId: r.question_id }
                 }
@@ -159,13 +165,12 @@ export async function getQuizOverviewForStudent(quizId: string): Promise<QuizOve
         latestAttempt = {
             id: latest.id,
             status: latest.status,
-            // Aggregate score/isPassing follow the same gate as detail —
-            // 'never' still shows pass/fail per the original design
-            // (only per-question detail is withheld under 'never'), but
-            // 'after_grading' withholds the aggregate too until graded,
-            // matching what grade-quiz-submission.ts does at submit time.
-            score: quiz.show_results_after === 'after_grading' && !isFullyGraded ? null : latest.score,
-            isPassing: quiz.show_results_after === 'after_grading' && !isFullyGraded ? null : latest.is_passing,
+            // Score follows the same gate as detail — 'grading'
+            // withholds it until the attempt is fully graded, matching
+            // what grade-quiz-submission.ts does at submit time. No
+            // more pass/fail (is_passing removed) — just the raw score.
+            score: quiz.show_results_after === 'grading' && !isFullyGraded ? null : latest.score,
+            maxScore,
             submittedAt: latest.submitted_at,
             questionResults,
         }

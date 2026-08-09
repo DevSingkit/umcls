@@ -320,9 +320,12 @@ export async function listSubmissionsForAssignment(assignmentId: string) {
 
 export type GradeSubmissionResult = { ok: true } | { ok: false; error: string }
 
-// Grades a submission with a numeric score only.
+// Grades a submission with a numeric score only. Admin can grade any
+// submission (files/records the admin, not the owning teacher), same
+// write path as the teacher — this is the "admin edits underlying
+// scores, not a separate override" decision, see gradebook grid work.
 export async function gradeSubmission(submissionId: string, formData: FormData): Promise<GradeSubmissionResult> {
-    const user = await requireRole(['teacher'])
+    const user = await requireRole(['teacher', 'admin'])
     const scoreRaw = formData.get('score')
     const score = Number(scoreRaw)
 
@@ -338,7 +341,8 @@ export async function gradeSubmission(submissionId: string, formData: FormData):
         .eq('id', submissionId)
         .single()
 
-    if (!submission || (submission as any).assignments.courses.teacher_id !== user.id) {
+    const isOwningTeacher = (submission as any)?.assignments?.courses?.teacher_id === user.id
+    if (!submission || (!isOwningTeacher && user.role !== 'admin')) {
         return { ok: false, error: 'Submission not found.' }
     }
 

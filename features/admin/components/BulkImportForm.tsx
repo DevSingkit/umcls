@@ -1,16 +1,33 @@
 'use client'
-// Upload screen for PH2-003 CSV Bulk Import. Kept simple on purpose:
-// download a template, upload it back filled in, see clear results.
+// Upload screen for PH2-003 Bulk Import — Excel (.xlsx) in, Excel (.xlsx) out.
+// Admin downloads a template, fills it in, uploads it, then downloads a
+// credentials file for the accounts that were just created.
 import { useState } from 'react'
 import { bulkImportUsers, type BulkImportResult } from '@/features/admin/actions/bulk-import'
-import { parseUserImportCsv, CSV_TEMPLATE } from '@/features/admin/utils/parse-csv'
+import {
+    parseUserImportExcel,
+    generateExcelTemplate,
+    generateCredentialsExcel,
+} from '@/features/admin/utils/parse-excel'
 
 function downloadTemplate() {
-    const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv' })
+    const blob = generateExcelTemplate()
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'UMCLSI-user-import-template.csv'
+    link.download = 'UMCLSI-user-import-template.xlsx'
+    link.click()
+    URL.revokeObjectURL(url)
+}
+
+function downloadCredentials(
+    created: { fullName: string; email: string; role: string; temporaryPassword: string }[]
+) {
+    const blob = generateCredentialsExcel(created)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `UMCLSI-new-accounts-${new Date().toISOString().slice(0, 10)}.xlsx`
     link.click()
     URL.revokeObjectURL(url)
 }
@@ -27,8 +44,8 @@ export function BulkImportForm() {
         setResult(null)
         setIsLoading(true)
 
-        const text = await file.text()
-        const rows = parseUserImportCsv(text)
+        const buffer = await file.arrayBuffer()
+        const rows = parseUserImportExcel(buffer)
         const outcome = await bulkImportUsers(rows)
         setResult(outcome)
         setIsLoading(false)
@@ -54,10 +71,10 @@ export function BulkImportForm() {
                     Download template
                 </button>
                 <label className="h-11 px-6 flex items-center justify-center rounded-md bg-brand text-on-ink font-medium cursor-pointer hover:bg-brand-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-brand focus-within:ring-offset-2">
-                    {isLoading ? 'Checking file...' : 'Upload filled-in CSV'}
+                    {isLoading ? 'Checking file...' : 'Upload filled-in Excel file'}
                     <input
                         type="file"
-                        accept=".csv"
+                        accept=".xlsx,.xls"
                         onChange={handleFileChange}
                         disabled={isLoading}
                         className="hidden"
@@ -90,6 +107,14 @@ export function BulkImportForm() {
                         {result.created.length} account{result.created.length === 1 ? '' : 's'} created.
                         Write down or print these passwords now, they will not be shown again.
                     </p>
+
+                    <button
+                        onClick={() => downloadCredentials(result.created)}
+                        className="h-11 px-6 mb-4 flex items-center justify-center rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    >
+                        Download credentials (Excel)
+                    </button>
+
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>

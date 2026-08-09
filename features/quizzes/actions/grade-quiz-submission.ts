@@ -41,7 +41,7 @@ export async function gradeQuizSubmission(
     // cannot grade a quiz they have no access to.
     const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
-        .select('id, passing_score, available_until, allow_late, show_results_after')
+        .select('id, available_until, allow_late, show_results_after')
         .eq('id', quizId)
         .single()
     if (quizError || !quiz) {
@@ -149,21 +149,12 @@ export async function gradeQuizSubmission(
         }
     })
 
-    // Score is based only on auto-gradable questions. If every question
-    // is short_answer (unusual, but possible), there's nothing to score
-    // yet — leave it null rather than dividing by zero.
-    const score =
-        autoGradableCount > 0
-            ? Math.round((correctCount / autoGradableCount) * 100)
-            : null
-
-    // passing_score is a raw "correct answers needed" count (e.g. 6 out of 10),
-    // not a percentage — compare it against correctCount, not the 0-100 score.
-    // While any short_answer question is still ungraded, we don't know the
-    // final correctCount yet, so pass/fail can't be decided.
-    const isPassing = hasPendingManualGrading
-        ? null
-        : correctCount >= quiz.passing_score
+    // Score is the raw point total, not a percentage — every question
+    // is worth 1 point today (see create-quiz.ts), so this is just
+    // correctCount. If every question is short_answer (unusual, but
+    // possible), there's nothing auto-graded yet — leave it null rather
+    // than showing a false 0.
+    const score = autoGradableCount > 0 ? correctCount : null
 
     // Persist each answer as a quiz_responses row BEFORE flipping the
     // attempt's status. This order matters: responses_update / the
@@ -225,7 +216,6 @@ export async function gradeQuizSubmission(
             status: attemptStatus,
             submitted_at: new Date().toISOString(),
             score: hasPendingManualGrading ? null : score,
-            is_passing: isPassing,
             graded_at: hasPendingManualGrading ? null : new Date().toISOString(),
         })
         .eq('id', attemptId)
@@ -235,9 +225,9 @@ export async function gradeQuizSubmission(
 
     // Whether isCorrect is safe to hand back to this student's browser
     // right now depends on the teacher's setting (migration 033):
-    //   'immediately'    — always fine, for any question already graded
+    //   'submission'     — always fine, for any question already graded
     //                       (i.e. not pendingManualGrading).
-    //   'after_grading'  — only once the whole attempt is fully graded —
+    //   'grading'        — only once the whole attempt is fully graded —
     //                       i.e. no short_answer question is still
     //                       waiting on a teacher. Until then, omit it
     //                       entirely, even for the auto-graded questions,
@@ -249,8 +239,8 @@ export async function gradeQuizSubmission(
     // a null still confirms "this field exists and is hidden right now,"
     // which is itself a signal. Leaving it out entirely gives nothing.
     const canRevealNow =
-        quiz.show_results_after === 'immediately' ||
-        (quiz.show_results_after === 'after_grading' && !hasPendingManualGrading)
+        quiz.show_results_after === 'submission' ||
+        (quiz.show_results_after === 'grading' && !hasPendingManualGrading)
 
     const exposedResults = results.map((r) => {
         if (quiz.show_results_after === 'never' || !canRevealNow || r.pendingManualGrading) {
@@ -262,7 +252,6 @@ export async function gradeQuizSubmission(
     return {
         attemptId,
         score,
-        isPassing,
         pendingManualGrading: hasPendingManualGrading,
         results: exposedResults,
     }

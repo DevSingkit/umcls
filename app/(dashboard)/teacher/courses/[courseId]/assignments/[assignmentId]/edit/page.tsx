@@ -42,11 +42,9 @@ export default async function EditAssignmentPage({
             initialInstructions={instructions?.body ?? ''}
             initialDueAt={assignment.due_at}
             initialMaxScore={assignment.max_score}
-            initialPassingScore={assignment.passing_score}
             initialAllowLate={assignment.allow_late}
             initialIsPublished={assignment.is_published}
             initialMaterials={materials.filter((m) => m.assignment_id === assignmentId)}
-            initialGradingComponent={assignment.grading_component}
         />
     )
 }

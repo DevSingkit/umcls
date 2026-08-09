@@ -19,7 +19,6 @@ type Quiz = {
     id: string
     title: string
     description: string | null
-    passing_score: number
     time_limit_minutes: number | null
     questions: Question[]
 }

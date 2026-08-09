@@ -36,7 +36,6 @@ export default async function AssignmentDetailPage({
             <p className="text-caption text-text-secondary mb-8">
                 {assignment.due_at ? `Due ${new Date(assignment.due_at).toLocaleString()}` : 'No due date'}
                 {' · '}Max {assignment.max_score}
-                {' · '}Passing {assignment.passing_score}
                 {assignment.allow_late && ' · Late submissions allowed'}
             </p>
 

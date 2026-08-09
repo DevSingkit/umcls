@@ -192,48 +192,16 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                 />
             </div>
             <div>
-                <label htmlFor="gradingComponent" className="text-label text-ink-soft">Grading component</label>
-                <select
-                    id="gradingComponent"
-                    name="gradingComponent"
+                <label htmlFor="maxScore" className="text-label text-ink-soft">Max score</label>
+                <input
+                    id="maxScore"
+                    name="maxScore"
+                    type="number"
+                    min={1}
+                    defaultValue={100}
                     required
-                    defaultValue=""
                     className="mt-1 h-11 w-full px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                >
-                    <option value="" disabled>Choose a component…</option>
-                    <option value="written_work">Written Work</option>
-                    <option value="performance_task">Performance Task</option>
-                    <option value="quarterly_assessment">Quarterly Assessment</option>
-                </select>
-                <p className="mt-1 text-caption text-text-secondary">
-                    Determines how much this assignment counts toward the student&apos;s DepEd quarterly grade.
-                </p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label htmlFor="maxScore" className="text-label text-ink-soft">Max score</label>
-                    <input
-                        id="maxScore"
-                        name="maxScore"
-                        type="number"
-                        min={1}
-                        defaultValue={100}
-                        required
-                        className="mt-1 h-11 w-full px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                    />
-                </div>
-                <div>
-                    <label htmlFor="passingScore" className="text-label text-ink-soft">Passing score</label>
-                    <input
-                        id="passingScore"
-                        name="passingScore"
-                        type="number"
-                        min={0}
-                        defaultValue={60}
-                        required
-                        className="mt-1 h-11 w-full px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                    />
-                </div>
+                />
             </div>
 
             <div className="flex items-center gap-3">

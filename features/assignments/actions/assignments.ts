@@ -12,14 +12,6 @@ const assignmentSchema = z.object({
     instructions: z.string().optional(),
     dueAt: z.string().optional(), // datetime-local string, may be empty
     maxScore: z.coerce.number().min(1, 'Max score must be at least 1'),
-    passingScore: z.coerce.number().min(0, 'Passing score cannot be negative'),
-    // DepEd Matatag component this assignment counts toward. Required,
-    // not defaulted in application code — the column-level default in
-    // migration 057 exists only for pre-existing rows, matching the
-    // is_published lesson from that same migration's comments.
-    gradingComponent: z.enum(['written_work', 'performance_task', 'quarterly_assessment'], {
-        errorMap: () => ({ message: 'Please choose a grading component.' }),
-    }),
 })
 
 export type AssignmentActionResult =
@@ -34,19 +26,13 @@ export async function createAssignment(courseId: string, formData: FormData): Pr
         instructions: formData.get('instructions'),
         dueAt: formData.get('dueAt'),
         maxScore: formData.get('maxScore'),
-        passingScore: formData.get('passingScore'),
-        gradingComponent: formData.get('gradingComponent'),
     })
 
     if (!parsed.success) {
         return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form and try again.' }
     }
 
-    const { title, instructions, dueAt, maxScore, passingScore, gradingComponent } = parsed.data
-
-    if (passingScore > maxScore) {
-        return { ok: false, error: 'Passing score cannot be greater than max score.' }
-    }
+    const { title, instructions, dueAt, maxScore } = parsed.data
 
     // Checkbox fields only appear in FormData when checked, so a missing
     // entry means "off" — no zod coercion needed, same handling as the
@@ -75,9 +61,7 @@ export async function createAssignment(courseId: string, formData: FormData): Pr
             instructions: instructions ? { type: 'text', body: instructions } : null,
             due_at: dueAt || null,
             max_score: maxScore,
-            passing_score: passingScore,
             allow_late: allowLate,
-            grading_component: gradingComponent,
             // Explicitly false (not omitted). This USED to rely on the
             // schema default to create a draft row, with a comment here
             // saying so — but migration 054 changed that same default
@@ -175,7 +159,7 @@ export async function getAssignmentForEdit(assignmentId: string) {
 
     const { data: assignment } = await supabase
         .from('assignments')
-        .select('id, course_id, title, instructions, due_at, max_score, passing_score, allow_late, is_published, grading_component')
+        .select('id, course_id, title, instructions, due_at, max_score, allow_late, is_published')
         .eq('id', assignmentId)
         .is('deleted_at', null)
         .single()
@@ -204,10 +188,6 @@ const updateAssignmentSchema = z.object({
     instructions: z.string().optional(),
     dueAt: z.string().optional(),
     maxScore: z.coerce.number().min(1, 'Max score must be at least 1'),
-    passingScore: z.coerce.number().min(0, 'Passing score cannot be negative'),
-    gradingComponent: z.enum(['written_work', 'performance_task', 'quarterly_assessment'], {
-        errorMap: () => ({ message: 'Please choose a grading component.' }),
-    }),
 })
 
 export type UpdateAssignmentResult = { ok: true } | { ok: false; error: string }
@@ -221,19 +201,13 @@ export async function updateAssignment(formData: FormData): Promise<UpdateAssign
         instructions: formData.get('instructions'),
         dueAt: formData.get('dueAt'),
         maxScore: formData.get('maxScore'),
-        passingScore: formData.get('passingScore'),
-        gradingComponent: formData.get('gradingComponent'),
     })
 
     if (!parsed.success) {
         return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form and try again.' }
     }
 
-    const { assignmentId, title, instructions, dueAt, maxScore, passingScore, gradingComponent } = parsed.data
-
-    if (passingScore > maxScore) {
-        return { ok: false, error: 'Passing score cannot be greater than max score.' }
-    }
+    const { assignmentId, title, instructions, dueAt, maxScore } = parsed.data
 
     // Same "missing checkbox field means off" handling as createAssignment.
     const allowLate = formData.get('allowLate') === 'on'
@@ -269,9 +243,7 @@ export async function updateAssignment(formData: FormData): Promise<UpdateAssign
             instructions: instructions ? { type: 'text', body: instructions } : null,
             due_at: dueAt || null,
             max_score: maxScore,
-            passing_score: passingScore,
             allow_late: allowLate,
-            grading_component: gradingComponent,
         })
         .eq('id', assignmentId)
 
@@ -332,7 +304,7 @@ export async function listAssignmentsForTeacher(courseId: string) {
 
     const { data, error } = await supabase
         .from('assignments')
-        .select('id, title, due_at, max_score, passing_score, allow_late, is_published, created_at')
+        .select('id, title, due_at, max_score, allow_late, is_published, created_at')
         .eq('course_id', courseId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
@@ -348,7 +320,7 @@ export async function listAssignmentsForStudent(courseId: string) {
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('assignments')
-        .select('id, title, due_at, max_score, passing_score, allow_late, created_at')
+        .select('id, title, due_at, max_score, allow_late, created_at')
         .eq('course_id', courseId)
         .eq('is_published', true)
         .is('deleted_at', null)
@@ -366,7 +338,7 @@ export async function getAssignment(assignmentId: string) {
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('assignments')
-        .select('id, course_id, title, instructions, due_at, max_score, passing_score, allow_late, is_published, grading_component')
+        .select('id, course_id, title, instructions, due_at, max_score, allow_late, is_published')
         .eq('id', assignmentId)
         .is('deleted_at', null)
         .single()

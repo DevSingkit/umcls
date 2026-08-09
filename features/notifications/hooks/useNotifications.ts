@@ -5,7 +5,18 @@
 // it isn't enabled, the initial fetch below still works (plain select,
 // RLS-scoped to the caller), but new notifications won't appear live —
 // only on next page load/refresh.
-import { useEffect, useState, useCallback } from 'react'
+//
+// Two independent read signals here, not one:
+//   - is_read: per-notification highlight. Set true only when THAT
+//     specific notification is clicked (markAsRead). Never touched by
+//     opening the bell.
+//   - badgeClearedAt: when the bell was last opened (users.
+//     notification_badge_cleared_at). The badge count is "how many
+//     notifications arrived after this timestamp" — opening the bell
+//     zeroes it for everything currently visible, but a new one
+//     arriving afterward counts again immediately, independent of
+//     is_read. See migration 078 for the schema and full reasoning.
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export type Notification = {
@@ -20,6 +31,7 @@ export type Notification = {
 
 export function useNotifications(userId: string) {
     const [notifications, setNotifications] = useState<Notification[]>([])
+    const [badgeClearedAt, setBadgeClearedAt] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -27,18 +39,22 @@ export function useNotifications(userId: string) {
         let isMounted = true
 
         async function loadInitial() {
-            // notifications_select (DATABASE.md) already restricts this to
-            // the caller's own rows — user_id filter here is belt-and-
-            // suspenders, same reasoning as AUTH_NOTES.md.
-            const { data } = await supabase
-                .from('notifications')
-                .select('id, type, title, body, link, is_read, created_at')
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false })
-                .limit(30)
+            const [{ data: notifs }, { data: profile }] = await Promise.all([
+                // notifications_select (DATABASE.md) already restricts this to
+                // the caller's own rows — user_id filter here is belt-and-
+                // suspenders, same reasoning as AUTH_NOTES.md.
+                supabase
+                    .from('notifications')
+                    .select('id, type, title, body, link, is_read, created_at')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(30),
+                supabase.from('users').select('notification_badge_cleared_at').eq('id', userId).single(),
+            ])
 
             if (isMounted) {
-                setNotifications(data ?? [])
+                setNotifications(notifs ?? [])
+                setBadgeClearedAt(profile?.notification_badge_cleared_at ?? null)
                 setIsLoading(false)
             }
         }
@@ -79,6 +95,7 @@ export function useNotifications(userId: string) {
         }
     }, [userId])
 
+    // Per-notification highlight only — never affects the badge.
     const markAsRead = useCallback(
         async (notificationId: string) => {
             const supabase = createClient()
@@ -97,7 +114,21 @@ export function useNotifications(userId: string) {
         [userId]
     )
 
-    const unreadCount = notifications.filter((n) => !n.is_read).length
+    // Called when the bell is opened. Clears the badge for everything
+    // currently visible by advancing badgeClearedAt to now — does NOT
+    // touch is_read on any notification, so highlights are untouched.
+    const clearBadge = useCallback(async () => {
+        const supabase = createClient()
+        const now = new Date().toISOString()
+        setBadgeClearedAt(now)
+        await supabase.from('users').update({ notification_badge_cleared_at: now }).eq('id', userId)
+    }, [userId])
 
-    return { notifications, unreadCount, isLoading, markAsRead }
+    const unreadCount = useMemo(() => {
+        if (!badgeClearedAt) return notifications.length
+        const clearedTime = new Date(badgeClearedAt).getTime()
+        return notifications.filter((n) => new Date(n.created_at).getTime() > clearedTime).length
+    }, [notifications, badgeClearedAt])
+
+    return { notifications, unreadCount, isLoading, markAsRead, clearBadge }
 }

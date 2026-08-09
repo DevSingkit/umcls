@@ -5,7 +5,6 @@ type Attempt = {
     studentName: string
     status: string
     score: number | null
-    isPassing: boolean | null
     submittedAt: string | null
     needsGrading: boolean
     attemptNumber: number
@@ -39,21 +38,6 @@ function groupByStudent(attempts: Attempt[]): StudentGroup[] {
     })
 }
 
-// A student is only "consistent" if they have 2+ scored attempts and every
-// scored attempt landed on the same side of the pass/fail line. One attempt
-// is never enough to call a pattern either way.
-function getPatternLabel(attempts: Attempt[]): { label: string; tone: 'brand' | 'error' | 'amber' | null } {
-    const scored = attempts.filter((a) => a.isPassing !== null)
-    if (scored.length < 2) return { label: '', tone: null }
-
-    const allPassing = scored.every((a) => a.isPassing)
-    const allFailing = scored.every((a) => !a.isPassing)
-
-    if (allPassing) return { label: 'Consistently passing', tone: 'brand' }
-    if (allFailing) return { label: 'Consistently struggling', tone: 'error' }
-    return { label: 'Mixed results', tone: 'amber' }
-}
-
 // Teacher-facing list of every attempt on a quiz, grouped by student so a
 // student who retook the quiz shows up as one card with their score history,
 // instead of scattered flat rows a teacher has to mentally reassemble.
@@ -82,7 +66,6 @@ export function AttemptsList({
     return (
         <div className="grid gap-3">
             {groups.map((group) => {
-                const pattern = getPatternLabel(group.attempts)
                 const latest = group.attempts[group.attempts.length - 1]!
 
                 return (
@@ -106,19 +89,6 @@ export function AttemptsList({
                                         Needs grading
                                     </span>
                                 )}
-                                {pattern.tone && (
-                                    <span
-                                        className={`inline-flex items-center gap-1.5 rounded-pill text-caption font-semibold px-3 py-1 ${
-                                            pattern.tone === 'brand'
-                                                ? 'bg-brand-soft text-brand'
-                                                : pattern.tone === 'error'
-                                                  ? 'bg-error-soft text-error'
-                                                  : 'bg-amber-soft text-amber'
-                                        }`}
-                                    >
-                                        {pattern.label}
-                                    </span>
-                                )}
                             </div>
                         </div>
 
@@ -130,13 +100,7 @@ export function AttemptsList({
                                 <Link
                                     key={attempt.id}
                                     href={`/teacher/courses/${courseId}/quizzes/${quizId}/attempts/${attempt.id}`}
-                                    className={`inline-flex items-center gap-1.5 rounded-pill text-caption font-semibold px-3 py-1 border transition-colors hover:border-hairline-strong ${
-                                        attempt.isPassing === true
-                                            ? 'bg-brand-soft text-brand border-transparent'
-                                            : attempt.isPassing === false
-                                              ? 'bg-error-soft text-error border-transparent'
-                                              : 'bg-surface-sunken text-text-secondary border-transparent'
-                                    }`}
+                                    className="inline-flex items-center gap-1.5 rounded-pill text-caption font-semibold px-3 py-1 border border-transparent bg-surface-sunken text-text-secondary transition-colors hover:border-hairline-strong"
                                 >
                                     <span className="opacity-60">#{attempt.attemptNumber}</span>
                                     {attempt.score === null ? 'Not yet scored' : attempt.score}

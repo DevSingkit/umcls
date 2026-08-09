@@ -1,24 +1,48 @@
-// See SECURITY.md §7.4 (FIND-018): CSV exports must have a mandatory
-// date range, capped at 90 days, to bound how much student data one
-// request can pull out of the system in one file.
+// Exports the current gradebook snapshot for a course as CSV: every
+// gradebook_items column, every enrolled student's score in each, and
+// each student's Final Grade (same computation as GradebookGrid.tsx
+// and get-my-final-grade.ts). Replaces the old assignment/quiz-average
+// export after the manual gradebook system replaced that data model —
+// see gradebook-items.ts and migration 072.
+//
+// NOTE ON FIND-018 (SECURITY.md §7.4): the original export had a
+// mandatory, 90-day-capped date range specifically to bound how much
+// student data one request could pull in a single file. That control
+// is deliberately NOT carried over here — per product decision, this
+// export has no size cap and always returns the full current
+// gradebook. If FIND-018 was tied to a compliance requirement or a
+// signed-off audit finding, that sign-off needs to be revisited
+// separately; this code change alone does not constitute that review.
 //
 // This is a Route Handler, not a Server Action, so it does NOT use
 // requireRole/requireUser (those redirect() via next/navigation, which
 // isn't the right shape for an API route returning a file). Auth here
-// follows the same pattern as app/api/activity/ping/route.ts: check
-// supabase.auth.getUser() directly and return a JSON error with a real
-// HTTP status instead.
+// follows the same pattern as app/api/activity/ping/route.ts and the
+// route this file replaces: check supabase.auth.getUser() directly and
+// return a JSON error with a real HTTP status instead.
+
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getGradebookForCourseInRange } from '@/features/grades/queries/gradebook'
+import { resolveWeightProfileKey } from '@/features/grades/queries/gradebook'
+
+type ComponentType = 'written_work' | 'performance_task' | 'quarterly_assessment'
+const COMPONENT_ORDER: ComponentType[] = ['written_work', 'performance_task', 'quarterly_assessment']
+const COMPONENT_LABEL: Record<ComponentType, string> = {
+    written_work: 'Written Work',
+    performance_task: 'Performance Task',
+    quarterly_assessment: 'Quarterly Assessment',
+}
 
 function toCsvValue(value: string | number): string {
     const str = String(value)
-    // Quote anything with a comma, quote, or newline; escape embedded quotes.
     if (/[",\n]/.test(str)) {
         return `"${str.replace(/"/g, '""')}"`
     }
     return str
+}
+
+function round2(n: number) {
+    return Math.round(n * 100) / 100
 }
 
 export async function GET(request: Request) {
@@ -39,77 +63,137 @@ export async function GET(request: Request) {
         .eq('id', user.id)
         .single()
 
-    if (!profile || !profile.is_active || profile.role !== 'teacher') {
+    if (!profile || !profile.is_active || (profile.role !== 'teacher' && profile.role !== 'admin')) {
         return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
     const courseId = searchParams.get('courseId')
-    const from = searchParams.get('from')
-    const to = searchParams.get('to')
 
     if (!courseId) {
         return NextResponse.json({ error: 'courseId is required' }, { status: 400 })
     }
 
-    // Mandatory date range; maximum 90-day window — FIND-018.
-    if (!from || !to) {
-        return NextResponse.json({ error: 'Date range required' }, { status: 400 })
-    }
+    const { data: course } = await supabase
+        .from('courses')
+        .select('id, title, subject, teacher_id')
+        .eq('id', courseId)
+        .is('deleted_at', null)
+        .single()
 
-    const fromDate = new Date(from)
-    const toDate = new Date(to)
-    if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
-        return NextResponse.json({ error: 'Invalid date range' }, { status: 400 })
+    if (!course) {
+        return NextResponse.json({ error: 'Course not found or not accessible' }, { status: 404 })
     }
-
-    const rangeMs = toDate.getTime() - fromDate.getTime()
-    if (rangeMs < 0) {
-        return NextResponse.json({ error: 'Invalid date range' }, { status: 400 })
-    }
-    if (rangeMs > 90 * 24 * 60 * 60 * 1000) {
-        return NextResponse.json({ error: 'Maximum 90-day range' }, { status: 400 })
-    }
-
-    const rows = await getGradebookForCourseInRange(courseId, from, to)
-
-    if (rows === null) {
+    if (profile.role !== 'admin' && course.teacher_id !== user.id) {
         return NextResponse.json({ error: 'Course not found or not accessible' }, { status: 404 })
     }
 
-    const header = ['Student', 'Lessons Completed', 'Total Lessons', 'Assignment Average', 'Assignment Count', 'Quiz Average', 'Quiz Count']
-    const lines = [
-        header.join(','),
-        ...rows.map((row) =>
-            [
-                toCsvValue(row.studentName),
-                toCsvValue(row.lessonsCompleted),
-                toCsvValue(row.totalLessons),
-                toCsvValue(row.assignmentAverage ?? ''),
-                toCsvValue(row.assignmentCount),
-                toCsvValue(row.quizAverage ?? ''),
-                toCsvValue(row.quizCount),
-            ].join(',')
-        ),
-    ]
+    const { data: enrollments } = await supabase
+        .from('enrollments')
+        .select('student_id, users!enrollments_student_id_fkey(full_name)')
+        .eq('course_id', courseId)
+        .eq('status', 'active')
+
+    const students = (enrollments ?? [])
+        .map((e: any) => ({ studentId: e.student_id as string, studentName: (e.users?.full_name as string) ?? 'Unknown' }))
+        .sort((a, b) => a.studentName.localeCompare(b.studentName))
+
+    const { data: items } = await supabase
+        .from('gradebook_items')
+        .select('id, component, label, max_score')
+        .eq('course_id', courseId)
+        .is('deleted_at', null)
+        .order('order_index', { ascending: true })
+
+    const itemIds = (items ?? []).map((i) => i.id)
+
+    const { data: scores } = itemIds.length
+        ? await supabase.from('gradebook_scores').select('gradebook_item_id, student_id, score').in('gradebook_item_id', itemIds)
+        : { data: [] as { gradebook_item_id: string; student_id: string; score: number }[] }
+
+    const scoreByKey = new Map((scores ?? []).map((s) => [`${s.gradebook_item_id}:${s.student_id}`, s.score]))
+
+    const weightProfileKey = resolveWeightProfileKey(course.subject)
+    const { data: weightRow } = await supabase
+        .from('subject_weight_profiles')
+        .select('written_work_pct, performance_task_pct, quarterly_assessment_pct')
+        .eq('profile_key', weightProfileKey)
+        .single()
+    const weights = weightRow ?? { written_work_pct: 20, performance_task_pct: 50, quarterly_assessment_pct: 30 }
+
+    const itemsByComponent: Record<ComponentType, any[]> = {
+        written_work: [],
+        performance_task: [],
+        quarterly_assessment: [],
+    }
+    for (const item of items ?? []) {
+        itemsByComponent[item.component as ComponentType].push(item)
+    }
+
+    const header = ['Student']
+    for (const component of COMPONENT_ORDER) {
+        for (const item of itemsByComponent[component]) {
+            header.push(`${COMPONENT_LABEL[component]} - ${item.label} (/${item.max_score})`)
+        }
+    }
+    header.push('Final Grade')
+
+    const lines = [header.join(',')]
+
+    for (const student of students) {
+        const row: (string | number)[] = [student.studentName]
+        let finalGrade = 0
+        let hasAnyGraded = false
+
+        for (const component of COMPONENT_ORDER) {
+            const componentItems = itemsByComponent[component]
+            let totalRaw = 0
+            let totalMax = 0
+            let componentHasAny = false
+
+            for (const item of componentItems) {
+                const raw = scoreByKey.get(`${item.id}:${student.studentId}`)
+                row.push(raw !== undefined ? raw : '')
+                if (raw !== undefined) {
+                    totalRaw += raw
+                    totalMax += item.max_score
+                    componentHasAny = true
+                }
+            }
+
+            if (componentHasAny && totalMax > 0) {
+                hasAnyGraded = true
+                const ps = (totalRaw / totalMax) * 100
+                const weightPct =
+                    component === 'written_work'
+                        ? weights.written_work_pct
+                        : component === 'performance_task'
+                          ? weights.performance_task_pct
+                          : weights.quarterly_assessment_pct
+                finalGrade += (ps * weightPct) / 100
+            }
+        }
+
+        row.push(hasAnyGraded ? round2(finalGrade) : '')
+        lines.push(row.map((v) => toCsvValue(v)).join(','))
+    }
+
     const csv = lines.join('\n')
 
-    // Explicit call required — GRADEBOOK_EXPORTED is not one of the
-    // events fn_audit_log() covers automatically. audit_logs.action has
-    // no CHECK constraint (DATABASE.md §3.20), so this is a new,
-    // free-text action name, same as QUIZ_RESPONSE_GRADED elsewhere.
     await supabase.rpc('log_audit_event', {
         p_action: 'GRADEBOOK_EXPORTED',
         p_target_table: 'courses',
         p_target_id: courseId,
-        p_metadata: { from, to, row_count: rows.length },
+        p_metadata: { student_count: students.length, item_count: (items ?? []).length },
     })
+
+    const todayStamp = new Date().toISOString().slice(0, 10)
 
     return new NextResponse(csv, {
         status: 200,
         headers: {
             'Content-Type': 'text/csv',
-            'Content-Disposition': `attachment; filename="gradebook-${courseId}-${from}-to-${to}.csv"`,
+            'Content-Disposition': `attachment; filename="gradebook-${courseId}-${todayStamp}.csv"`,
         },
     })
 }

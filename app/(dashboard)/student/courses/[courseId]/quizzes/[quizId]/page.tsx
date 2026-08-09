@@ -27,7 +27,7 @@ export default async function QuizDetailsPage({
     }
 
     const isPendingGrading = latestAttempt.status === 'submitted'
-    const scoreHidden = latestAttempt.score === null && latestAttempt.isPassing === null
+    const scoreHidden = latestAttempt.score === null
 
     return (
         <div className="max-w-2xl">
@@ -50,15 +50,9 @@ export default async function QuizDetailsPage({
                 )}
 
                 {!scoreHidden && (
-                    <>
-                        <p className="font-heading text-h1 text-ink mb-1">{latestAttempt.score}%</p>
-                        <p
-                            className={`text-body-emphasis ${latestAttempt.isPassing ? 'text-success' : 'text-error'
-                                }`}
-                        >
-                            {latestAttempt.isPassing ? 'Nice work — you passed!' : "Almost there — let's try again"}
-                        </p>
-                    </>
+                    <p className="font-heading text-h1 text-ink mb-1">
+                        {latestAttempt.score} <span className="text-h2 text-text-secondary">/ {latestAttempt.maxScore}</span>
+                    </p>
                 )}
             </div>
 

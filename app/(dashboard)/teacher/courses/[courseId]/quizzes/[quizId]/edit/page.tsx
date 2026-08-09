@@ -77,12 +77,11 @@ export default async function QuizEditPage({
             <div className="mb-6">
                 <QuizSettingsForm
                     quizId={quiz.id}
-                    currentGradingComponent={quiz.grading_component}
                     currentTimeLimitMinutes={quiz.time_limit_minutes}
+                    currentMaxAttempts={quiz.max_attempts}
                     currentAvailableUntil={quiz.available_until}
                     currentAllowLate={quiz.allow_late}
                     totalQuestions={questions.length}
-                    currentPassingScore={quiz.passing_score}
                     currentVisibility={quiz.show_results_after}
                 />
             </div>

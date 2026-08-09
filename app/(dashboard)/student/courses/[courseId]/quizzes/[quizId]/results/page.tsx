@@ -22,7 +22,7 @@ export default async function QuizResultsPage({
 
     const { data: attempt } = await supabase
         .from('quiz_attempts')
-        .select('id, score, is_passing, status, quizzes(title, passing_score, show_results_after)')
+        .select('id, score, status, quizzes(id, title, show_results_after)')
         .eq('id', attemptId)
         .eq('student_id', user.id)
         .single()
@@ -32,15 +32,26 @@ export default async function QuizResultsPage({
     }
 
     const quiz = attempt.quizzes as unknown as {
+        id: string
         title: string
-        passing_score: number
-        show_results_after: 'immediately' | 'after_grading' | 'never'
+        show_results_after: 'submission' | 'grading' | 'never'
     }
+
+    // Total possible points for this quiz — sum of every question's
+    // points, since quiz_attempts.score is now a raw point total
+    // (e.g. "8"), not a 0-100 percentage. No pass/fail anymore either,
+    // so there's nothing to compare the score against except this max.
+    const { data: questions } = await supabase
+        .from('questions')
+        .select('points')
+        .eq('quiz_id', quiz.id)
+
+    const maxPoints = (questions ?? []).reduce((sum, q) => sum + (q.points ?? 0), 0)
 
     const isFullyGraded = attempt.status === 'graded'
     const canReveal =
-        quiz.show_results_after === 'immediately' ||
-        (quiz.show_results_after === 'after_grading' && isFullyGraded)
+        quiz.show_results_after === 'submission' ||
+        (quiz.show_results_after === 'grading' && isFullyGraded)
 
     return (
         <div className="max-w-2xl mx-auto text-center py-12">
@@ -59,23 +70,11 @@ export default async function QuizResultsPage({
                 </>
             ) : (
                 <>
-                    <h1 className="font-heading text-h1 text-ink mt-2 mb-8">
-                        {attempt.is_passing ? 'Great job!' : "Let's practice some more"}
-                    </h1>
+                    <h1 className="font-heading text-h1 text-ink mt-2 mb-8">Quiz results</h1>
                     <div className="bg-surface rounded-md shadow-card p-10 mb-8">
-                        <p
-                            className={
-                                attempt.is_passing
-                                    ? 'font-heading text-[3.5rem] font-extrabold leading-none text-success'
-                                    : 'font-heading text-[3.5rem] font-extrabold leading-none text-error'
-                            }
-                        >
+                        <p className="font-heading text-[3.5rem] font-extrabold leading-none text-ink">
                             {attempt.score}
-                        </p>
-                        <p className="text-caption text-text-secondary mt-2">
-                            {attempt.is_passing
-                                ? `out of 100 — you needed ${quiz.passing_score} to pass`
-                                : `out of 100 — you needed ${quiz.passing_score} to pass. You can do it!`}
+                            <span className="text-h2 text-text-secondary"> / {maxPoints}</span>
                         </p>
                     </div>
                 </>
