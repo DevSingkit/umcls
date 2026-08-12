@@ -19,11 +19,28 @@ export function MobileBottomNav({ role }: MobileBottomNavProps) {
     const pathname = usePathname();
     const items = NAV_ITEMS[role];
 
+    // Tailwind can't read a dynamic `grid-cols-${n}`, it only picks up
+    // classes it can see literally in source, so map the real item
+    // count to an explicit class instead of hardcoding grid-cols-5.
+    // This is what was leaving a clickable-looking but empty 5th slot
+    // for teacher/student (4 items) while admin (5 items) filled it.
+    const gridColsClass =
+        items.length === 5
+            ? "grid-cols-5"
+            : items.length === 4
+              ? "grid-cols-4"
+              : items.length === 3
+                ? "grid-cols-3"
+                : "grid-cols-5";
+
     return (
         <nav
             role="navigation"
             aria-label="Main navigation"
-            className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-hairline bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
+            className={cn(
+                "fixed inset-x-0 bottom-0 z-30 grid border-t border-hairline bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden",
+                gridColsClass
+            )}
         >
             {items.map((item) => {
                 const isActive = item.isActive
