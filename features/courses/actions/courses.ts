@@ -12,12 +12,29 @@ import { createClient } from '@/lib/supabase/server'
 // to set it right away, same reasoning the migration used for making
 // the column nullable. It's used to scope what grade level Simplify
 // generation targets, once set.
+//
+// FIX: FormData.get() returns `null` for an empty or missing field,
+// never `undefined` — but z.string().optional() only treats
+// `undefined` as "not present." A blank Description or Subject field
+// was sending `null` straight into safeParse, which Zod rejected with
+// its raw internal message ("Expected string, received null"),
+// surfaced directly to the user instead of a real validation error.
+// z.string().nullable().optional() accepts both, then .transform
+// normalizes either one to undefined so the rest of this file's logic
+// (description || null, etc.) doesn't need to change.
+const optionalString = z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => val || undefined)
+
 const createCourseSchema = z.object({
     title: z.string().min(2, 'Title is too short'),
-    description: z.string().optional(),
-    subject: z.string().optional(),
+    description: optionalString,
+    subject: optionalString,
     gradeLevel: z
         .string()
+        .nullable()
         .optional()
         .transform((val) => (val ? parseInt(val, 10) : undefined))
         .refine((val) => val === undefined || (val >= 1 && val <= 6), {
@@ -47,6 +64,7 @@ export async function createCourse(formData: FormData): Promise<CreateCourseResu
         description: description || null,
         subject: subject || null,
         grade_level: gradeLevel ?? null,
+        is_published: true,
     })
     if (error) {
         return { ok: false, error: 'Could not create the course. Please try again.' }

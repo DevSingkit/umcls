@@ -38,7 +38,7 @@ export function CoursesPreview({
     return (
         <div>
             <div className="flex items-center justify-between mb-4">
-                <h2 className="font-heading text-h2 text-ink">Your courses</h2>
+                <h2 className="font-heading text-h2 text-ink">Your classes</h2>
                 <Link href={viewAllHref} className="text-caption text-brand hover:underline">
                     View all
                 </Link>

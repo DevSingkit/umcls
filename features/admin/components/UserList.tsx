@@ -13,6 +13,11 @@ import {
     changeUserRole,
     type UserRow,
 } from '@/features/admin/actions/users'
+import {
+    getStudentEnrollments,
+    unenrollStudent,
+    type StudentEnrollment,
+} from '@/features/admin/actions/enroll-student'
 import { EraseUserButton } from '@/features/admin/components/EraseUserButton'
 
 export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
@@ -29,6 +34,11 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
     const [roleError, setRoleError] = useState<string | null>(null)
     const [roleCheckPending, setRoleCheckPending] = useState(false)
     const [toggleActiveError, setToggleActiveError] = useState<string | null>(null)
+    const [enrollTargetId, setEnrollTargetId] = useState<string | null>(null)
+    const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([])
+    const [enrollLoading, setEnrollLoading] = useState(false)
+    const [enrollError, setEnrollError] = useState<string | null>(null)
+    const [unenrollPendingId, setUnenrollPendingId] = useState<string | null>(null)
 
     const refresh = useCallback(() => {
         startTransition(async () => {
@@ -124,6 +134,33 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
         })
     }
 
+    async function handleOpenEnrollments(userId: string) {
+        setEnrollError(null)
+        if (enrollTargetId === userId) {
+            setEnrollTargetId(null)
+            return
+        }
+        setEnrollTargetId(userId)
+        setEnrollLoading(true)
+        const result = await getStudentEnrollments(userId)
+        setEnrollments(result)
+        setEnrollLoading(false)
+    }
+
+    function handleUnenroll(enrollmentId: string) {
+        setEnrollError(null)
+        setUnenrollPendingId(enrollmentId)
+        startTransition(async () => {
+            const result = await unenrollStudent(enrollmentId)
+            setUnenrollPendingId(null)
+            if (result.ok) {
+                setEnrollments((prev) => prev.filter((e) => e.enrollmentId !== enrollmentId))
+            } else {
+                setEnrollError(result.error)
+            }
+        })
+    }
+
     return (
         <div>
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -206,6 +243,18 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                 >
                                     {roleCheckPending ? 'Checking…' : 'Change role'}
                                 </button>
+                                {user.role === 'student' && (
+                                    <button
+                                        onClick={() => handleOpenEnrollments(user.id)}
+                                        className={`h-9 px-4 rounded-md border-[1.5px] text-caption font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                                            enrollTargetId === user.id
+                                                ? 'border-brand bg-brand text-on-ink hover:bg-brand-hover'
+                                                : 'border-hairline-strong bg-surface text-ink hover:bg-surface-sunken'
+                                        }`}
+                                    >
+                                        Classes
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setResetTargetId(resetTargetId === user.id ? null : user.id)}
                                     className={`h-9 px-4 rounded-md border-[1.5px] text-caption font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
@@ -309,6 +358,41 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                     </p>
                                 </div>
                             )}
+
+                            {enrollTargetId === user.id && (
+                                <div className="rounded-md border border-hairline-strong p-4">
+                                    {enrollLoading ? (
+                                        <p className="text-caption text-text-secondary">Loading classes…</p>
+                                    ) : enrollments.length === 0 ? (
+                                        <p className="text-caption text-text-secondary">
+                                            Not currently enrolled in any class.
+                                        </p>
+                                    ) : (
+                                        <ul className="flex flex-col gap-2">
+                                            {enrollments.map((e) => (
+                                                <li
+                                                    key={e.enrollmentId}
+                                                    className="flex items-center justify-between gap-3"
+                                                >
+                                                    <span className="text-caption text-ink">
+                                                        {e.title}
+                                                        {e.subject ? ` — ${e.subject}` : ''}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleUnenroll(e.enrollmentId)}
+                                                        disabled={unenrollPendingId === e.enrollmentId}
+                                                        className="h-8 px-3 rounded-md border-[1.5px] border-error bg-surface text-error text-caption font-medium hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                                                    >
+                                                        {unenrollPendingId === e.enrollmentId
+                                                            ? 'Unenrolling…'
+                                                            : 'Unenroll'}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -332,6 +416,11 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
             {roleError && (
                 <p className="text-caption text-error mt-3" role="alert">
                     {roleError}
+                </p>
+            )}
+            {enrollError && (
+                <p className="text-caption text-error mt-3" role="alert">
+                    {enrollError}
                 </p>
             )}
         </div>

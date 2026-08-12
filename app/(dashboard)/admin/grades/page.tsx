@@ -26,12 +26,12 @@ export default async function AdminGradesPage({
         <div>
             <h1 className="font-heading text-h1 text-ink mb-2">Grades</h1>
             <p className="text-body-md text-text-secondary mb-8">
-                Admin can view and edit any course&apos;s gradebook, the same as its teacher.
+                You can view and edit your class&apos;s gradebook.
             </p>
 
             {courses.length === 0 ? (
                 <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                    <p className="text-body-md text-text-secondary">No courses have been created yet.</p>
+                    <p className="text-body-md text-text-secondary">No class have been created yet.</p>
                 </div>
             ) : (
                 <div className="grid gap-3 mb-8">
@@ -55,8 +55,8 @@ export default async function AdminGradesPage({
                                 <div className="min-w-0 flex-1">
                                     <p className="text-body-emphasis text-ink truncate">{course.title}</p>
                                     <p className="text-caption text-text-secondary mt-1">
-                                        {course.teacherName}
-                                        {course.subject ? ` · ${course.subject}` : ''} · {course.studentCount} student
+                                        {course.subject ? `${course.subject} · ` : ''}
+                                        {course.teacherName} · {course.studentCount} student
                                         {course.studentCount === 1 ? '' : 's'}
                                     </p>
                                 </div>
@@ -67,11 +67,11 @@ export default async function AdminGradesPage({
             )}
 
             {!courseId && courses.length > 0 && (
-                <p className="text-body-md text-text-secondary">Pick a course above to see its gradebook.</p>
+                <p className="text-body-md text-text-secondary">Pick a class above to see its gradebook.</p>
             )}
 
             {courseId && gridData === null && (
-                <p className="text-body-md text-error">That course could not be found.</p>
+                <p className="text-body-md text-error">That class could not be found.</p>
             )}
 
             {courseId && gridData !== null && (
@@ -79,13 +79,16 @@ export default async function AdminGradesPage({
                     <div className="mb-3">
                         <h2 className="font-heading text-body-emphasis text-ink">{selectedCourse?.title}</h2>
                         {selectedCourse && (
-                            <p className="text-caption text-text-secondary">Taught by {selectedCourse.teacherName}</p>
+                            <p className="text-caption text-text-secondary">
+                                {selectedCourse.subject ? `${selectedCourse.subject} · ` : ''}
+                                Taught by {selectedCourse.teacherName}
+                            </p>
                         )}
                     </div>
 
                     {gridData.students.length === 0 ? (
                         <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                            <p className="text-body-md text-text-secondary">No students enrolled in this course yet.</p>
+                            <p className="text-body-md text-text-secondary">No students enrolled in this class yet.</p>
                         </div>
                     ) : (
                         <>

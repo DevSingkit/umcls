@@ -1,6 +1,13 @@
 'use client'
-import { useActionState, useState } from 'react'
+import { useActionState, useRef, useState } from 'react'
 import { createLesson, type CreateLessonResult } from '@/features/lessons/actions/lessons'
+
+const MAX_FILE_MB = 40
+
+function formatFileSize(bytes: number) {
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 const initialState: CreateLessonResult = { ok: false, error: '' }
 
@@ -14,6 +21,43 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
     // unique key for React — the actual values live in the DOM inputs
     // and are read via formData.getAll on submit.
     const [linkRowIds, setLinkRowIds] = useState<number[]>([0])
+
+    // Files live in the hidden input's FileList (the actual source of
+    // truth submitted with the form). We mirror them into state just to
+    // render the "chip list" UI, and rebuild the input's FileList via
+    // DataTransfer whenever a file is removed.
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+
+    function handleFilesChosen(e: React.ChangeEvent<HTMLInputElement>) {
+        const chosen = Array.from(e.target.files ?? [])
+        setSelectedFiles((prev) => {
+            // Avoid duplicate name+size entries when picking files across
+            // multiple browse actions.
+            const existingKeys = new Set(prev.map((f) => `${f.name}-${f.size}`))
+            const merged = [...prev, ...chosen.filter((f) => !existingKeys.has(`${f.name}-${f.size}`))]
+            syncInputFiles(merged)
+            return merged
+        })
+    }
+
+    function removeFile(index: number) {
+        setSelectedFiles((prev) => {
+            const next = prev.filter((_, i) => i !== index)
+            syncInputFiles(next)
+            return next
+        })
+    }
+
+    // Keeps the actual <input type="file"> in sync with our chip list so
+    // the right files still get submitted with the form.
+    function syncInputFiles(files: File[]) {
+        const dataTransfer = new DataTransfer()
+        files.forEach((f) => dataTransfer.items.add(f))
+        if (fileInputRef.current) {
+            fileInputRef.current.files = dataTransfer.files
+        }
+    }
 
     function addLinkRow() {
         setLinkRowIds((rows) => [...rows, rows.length ? Math.max(...rows) + 1 : 0])
@@ -68,20 +112,102 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                 </div>
 
                 <div>
-                    <label htmlFor="files" className="block text-label text-ink mb-2">
+                    <label className="block text-label text-ink mb-2">
                         Files (optional)
                     </label>
+
+                    {/* Hidden input holds the real FileList submitted with the form;
+                        the button below just opens the OS file picker. */}
                     <input
+                        ref={fileInputRef}
                         id="files"
                         name="files"
                         type="file"
                         multiple
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.mp3,.mp4"
-                        className="w-full text-body-md text-text-secondary"
+                        onChange={handleFilesChosen}
+                        className="hidden"
                     />
+
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 h-11 px-4 rounded-md border-[1.5px] border-dashed border-hairline-strong
+                                   text-body-md text-ink font-medium hover:border-brand hover:bg-surface-sunken
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                            <path
+                                d="M12 4v16m-8-8h16"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        Attach files
+                    </button>
+
                     <p className="text-caption text-text-secondary mt-2">
-                        PDF, DOC/DOCX, JPEG/PNG, MP3, MP4 — max 40 MB each. Select multiple files at once if needed.
+                        PDF, DOC/DOCX, JPEG/PNG, MP3, MP4 — max {MAX_FILE_MB} MB each. Select multiple files at once if needed.
                     </p>
+
+                    {selectedFiles.length > 0 && (
+                        <ul className="mt-3 space-y-2">
+                            {selectedFiles.map((file, index) => {
+                                const tooLarge = file.size > MAX_FILE_MB * 1024 * 1024
+                                return (
+                                    <li
+                                        key={`${file.name}-${file.size}-${index}`}
+                                        className={`flex items-center gap-3 h-11 px-3 rounded-md border-[1.5px] bg-surface-sunken
+                                                    ${tooLarge ? 'border-error' : 'border-hairline-strong'}`}
+                                    >
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            className="shrink-0 text-text-secondary"
+                                        >
+                                            <path
+                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                                                stroke="currentColor"
+                                                strokeWidth="1.5"
+                                            />
+                                            <path d="M14 2v6h6" stroke="currentColor" strokeWidth="1.5" />
+                                        </svg>
+
+                                        <span className="text-caption text-ink truncate flex-1" title={file.name}>
+                                            {file.name}
+                                        </span>
+
+                                        <span
+                                            className={`text-caption whitespace-nowrap ${
+                                                tooLarge ? 'text-error font-medium' : 'text-text-secondary'
+                                            }`}
+                                        >
+                                            {tooLarge ? `Too large (${formatFileSize(file.size)})` : formatFileSize(file.size)}
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFile(index)}
+                                            aria-label={`Remove ${file.name}`}
+                                            className="text-text-secondary hover:text-error shrink-0"
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                                <path
+                                                    d="M6 6l12 12M18 6L6 18"
+                                                    stroke="currentColor"
+                                                    strokeWidth="1.75"
+                                                    strokeLinecap="round"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    )}
                 </div>
 
                 <div>

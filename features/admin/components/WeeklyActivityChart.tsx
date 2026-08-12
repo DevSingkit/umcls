@@ -23,12 +23,13 @@ export function WeeklyActivityChart({ data }: { data: DailyLoginCount[] }) {
             </p>
             <div style={{ width: '100%', height: 220 }}>
                 <ResponsiveContainer>
-                    <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <BarChart data={data} margin={{ top: 8, right: 32, left: 0, bottom: 0 }}>
                         <XAxis
                             dataKey="label"
                             axisLine={false}
                             tickLine={false}
                             tick={{ fontSize: 13 }}
+                            padding={{ left: 16, right: 16 }}
                         />
                         <YAxis
                             allowDecimals={false}

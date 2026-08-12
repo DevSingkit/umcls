@@ -153,7 +153,7 @@ export function AddGradebookColumnForm({
                     />
                     {maxScoreLocked && (
                         <p className="text-caption text-text-muted mt-1">
-                            Matches the linked item's max score automatically.
+                            Matches the linked item&apos;s max score automatically.
                         </p>
                     )}
                 </div>

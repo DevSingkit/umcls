@@ -30,6 +30,7 @@ export type AdminActivityItem = {
 export type AdminCourseActivityGroup = {
     courseId: string
     courseTitle: string
+    subject: string | null
     teacherName: string
     items: AdminActivityItem[]
 }
@@ -47,7 +48,7 @@ export async function getCourseActivityForAdmin(): Promise<AdminCourseActivityGr
 
     const { data: courses } = await supabase
         .from('courses')
-        .select('id, title, users!courses_teacher_id_fkey(full_name)')
+        .select('id, title, subject, users!courses_teacher_id_fkey(full_name)')
         .is('deleted_at', null)
         .order('title', { ascending: true })
 
@@ -115,6 +116,7 @@ export async function getCourseActivityForAdmin(): Promise<AdminCourseActivityGr
         return {
             courseId: c.id,
             courseTitle: c.title,
+            subject: c.subject,
             teacherName: c.users?.full_name ?? 'Unknown',
             items,
         }

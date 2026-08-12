@@ -1,9 +1,11 @@
-// Exports the current gradebook snapshot for a course as CSV: every
-// gradebook_items column, every enrolled student's score in each, and
-// each student's Final Grade (same computation as GradebookGrid.tsx
-// and get-my-final-grade.ts). Replaces the old assignment/quiz-average
-// export after the manual gradebook system replaced that data model —
-// see gradebook-items.ts and migration 072.
+// Exports the current gradebook snapshot for a course as an Excel
+// (.xlsx) file via ExcelJS: every gradebook_items column, every
+// enrolled student's score in each, and each student's Final Grade
+// (same computation as GradebookGrid.tsx and get-my-final-grade.ts).
+// Replaces the old assignment/quiz-average export after the manual
+// gradebook system replaced that data model — see gradebook-items.ts
+// and migration 072. Was plain CSV until the teacher requested a real
+// spreadsheet file instead.
 //
 // NOTE ON FIND-018 (SECURITY.md §7.4): the original export had a
 // mandatory, 90-day-capped date range specifically to bound how much
@@ -22,6 +24,7 @@
 // return a JSON error with a real HTTP status instead.
 
 import { NextResponse } from 'next/server'
+import ExcelJS from 'exceljs'
 import { createClient } from '@/lib/supabase/server'
 import { resolveWeightProfileKey } from '@/features/grades/queries/gradebook'
 
@@ -31,14 +34,6 @@ const COMPONENT_LABEL: Record<ComponentType, string> = {
     written_work: 'Written Work',
     performance_task: 'Performance Task',
     quarterly_assessment: 'Quarterly Assessment',
-}
-
-function toCsvValue(value: string | number): string {
-    const str = String(value)
-    if (/[",\n]/.test(str)) {
-        return `"${str.replace(/"/g, '""')}"`
-    }
-    return str
 }
 
 function round2(n: number) {
@@ -130,18 +125,40 @@ export async function GET(request: Request) {
         itemsByComponent[item.component as ComponentType].push(item)
     }
 
-    const header = ['Student']
+    // --- Build the workbook ---
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'UMCLS'
+    workbook.created = new Date()
+
+    const sheet = workbook.addWorksheet('Gradebook', {
+        views: [{ state: 'frozen', xSplit: 1, ySplit: 1 }], // freeze the Student column + header row
+    })
+
+    const columns: Partial<ExcelJS.Column>[] = [{ header: 'Student', key: 'student', width: 28 }]
     for (const component of COMPONENT_ORDER) {
         for (const item of itemsByComponent[component]) {
-            header.push(`${COMPONENT_LABEL[component]} - ${item.label} (/${item.max_score})`)
+            columns.push({
+                header: `${COMPONENT_LABEL[component]} - ${item.label} (/${item.max_score})`,
+                key: `item:${item.id}`,
+                width: 22,
+            })
         }
     }
-    header.push('Final Grade')
+    columns.push({ header: 'Final Grade', key: 'finalGrade', width: 14 })
+    sheet.columns = columns
 
-    const lines = [header.join(',')]
+    // Style the header row.
+    const headerRow = sheet.getRow(1)
+    headerRow.font = { bold: true }
+    headerRow.alignment = { vertical: 'middle', wrapText: true }
+    headerRow.height = 32
+    headerRow.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9EDF5' } }
+        cell.border = { bottom: { style: 'thin', color: { argb: 'FFCBD2E1' } } }
+    })
 
     for (const student of students) {
-        const row: (string | number)[] = [student.studentName]
+        const rowData: Record<string, string | number> = { student: student.studentName }
         let finalGrade = 0
         let hasAnyGraded = false
 
@@ -153,8 +170,8 @@ export async function GET(request: Request) {
 
             for (const item of componentItems) {
                 const raw = scoreByKey.get(`${item.id}:${student.studentId}`)
-                row.push(raw !== undefined ? raw : '')
                 if (raw !== undefined) {
+                    rowData[`item:${item.id}`] = raw
                     totalRaw += raw
                     totalMax += item.max_score
                     componentHasAny = true
@@ -174,11 +191,23 @@ export async function GET(request: Request) {
             }
         }
 
-        row.push(hasAnyGraded ? round2(finalGrade) : '')
-        lines.push(row.map((v) => toCsvValue(v)).join(','))
+        if (hasAnyGraded) {
+            rowData.finalGrade = round2(finalGrade)
+        }
+
+        const row = sheet.addRow(rowData)
+        row.getCell('finalGrade').font = { bold: true }
     }
 
-    const csv = lines.join('\n')
+    // Thin bottom border under every data row for readability.
+    sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        if (rowNumber === 1) return
+        row.eachCell({ includeEmpty: true }, (cell) => {
+            cell.border = { bottom: { style: 'hair', color: { argb: 'FFE2E6ED' } } }
+        })
+    })
+
+    const buffer = await workbook.xlsx.writeBuffer()
 
     await supabase.rpc('log_audit_event', {
         p_action: 'GRADEBOOK_EXPORTED',
@@ -189,11 +218,12 @@ export async function GET(request: Request) {
 
     const todayStamp = new Date().toISOString().slice(0, 10)
 
-    return new NextResponse(csv, {
+    return new NextResponse(buffer as any, {
         status: 200,
         headers: {
-            'Content-Type': 'text/csv',
-            'Content-Disposition': `attachment; filename="gradebook-${courseId}-${todayStamp}.csv"`,
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': `attachment; filename="gradebook-${courseId}-${todayStamp}.xlsx"`,
         },
     })
 }
+

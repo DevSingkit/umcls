@@ -31,17 +31,19 @@ export function CourseCard({ id, title, subject, href }: CourseCardProps) {
         >
             <div className={`h-20 ${band} px-5 py-4 flex flex-col justify-end`}>
                 {subject && (
-                    <span className="text-caption font-semibold text-on-ink/80 mb-1">
-                        {subject}
-                    </span>
+
+                <span className="text-caption font-semibold text-on-ink/80 mb-1">
+                    {title}
+                </span>
+
                 )}
                 <span className="text-body-emphasis text-on-ink leading-tight line-clamp-2">
-                    {title}
+                    {subject}
                 </span>
             </div>
             <div className="px-5 py-3">
                 <span className="text-caption text-brand font-semibold group-hover:underline">
-                    Open course
+                    Open class
                 </span>
             </div>
         </Link>

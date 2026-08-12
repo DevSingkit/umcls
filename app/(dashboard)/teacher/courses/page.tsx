@@ -10,12 +10,12 @@ export default async function TeacherCoursesPage() {
     return (
         <div>
             <div className="mb-8 flex items-center justify-between">
-                <h1 className="font-heading text-h1 text-ink">My courses</h1>
+                <h1 className="font-heading text-h1 text-ink">My classes</h1>
                 <Link
                     href="/teacher/courses/new"
                     className="flex h-11 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
                 >
-                    + New course
+                    + New class
                 </Link>
             </div>
 
@@ -25,13 +25,13 @@ export default async function TeacherCoursesPage() {
                         <Plus size={28} className="text-brand" aria-hidden="true" />
                     </div>
                     <p className="text-body-md text-ink-soft">
-                        You haven&apos;t created a course yet.
+                        You haven&apos;t created a class yet.
                     </p>
                     <Link
                         href="/teacher/courses/new"
                         className="flex h-11 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
                     >
-                        + Create your first course
+                        + Create your first class
                     </Link>
                 </div>
             ) : (

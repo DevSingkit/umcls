@@ -66,6 +66,7 @@ export function CourseActivityAccordion({ courses }: { courses: AdminCourseActiv
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-body-emphasis text-ink">{course.courseTitle}</p>
                                 <p className="text-caption text-text-secondary">
+                                    {course.subject ? `${course.subject} · ` : ''}
                                     {course.teacherName} · {course.items.length} item
                                     {course.items.length === 1 ? '' : 's'}
                                 </p>

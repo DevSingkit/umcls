@@ -15,6 +15,7 @@ import { Fragment, useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { setGradebookScore, pullLinkedScores } from '@/features/grades/actions/gradebook-items'
 import { AddGradebookColumnForm } from './AddGradebookColumnForm'
+import { GradebookExportControls } from './GradebookExportControls'
 
 type ComponentType = 'written_work' | 'performance_task' | 'quarterly_assessment'
 
@@ -172,14 +173,17 @@ export function GradebookGrid({
         <div>
             <div className="flex items-center justify-between mb-3">
                 <h2 className="font-heading text-body-emphasis text-ink">Gradebook</h2>
-                {canEdit && (
-                    <button
-                        onClick={() => setShowAddForm((v) => !v)}
-                        className="h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
-                    >
-                        {showAddForm ? 'Close' : 'Add column'}
-                    </button>
-                )}
+                <div className="flex items-center gap-2">
+                    <GradebookExportControls courseId={courseId} />
+                    {canEdit && (
+                        <button
+                            onClick={() => setShowAddForm((v) => !v)}
+                            className="h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
+                        >
+                            {showAddForm ? 'Close' : 'Add column'}
+                        </button>
+                    )}
+                </div>
             </div>
 
             {showAddForm && (
@@ -358,7 +362,7 @@ export function GradebookGrid({
                     </table>
                     {errorCell && (
                         <p className="px-4 py-2 text-caption text-error">
-                            Could not save that score. Check it's within the max and try again.
+                            Could not save that score. Check it&apos;s within the max and try again.
                         </p>
                     )}
                 </div>

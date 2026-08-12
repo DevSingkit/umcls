@@ -1,4 +1,4 @@
-// Admin backup: every user's profile + email as CSV. Same Route
+// Admin backup: every user's profile + email as XLSX. Same Route
 // Handler shape as app/api/gradebook/export/route.ts (auth checked
 // directly via supabase.auth.getUser(), not requireRole — see that
 // route's own comment for why). No date-range cap here (unlike
@@ -6,16 +6,9 @@
 // backup is a bounded, admin-only, whole-table snapshot, not an
 // open-ended per-course data pull.
 import { NextResponse } from 'next/server'
+import ExcelJS from 'exceljs'
 import { createClient } from '@/lib/supabase/server'
 import { getAllUsersForBackup } from '@/features/admin/actions/backup-queries'
-
-function toCsvValue(value: string | number | boolean): string {
-    const str = String(value)
-    if (/[",\n]/.test(str)) {
-        return `"${str.replace(/"/g, '""')}"`
-    }
-    return str
-}
 
 export async function GET() {
     const supabase = await createClient()
@@ -41,20 +34,29 @@ export async function GET() {
 
     const rows = await getAllUsersForBackup()
 
-    const header = ['Full Name', 'Email', 'Role', 'Status', 'Created At']
-    const lines = [
-        header.join(','),
-        ...rows.map((row) =>
-            [
-                toCsvValue(row.fullName),
-                toCsvValue(row.email),
-                toCsvValue(row.role),
-                toCsvValue(row.isActive ? 'Active' : 'Deactivated'),
-                toCsvValue(row.createdAt),
-            ].join(',')
-        ),
+    const workbook = new ExcelJS.Workbook()
+    const sheet = workbook.addWorksheet('Users')
+
+    sheet.columns = [
+        { header: 'Full Name', key: 'fullName', width: 28 },
+        { header: 'Email', key: 'email', width: 32 },
+        { header: 'Role', key: 'role', width: 12 },
+        { header: 'Status', key: 'status', width: 14 },
+        { header: 'Created At', key: 'createdAt', width: 22 },
     ]
-    const csv = lines.join('\n')
+    sheet.getRow(1).font = { bold: true }
+
+    for (const row of rows) {
+        sheet.addRow({
+            fullName: row.fullName,
+            email: row.email,
+            role: row.role,
+            status: row.isActive ? 'Active' : 'Deactivated',
+            createdAt: row.createdAt,
+        })
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer()
 
     await supabase.rpc('log_audit_event', {
         p_action: 'USERS_BACKUP_EXPORTED',
@@ -63,11 +65,11 @@ export async function GET() {
 
     const today = new Date().toISOString().slice(0, 10)
 
-    return new NextResponse(csv, {
+    return new NextResponse(buffer, {
         status: 200,
         headers: {
-            'Content-Type': 'text/csv',
-            'Content-Disposition': `attachment; filename="users-backup-${today}.csv"`,
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': `attachment; filename="users-backup-${today}.xlsx"`,
         },
     })
 }

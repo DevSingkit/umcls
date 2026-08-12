@@ -22,7 +22,7 @@ export function EnrollForm({
     courses,
 }: {
     students: { id: string; full_name: string; email: string }[]
-    courses: { id: string; title: string }[]
+    courses: { id: string; title: string; subject: string | null }[]
 }) {
     const [state, formAction, isPending] = useActionState(enrollAction, initialState)
 
@@ -49,7 +49,7 @@ export function EnrollForm({
 
             <div>
                 <label htmlFor="courseId" className="text-label text-text-secondary block mb-2">
-                    Course
+                    Classes
                 </label>
                 <select
                     id="courseId"
@@ -57,10 +57,11 @@ export function EnrollForm({
                     required
                     className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
-                    <option value="">Choose a course</option>
+                    <option value="">Choose a class</option>
                     {courses.map((course) => (
                         <option key={course.id} value={course.id}>
                             {course.title}
+                            {course.subject ? ` — ${course.subject}` : ''}
                         </option>
                     ))}
                 </select>

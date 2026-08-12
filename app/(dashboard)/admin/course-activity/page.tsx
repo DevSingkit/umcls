@@ -11,9 +11,9 @@ export default async function AdminCourseActivityPage() {
 
     return (
         <div>
-            <h1 className="mb-2 font-heading text-h1 text-ink">Course Activity</h1>
+            <h1 className="mb-2 font-heading text-h1 text-ink">Class Activities</h1>
             <p className="mb-8 text-body-md text-text-secondary">
-                Every lesson, quiz, and assignment, by course. Click a course to expand it. View-only.
+                Every lesson, quiz, and assignment, by class. Click a class to expand it.
             </p>
 
             <CourseActivityAccordion courses={courses} />

@@ -46,13 +46,13 @@ export function GradesVisibilityToggle({
                 disabled={isPending}
                 role="switch"
                 aria-checked={visible}
-                className={`shrink-0 h-7 w-12 rounded-pill relative transition-colors disabled:opacity-60 ${
-                    visible ? 'bg-brand' : 'bg-hairline-strong'
+                className={`shrink-0 h-6 w-11 rounded-pill relative transition-colors disabled:opacity-60 border ${
+                    visible ? 'bg-brand border-brand' : 'bg-hairline border-hairline-strong'
                 }`}
             >
                 <span
-                    className={`absolute top-0.5 h-6 w-6 rounded-pill bg-surface shadow transition-transform ${
-                        visible ? 'translate-x-5' : 'translate-x-0.5'
+                    className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-pill bg-surface shadow transition-transform ${
+                        visible ? 'translate-x-5' : 'translate-x-0'
                     }`}
                 />
             </button>

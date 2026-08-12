@@ -11,13 +11,12 @@ export default async function AdminCoursesPage() {
     const courses = await getAllCoursesForManagement()
 
     return (
-        <div className="min-h-screen bg-canvas px-md py-xxl">
+        <div className="min-h-screen bg-canvas">
             <div className="mx-auto max-w-3xl space-y-8">
                 <div>
-                    <p className="text-label uppercase tracking-wide text-text-secondary">• ADMIN</p>
-                    <h1 className="text-h1 text-ink mt-2">Courses</h1>
+                    <h1 className="text-h1 text-ink mt-2">All class</h1>
                     <p className="text-body-md text-text-secondary mt-2">
-                        Archive a course to remove it from its teacher and students&apos; dashboards
+                        Archive a class to remove it from its teacher and students&apos; dashboards
                         without deleting anything. They can still open it from their own
                         &quot;Archived&quot; list.
                     </p>

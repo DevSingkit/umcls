@@ -45,62 +45,65 @@ export default async function AdminDashboardPage() {
 
             <h1 className="mb-8 font-heading text-h1 text-ink">Admin Dashboard</h1>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div className="bg-surface rounded-md shadow-card p-6">
-                    <p className="text-label text-text-secondary mb-2">Teachers</p>
-                    <p className="text-data-lg text-ink">{teacherCount ?? 0}</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
+                <div className="bg-surface rounded-md shadow-card p-3 sm:p-6">
+                    <p className="text-caption sm:text-label text-text-secondary mb-1 sm:mb-2">Teachers</p>
+                    <p className="text-body-emphasis sm:text-data-lg text-ink">{teacherCount ?? 0}</p>
                 </div>
-                <div className="bg-surface rounded-md shadow-card p-6">
-                    <p className="text-label text-text-secondary mb-2">Students</p>
-                    <p className="text-data-lg text-ink">{studentCount ?? 0}</p>
+                <div className="bg-surface rounded-md shadow-card p-3 sm:p-6">
+                    <p className="text-caption sm:text-label text-text-secondary mb-1 sm:mb-2">Students</p>
+                    <p className="text-body-emphasis sm:text-data-lg text-ink">{studentCount ?? 0}</p>
                 </div>
-                <div className="bg-surface rounded-md shadow-card p-6">
-                    <p className="text-label text-text-secondary mb-2">Courses</p>
-                    <p className="text-data-lg text-ink">{courseCount ?? 0}</p>
+                <div className="bg-surface rounded-md shadow-card p-3 sm:p-6">
+                    <p className="text-caption sm:text-label text-text-secondary mb-1 sm:mb-2">Classes</p>
+                    <p className="text-body-emphasis sm:text-data-lg text-ink">{courseCount ?? 0}</p>
                 </div>
             </div>
 
-            <div className="mb-8">
-                <WeeklyActivityChart data={weeklyLogins} />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
                 <Link
                     href="/admin/users"
-                    className="bg-surface rounded-md shadow-card p-6 flex items-start gap-4 hover:bg-surface-sunken"
+                    className="bg-surface rounded-md shadow-card p-3 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 text-center sm:text-left hover:bg-surface-sunken"
                 >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-brand-soft text-brand">
-                        <Users size={20} aria-hidden="true" />
+                    <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-md bg-brand-soft text-brand">
+                        <Users size={16} className="sm:hidden" aria-hidden="true" />
+                        <Users size={20} className="hidden sm:block" aria-hidden="true" />
                     </div>
                     <div>
-                        <span className="text-body-emphasis text-ink block mb-1">Manage accounts</span>
-                        <span className="text-caption text-text-secondary">Add, edit, or enroll teachers and students.</span>
+                        <span className="text-caption sm:text-body-emphasis text-ink block sm:mb-1">Manage accounts</span>
+                        <span className="hidden sm:block text-caption text-text-secondary">Add, edit, or enroll teachers and students.</span>
                     </div>
                 </Link>
                 <Link
                     href="/admin/grades"
-                    className="bg-surface rounded-md shadow-card p-6 flex items-start gap-4 hover:bg-surface-sunken"
+                    className="bg-surface rounded-md shadow-card p-3 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 text-center sm:text-left hover:bg-surface-sunken"
                 >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-info-soft text-info">
-                        <GraduationCap size={20} aria-hidden="true" />
+                    <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-md bg-info-soft text-info">
+                        <GraduationCap size={16} className="sm:hidden" aria-hidden="true" />
+                        <GraduationCap size={20} className="hidden sm:block" aria-hidden="true" />
                     </div>
                     <div>
-                        <span className="text-body-emphasis text-ink block mb-1">View grades</span>
-                        <span className="text-caption text-text-secondary">See every section&apos;s grades. View-only.</span>
+                        <span className="text-caption sm:text-body-emphasis text-ink block sm:mb-1">View grades</span>
+                        <span className="hidden sm:block text-caption text-text-secondary">See every classes&apos; grades.</span>
                     </div>
                 </Link>
                 <Link
                     href="/admin/course-activity"
-                    className="bg-surface rounded-md shadow-card p-6 flex items-start gap-4 hover:bg-surface-sunken"
+                    className="bg-surface rounded-md shadow-card p-3 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 text-center sm:text-left hover:bg-surface-sunken"
                 >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-amber-soft text-amber">
-                        <ClipboardList size={20} aria-hidden="true" />
+                    <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-md bg-amber-soft text-amber">
+                        <ClipboardList size={16} className="sm:hidden" aria-hidden="true" />
+                        <ClipboardList size={20} className="hidden sm:block" aria-hidden="true" />
                     </div>
                     <div>
-                        <span className="text-body-emphasis text-ink block mb-1">Course activity</span>
-                        <span className="text-caption text-text-secondary">Every lesson, quiz, and assignment. View-only.</span>
+                        <span className="text-caption sm:text-body-emphasis text-ink block sm:mb-1">Class activity</span>
+                        <span className="hidden sm:block text-caption text-text-secondary">Every lesson, quiz, and assignment.</span>
                     </div>
                 </Link>
+            </div>
+
+            <div className="mb-10">
+                <WeeklyActivityChart data={weeklyLogins} />
             </div>
         </div>
     )

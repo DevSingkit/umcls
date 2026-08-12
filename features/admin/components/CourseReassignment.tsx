@@ -15,7 +15,7 @@ export function CourseReassignment({
     courses,
     teachers,
 }: {
-    courses: { id: string; title: string }[]
+    courses: { id: string; title: string; subject: string | null }[]
     teachers: { id: string; full_name: string; email: string }[]
 }) {
     const [state, formAction, isPending] = useActionState(assignAction, initialState)
@@ -32,9 +32,11 @@ export function CourseReassignment({
                     required
                     className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface outline-none focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
+                    <option value="">Choose a course</option>
                     {courses.map((course) => (
                         <option key={course.id} value={course.id}>
                             {course.title}
+                            {course.subject ? ` — ${course.subject}` : ''}
                         </option>
                     ))}
                 </select>
@@ -50,6 +52,7 @@ export function CourseReassignment({
                     required
                     className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface outline-none focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
+                    <option value="">Choose a teacher</option>
                     {teachers.map((teacher) => (
                         <option key={teacher.id} value={teacher.id}>
                             {teacher.full_name} ({teacher.email})

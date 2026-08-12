@@ -95,13 +95,12 @@ export function AuditLogViewer({
                             <th className="p-4 text-label text-text-secondary">When</th>
                             <th className="p-4 text-label text-text-secondary">Actor</th>
                             <th className="p-4 text-label text-text-secondary">Action</th>
-                            <th className="p-4 text-label text-text-secondary">Target</th>
                         </tr>
                     </thead>
                     <tbody>
                         {data.rows.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="p-8 text-center text-body-md text-text-secondary">
+                                <td colSpan={3} className="p-8 text-center text-body-md text-text-secondary">
                                     No audit log entries match these filters.
                                 </td>
                             </tr>
@@ -112,12 +111,12 @@ export function AuditLogViewer({
                                         {new Date(row.created_at).toLocaleString()}
                                     </td>
                                     <td className="p-4 text-caption text-ink">
-                                        {row.actor_role ?? 'system'}
+                                        {row.actor_name ?? (row.actor_role ?? 'system')}
+                                        {row.actor_name && row.actor_role && (
+                                            <span className="text-text-secondary"> ({row.actor_role})</span>
+                                        )}
                                     </td>
                                     <td className="p-4 text-caption text-ink font-medium">{row.action}</td>
-                                    <td className="p-4 text-caption text-text-secondary">
-                                        {row.target_table ? `${row.target_table}:${row.target_id}` : '—'}
-                                    </td>
                                 </tr>
                             ))
                         )}

@@ -2,10 +2,12 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { getTeacherCourseStream } from '@/features/courses/actions/get-teacher-course-stream'
+import { getEnrollableStudents } from '@/features/courses/actions/enroll-student'
 import { TeacherCourseStream } from '@/features/courses/components/TeacherCourseStream'
 import { CourseMenu } from '@/features/courses/components/CourseMenu'
 import { MaterialList } from '@/features/materials/components/MaterialList'
 import { CreateMenu } from '@/features/courses/components/CreateMenu'
+import { EnrollStudentForm } from '@/features/courses/components/EnrollStudentForm'
 
 export default async function TeacherCourseDetailPage({
     params,
@@ -28,7 +30,7 @@ export default async function TeacherCourseDetailPage({
         notFound()
     }
 
-    const [streamResult, materialsRes] = await Promise.all([
+    const [streamResult, materialsRes, enrollableStudents] = await Promise.all([
         getTeacherCourseStream(courseId),
         supabase
             .from('materials')
@@ -37,6 +39,7 @@ export default async function TeacherCourseDetailPage({
             .is('lesson_id', null)
             .is('assignment_id', null) // course-wide materials only — exclude both lesson- and assignment-attached ones
             .is('deleted_at', null),
+        getEnrollableStudents(courseId),
     ])
 
     if ('error' in streamResult) {
@@ -49,12 +52,25 @@ export default async function TeacherCourseDetailPage({
         <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="font-heading text-h1 text-ink">{course.title}</h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="font-heading text-h1 text-ink">{course.title}</h1>
+                        {!course.is_published && (
+                            <span className="inline-flex items-center rounded-full bg-warning-soft px-2.5 py-1 text-caption font-semibold text-warning">
+                                Unpublished
+                            </span>
+                        )}
+                    </div>
                     {course.description && (
                         <p className="text-body-md text-text-secondary">{course.description}</p>
                     )}
+                    {!course.is_published && (
+                        <p className="mt-1 text-caption text-text-secondary">
+                            Students can&apos;t see this class yet. Use the menu to publish it.
+                        </p>
+                    )}
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
+                    <EnrollStudentForm courseId={courseId} students={enrollableStudents} />
                     <CreateMenu courseId={courseId} />
                     <CourseMenu courseId={course.id} isPublished={course.is_published} />
                 </div>

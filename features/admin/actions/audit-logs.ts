@@ -12,11 +12,31 @@ export type AuditLogRow = {
     id: number
     actor_id: string | null
     actor_role: string | null
+    actor_name: string | null
     action: string
-    target_table: string | null
-    target_id: string | null
     metadata: Record<string, unknown>
     created_at: string
+}
+
+// Raw shape returned by the Supabase query below, before we flatten the
+// embedded users relation into actor_name.
+type AuditLogQueryRow = {
+    id: number
+    actor_id: string | null
+    actor_role: string | null
+    action: string
+    metadata: Record<string, unknown>
+    created_at: string
+    users: { full_name: string; email: string } | { full_name: string; email: string }[] | null
+}
+
+function toAuditLogRow(row: AuditLogQueryRow): AuditLogRow {
+    const user = Array.isArray(row.users) ? row.users[0] : row.users
+    const { users, ...rest } = row
+    return {
+        ...rest,
+        actor_name: user?.full_name ?? null,
+    }
 }
 
 export type AuditLogFilters = {
@@ -48,9 +68,10 @@ export async function getAuditLogs(filters: AuditLogFilters = {}): Promise<Audit
 
     let query = supabase
         .from('audit_logs')
-        .select('id, actor_id, actor_role, action, target_table, target_id, metadata, created_at', {
-            count: 'exact',
-        })
+        .select(
+            'id, actor_id, actor_role, action, metadata, created_at, users:actor_id(full_name, email)',
+            { count: 'exact' }
+        )
         .order('created_at', { ascending: false })
 
     if (filters.actorId) {
@@ -72,7 +93,7 @@ export async function getAuditLogs(filters: AuditLogFilters = {}): Promise<Audit
     const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
     return {
-        rows: data ?? [],
+        rows: ((data as AuditLogQueryRow[] | null) ?? []).map(toAuditLogRow),
         totalCount,
         page,
         totalPages,

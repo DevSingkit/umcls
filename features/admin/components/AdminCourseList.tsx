@@ -65,6 +65,7 @@ export function AdminCourseList({ initialCourses }: { initialCourses: AdminCours
                         <div>
                             <p className="text-body-emphasis text-ink">{course.title}</p>
                             <p className="text-caption text-text-secondary">
+                                {course.subject ? `${course.subject} · ` : ''}
                                 {course.teacherName}
                                 {' · '}
                                 <span className={course.isArchived ? 'text-error' : 'text-success'}>

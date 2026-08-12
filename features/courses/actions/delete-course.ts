@@ -27,13 +27,18 @@ export async function deleteCourse(courseId: string): Promise<DeleteCourseResult
         return { ok: false, error: 'Course not found.' }
     }
 
-    const { error } = await supabase
-        .from('courses')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', courseId)
+    // Plain .update() on courses hits an RLS WITH CHECK rejection (42501)
+    // on the deleted_at transition — same class of bug as lessons/quizzes/
+    // assignments/materials, all of which go through a SECURITY DEFINER
+    // RPC for the same reason. courses never got that RPC until now.
+    // See migration 080 (delete_course).
+    const { error } = await supabase.rpc('delete_course', {
+        p_course_id: courseId,
+    })
 
     if (error) {
-        return { ok: false, error: 'Could not delete the course. Please try again.' }
+        console.error('deleteCourse RPC failed:', error)
+        return { ok: false, error: `Could not delete the course: ${error.message}` }
     }
 
     redirect('/teacher/courses')

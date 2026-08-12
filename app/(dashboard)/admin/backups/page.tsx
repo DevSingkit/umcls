@@ -11,13 +11,12 @@ export default async function AdminBackupsPage() {
     await requireRole(['admin'])
 
     return (
-        <div className="min-h-screen bg-canvas px-md py-xxl">
+        <div className="min-h-screen bg-canvas">
             <div className="mx-auto max-w-3xl space-y-8">
                 <div>
-                    <p className="text-label uppercase tracking-wide text-text-secondary">• ADMIN</p>
                     <h1 className="text-h1 text-ink mt-2">Backups</h1>
                     <p className="text-body-md text-text-secondary mt-2">
-                        Download a full snapshot of the school&apos;s data as CSV.
+                        Download a full snapshot of the school&apos;s data as an Excel file.
                     </p>
                 </div>
 
@@ -46,7 +45,7 @@ export default async function AdminBackupsPage() {
                     <div>
                         <span className="text-body-emphasis text-ink block mb-1">Grades backup</span>
                         <span className="text-caption text-text-secondary">
-                            Every graded assignment and quiz, per student, across every course.
+                            Every graded assignment and quiz, per student, across every class.
                         </span>
                     </div>
                 </a>

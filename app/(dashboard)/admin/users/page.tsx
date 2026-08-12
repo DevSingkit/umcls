@@ -29,16 +29,11 @@ export default async function AdminUsersPage() {
                 </div>
 
                 <div>
-                    <h2 className="text-body-emphasis text-ink mb-4">All users</h2>
-                    <UserList initialUsers={users} />
-                </div>
-
-                <div>
-                    <h2 className="text-body-emphasis text-ink mb-4">Reassign a course</h2>
+                    <h2 className="text-body-emphasis text-ink mb-4">Reassign a class to teacher</h2>
                     {courses.length === 0 || teachers.length === 0 ? (
                         <div className="bg-surface rounded-md shadow-card p-8 text-center">
                             <p className="text-body-md text-text-secondary">
-                                Reassignment needs at least one course and one teacher to exist first.
+                                Reassignment needs at least one class and one teacher to exist first.
                             </p>
                         </div>
                     ) : (
@@ -58,6 +53,12 @@ export default async function AdminUsersPage() {
                         <EnrollForm students={students} courses={courses} />
                     )}
                 </div>
+
+                <div>
+                    <h2 className="text-body-emphasis text-ink mb-4">All users</h2>
+                    <UserList initialUsers={users} />
+                </div>
+                
             </div>
         </div>
     )
