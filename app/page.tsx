@@ -61,21 +61,29 @@ const teachingApproach = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-canvas text-ink antialiased">
-      {/* ── Nav ──────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-hairline bg-surface px-4 sm:px-6">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between py-3">
-          <Link href="/" className="inline-flex min-h-[44px] items-center">
-            <Image
-              src="/logo.png"
-              alt="UMCLSI LMS"
-              width={112}
-              height={34}
-              priority
-              className="h-8 w-auto object-contain"
-            />
-          </Link>
-        </div>
-      </header>
+{/* ── Nav ──────────────────────────────────────────────────────────── */}
+<header className="sticky top-0 z-40 bg-sidebar px-4 sm:px-6">
+  <div className="mx-auto flex max-w-[1200px] items-center justify-between py-3">
+    <Link href="/" className="inline-flex min-h-[44px] items-center gap-3 min-w-0">
+      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-pill bg-surface">
+        <Image
+          src="/logo.png"
+          alt="UMCLSI LMS"
+          width={112}
+          height={112}
+          priority
+          className="h-11 w-11 object-contain"
+        />
+      </span>
+      <span className="truncate text-body-md font-semibold leading-tight text-on-ink sm:whitespace-normal sm:text-caption sm:font-medium">
+        <span className="sm:hidden">UMCLSI</span>
+        <span className="hidden sm:block">
+          United Methodist Cooperative Learning System, Inc.
+        </span>
+      </span>
+    </Link>
+  </div>
+</header>
 
       {/* ── Hero + Login ─────────────────────────────────────────────────── */}
       {/* Spacing uses the named scale (xxs–xxl, DESIGN-LMS.md §4) rather
