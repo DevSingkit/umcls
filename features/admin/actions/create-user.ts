@@ -14,6 +14,7 @@
 // before touching the database, same pattern as every other protected
 // action in this project.
 import { z } from 'zod'
+import { revalidatePath } from 'next/cache'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createAdminClient } from '@/lib/supabase/admin'
 const createUserSchema = z.object({
@@ -64,5 +65,16 @@ export async function createUser(formData: FormData): Promise<CreateUserResult> 
     if (authError || !authUser.user) {
         return { ok: false, error: authError?.message ?? 'Could not create the login account.' }
     }
+    // AdminUsersPage is a server component that fetches users/teachers/
+    // students once on render and hands them down as static props to
+    // CreateUserForm, CourseReassignment, and EnrollForm (the
+    // SearchableSelect comboboxes). Without this, Next keeps serving
+    // that already-rendered page — including its now-stale option
+    // lists — until the admin does a full manual reload, so a
+    // just-created teacher/student silently can't be picked from either
+    // combobox right after being created. revalidatePath forces the
+    // page's data fetch to re-run on the next render, so the new
+    // person shows up immediately.
+    revalidatePath('/admin/users')
     return { ok: true }
 }

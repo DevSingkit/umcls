@@ -6,10 +6,24 @@
 // pull (pullLinkedScores), after which it's just a normal editable
 // column like any other.
 //
+// The grid always renders as a raw table shell — all three DepEd
+// component group headers (Written work / Performance task / Quarterly
+// assessment) are always visible, even before any column exists under
+// them and even before any student is enrolled. This gives the teacher
+// the sheet's structure to build into from day one, rather than an
+// empty-state message that hides the shape of the gradebook.
+//
 // Every enrolled student is always a row here, alphabetical by name,
 // regardless of whether they have a score yet for any column — that
 // comes from the students list this component receives, not from
 // which scores exist.
+//
+// min-w-0 on the root and the pre-table wrapper: this table can get
+// genuinely wide once several columns exist, and overflow-x-auto on
+// its own container only clips content if that container is itself
+// prevented from growing to fit the table — otherwise the table's
+// natural width pushes every ancestor wider, and the whole page scrolls
+// sideways on mobile instead of just this one table.
 
 import { Fragment, useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -169,8 +183,16 @@ export function GradebookGrid({
         })
     }
 
+    // colSpan for a component group's header: its own item columns plus
+    // the always-present Total/PS/WS trio. Never collapses to 0 even
+    // with no columns under it yet — the group header still needs
+    // somewhere to sit.
+    function componentColSpan(component: ComponentType) {
+        return itemsByComponent[component].length + 3
+    }
+
     return (
-        <div>
+        <div className="min-w-0">
             <div className="flex items-center justify-between mb-3">
                 <h2 className="font-heading text-body-emphasis text-ink">Gradebook</h2>
                 <div className="flex items-center gap-2">
@@ -207,76 +229,81 @@ export function GradebookGrid({
                 </div>
             )}
 
-            {items.length === 0 ? (
-                <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                    <p className="text-body-md text-text-secondary">
-                        No gradebook columns yet. Add one to start entering scores.
-                    </p>
-                </div>
-            ) : (
-                <div className="bg-surface rounded-md shadow-card overflow-x-auto">
-                    <table className="text-left border-collapse">
-                        <thead>
-                            <tr className="border-b border-hairline">
-                                <th className="px-4 py-3 text-label text-text-secondary sticky left-0 bg-surface z-10 whitespace-nowrap">
-                                    Student
+            {/* Grid shell always renders — component groups, Total/PS/WS, and
+                Final grade are always visible, whether or not any column or
+                any student exists yet. min-w-0 + max-w-full keep this box from
+                stretching its parents; overflow-x-auto scrolls the table
+                itself instead of the whole page having to scroll sideways. */}
+            <div className="bg-surface rounded-md shadow-card overflow-x-auto min-w-0 max-w-full">
+                <table className="text-left border-collapse">
+                    <thead>
+                        <tr className="border-b border-hairline">
+                            <th className="px-4 py-3 text-label text-text-secondary sticky left-0 bg-surface z-10 whitespace-nowrap">
+                                Student
+                            </th>
+                            {COMPONENT_ORDER.map((component) => (
+                                <th
+                                    key={component}
+                                    colSpan={componentColSpan(component)}
+                                    className="px-4 py-3 text-label text-text-secondary text-center border-l border-hairline whitespace-nowrap"
+                                >
+                                    {COMPONENT_LABEL[component]}
                                 </th>
-                                {COMPONENT_ORDER.map((component) =>
-                                    itemsByComponent[component].length > 0 ? (
+                            ))}
+                            <th className="px-4 py-3 text-label text-text-secondary text-center border-l border-hairline whitespace-nowrap">
+                                Final grade
+                            </th>
+                        </tr>
+                        <tr className="border-b border-hairline">
+                            <th className="px-4 py-2 sticky left-0 bg-surface z-10" />
+                            {COMPONENT_ORDER.map((component) => (
+                                <Fragment key={component}>
+                                    {itemsByComponent[component].map((item) => (
                                         <th
-                                            key={component}
-                                            colSpan={itemsByComponent[component].length + 3}
-                                            className="px-4 py-3 text-label text-text-secondary text-center border-l border-hairline whitespace-nowrap"
+                                            key={item.id}
+                                            className="px-3 py-2 text-caption text-text-secondary font-medium text-center border-l border-hairline whitespace-nowrap max-w-[100px]"
+                                            title={`${item.label} (out of ${item.maxScore})`}
                                         >
-                                            {COMPONENT_LABEL[component]}
-                                        </th>
-                                    ) : null
-                                )}
-                                <th className="px-4 py-3 text-label text-text-secondary text-center border-l border-hairline whitespace-nowrap">
-                                    Final grade
-                                </th>
-                            </tr>
-                            <tr className="border-b border-hairline">
-                                <th className="px-4 py-2 sticky left-0 bg-surface z-10" />
-                                {COMPONENT_ORDER.map((component) =>
-                                    itemsByComponent[component].length > 0 ? (
-                                        <Fragment key={component}>
-                                            {itemsByComponent[component].map((item) => (
-                                                <th
-                                                    key={item.id}
-                                                    className="px-3 py-2 text-caption text-text-secondary font-medium text-center border-l border-hairline whitespace-nowrap max-w-[100px]"
-                                                    title={`${item.label} (out of ${item.maxScore})`}
+                                            <div className="truncate">{item.label}</div>
+                                            <span className="block text-text-muted">/{item.maxScore}</span>
+                                            {canEdit && (item.linkedAssignmentId || item.linkedQuizId) && (
+                                                <button
+                                                    onClick={() => handlePull(item)}
+                                                    disabled={pullingItemId === item.id}
+                                                    className="mt-1 text-text-muted hover:text-brand underline disabled:opacity-50"
                                                 >
-                                                    <div className="truncate">{item.label}</div>
-                                                    <span className="block text-text-muted">/{item.maxScore}</span>
-                                                    {canEdit && (item.linkedAssignmentId || item.linkedQuizId) && (
-                                                        <button
-                                                            onClick={() => handlePull(item)}
-                                                            disabled={pullingItemId === item.id}
-                                                            className="mt-1 text-text-muted hover:text-brand underline disabled:opacity-50"
-                                                        >
-                                                            {pullingItemId === item.id ? 'Pulling…' : 'Pull scores'}
-                                                        </button>
-                                                    )}
-                                                </th>
-                                            ))}
-                                            <th className="px-3 py-2 text-caption text-text-secondary font-semibold text-center border-l border-hairline">
-                                                Total
-                                            </th>
-                                            <th className="px-3 py-2 text-caption text-text-secondary font-semibold text-center">
-                                                PS
-                                            </th>
-                                            <th className="px-3 py-2 text-caption text-text-secondary font-semibold text-center">
-                                                WS
-                                            </th>
-                                        </Fragment>
-                                    ) : null
-                                )}
-                                <th className="px-4 py-2" />
+                                                    {pullingItemId === item.id ? 'Pulling…' : 'Pull scores'}
+                                                </button>
+                                            )}
+                                        </th>
+                                    ))}
+                                    <th className="px-3 py-2 text-caption text-text-secondary font-semibold text-center border-l border-hairline">
+                                        Total
+                                    </th>
+                                    <th className="px-3 py-2 text-caption text-text-secondary font-semibold text-center">
+                                        PS
+                                    </th>
+                                    <th className="px-3 py-2 text-caption text-text-secondary font-semibold text-center">
+                                        WS
+                                    </th>
+                                </Fragment>
+                            ))}
+                            <th className="px-4 py-2" />
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {initialData.students.length === 0 ? (
+                            <tr>
+                                <td
+                                    colSpan={1 + COMPONENT_ORDER.reduce((sum, c) => sum + componentColSpan(c), 0) + 1}
+                                    className="px-4 py-8 text-center text-body-md text-text-secondary"
+                                >
+                                    No students enrolled in this section yet. The gradebook is ready — add
+                                    columns now, or once students are enrolled.
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {initialData.students.map((student) => {
+                        ) : (
+                            initialData.students.map((student) => {
                                 const { componentResults, finalGrade } = computeStudentRow(student.studentId)
                                 return (
                                     <tr key={student.studentId} className="border-b border-hairline last:border-0">
@@ -285,7 +312,6 @@ export function GradebookGrid({
                                         </td>
                                         {COMPONENT_ORDER.map((component) => {
                                             const componentItems = itemsByComponent[component]
-                                            if (componentItems.length === 0) return null
                                             const result = componentResults.find((c) => c.component === component)!
                                             return (
                                                 <Fragment key={component}>
@@ -357,16 +383,16 @@ export function GradebookGrid({
                                         </td>
                                     </tr>
                                 )
-                            })}
-                        </tbody>
-                    </table>
-                    {errorCell && (
-                        <p className="px-4 py-2 text-caption text-error">
-                            Could not save that score. Check it&apos;s within the max and try again.
-                        </p>
-                    )}
-                </div>
-            )}
+                            })
+                        )}
+                    </tbody>
+                </table>
+                {errorCell && (
+                    <p className="px-4 py-2 text-caption text-error">
+                        Could not save that score. Check it&apos;s within the max and try again.
+                    </p>
+                )}
+            </div>
         </div>
     )
 }

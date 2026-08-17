@@ -21,7 +21,7 @@ export function ContinueLearning({ items }: { items: ContinueLearningItem[] }) {
                 <Link
                     key={item.courseId}
                     href={`/student/courses/${item.courseId}/lessons/${item.lessonId}`}
-                    className="bg-surface rounded-md shadow-card p-6 block hover:shadow-card-hover border-l-4 border-brand"
+                    className="bg-surface rounded-md shadow-card p-6 block hover:shadow-card-hover"
                 >
                     <p className="text-caption text-text-secondary">{item.courseName}</p>
                     <p className="text-body-emphasis text-ink mt-1">{item.lessonTitle}</p>

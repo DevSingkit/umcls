@@ -7,11 +7,21 @@ import { GradebookGrid } from '@/features/grades/components/GradebookGrid'
 import { GradesVisibilityToggle } from '@/features/grades/components/GradesVisibilityToggle'
 
 // Manual gradebook, teacher-built columns — see gradebook-items.ts and
-// migration 072. Replaces the old auto-computed DepEd summary table:
-// a teacher now creates each column themselves (component, label, max
-// score, optional link to a real assignment/quiz for a one-time score
-// pull), and types every score in directly. Every enrolled student is
+// migration 072. A teacher creates each column themselves (component,
+// label, max score, optional link) and types every score in directly.
+// The grid itself — including all three DepEd component groups — is
+// always shown once a course is selected, regardless of whether it has
+// enrolled students yet or gradebook columns yet, so a teacher can see
+// the sheet's shape before either exists. Every enrolled student is
 // always a row, regardless of submission status.
+//
+// min-w-0 on the wrapping containers below: without it, a flex/grid
+// child's default minimum width is its content's natural width, so the
+// wide gradebook table inside GradebookGrid's own overflow-x-auto was
+// stretching these parent containers instead of being clipped by them —
+// that stretch propagated up until the whole page scrolled horizontally
+// on mobile instead of just the table. min-w-0 forces each container to
+// respect its actual width so only the table itself scrolls.
 export default async function GradebookPage({
     searchParams,
 }: {
@@ -23,7 +33,7 @@ export default async function GradebookPage({
     const linkable = courseId ? await getLinkableItemsForCourse(courseId) : null
 
     return (
-        <div>
+        <div className="min-w-0">
             <h1 className="font-heading text-h1 text-ink mb-8">Gradebook</h1>
 
             {courses.length === 0 ? (
@@ -31,7 +41,7 @@ export default async function GradebookPage({
                     <p className="text-body-md text-text-secondary">You have not created a course yet.</p>
                 </div>
             ) : (
-                <div className="grid gap-3 mb-8">
+                <div className="grid gap-3 mb-8 min-w-0">
                     {courses.map((course) => {
                         const isSelected = course.id === courseId
                         return (
@@ -63,16 +73,11 @@ export default async function GradebookPage({
                                     </div>
                                 </Link>
 
-                                {isSelected && gridData !== null && gridData.students.length === 0 && (
-                                    <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                                        <p className="text-body-md text-text-secondary">
-                                            No students enrolled in this course yet.
-                                        </p>
-                                    </div>
-                                )}
-
-                                {isSelected && gridData !== null && gridData.students.length > 0 && (
-                                    <div className="space-y-4">
+                                {/* Grid always renders once a course is selected and access is
+                                    confirmed — with or without enrolled students, with or without
+                                    columns yet. GradebookGrid itself handles both empty cases. */}
+                                {isSelected && gridData !== null && (
+                                    <div className="space-y-4 min-w-0">
                                         <GradesVisibilityToggle courseId={courseId!} initialVisible={gridData.gradesVisible} />
                                         <GradebookGrid
                                             courseId={courseId!}

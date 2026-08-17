@@ -1,15 +1,18 @@
 'use client'
-// Form with two dropdowns, one student and one course. Submitting it
-// enrolls that student into that course.
+// Form to enroll one student into one course.
 //
-// No longer wraps itself in max-w-2xl — this form now lives inside
+// 2026-08-17: replaced both native <select> dropdowns with
+// SearchableSelect — type to filter, click to pick — same reasoning
+// as CourseReassignment.tsx, student and course lists can get long.
+//
+// No longer wraps itself in max-w-2xl — this form lives inside
 // admin/users/page.tsx's own max-w-3xl container alongside
-// CourseReassignment and the user list, so it should fill that
-// container's width like its siblings do, not impose its own
-// narrower width and look small next to them.
+// CourseReassignment and the user list, so it fills that container's
+// width like its siblings do, not a narrower width of its own.
 
 import { useActionState } from 'react'
 import { enrollStudent, type EnrollResult } from '@/features/admin/actions/enroll-student'
+import { SearchableSelect } from './SearchableSelect'
 
 const initialState: EnrollResult = { ok: false, error: '' }
 
@@ -29,42 +32,35 @@ export function EnrollForm({
     return (
         <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
             <div>
-                <label htmlFor="studentId" className="text-label text-text-secondary block mb-2">
+                <label htmlFor="studentId-search" className="text-label text-text-secondary block mb-2">
                     Student
                 </label>
-                <select
-                    id="studentId"
+                <SearchableSelect
                     name="studentId"
                     required
-                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                >
-                    <option value="">Choose a student</option>
-                    {students.map((student) => (
-                        <option key={student.id} value={student.id}>
-                            {student.full_name} ({student.email})
-                        </option>
-                    ))}
-                </select>
+                    placeholder="Search for a student…"
+                    options={students.map((student) => ({
+                        id: student.id,
+                        label: student.full_name,
+                        sublabel: student.email,
+                    }))}
+                />
             </div>
 
             <div>
-                <label htmlFor="courseId" className="text-label text-text-secondary block mb-2">
+                <label htmlFor="courseId-search" className="text-label text-text-secondary block mb-2">
                     Classes
                 </label>
-                <select
-                    id="courseId"
+                <SearchableSelect
                     name="courseId"
                     required
-                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                >
-                    <option value="">Choose a class</option>
-                    {courses.map((course) => (
-                        <option key={course.id} value={course.id}>
-                            {course.title}
-                            {course.subject ? ` — ${course.subject}` : ''}
-                        </option>
-                    ))}
-                </select>
+                    placeholder="Search for a class…"
+                    options={courses.map((course) => ({
+                        id: course.id,
+                        label: course.title,
+                        sublabel: course.subject ?? undefined,
+                    }))}
+                />
             </div>
 
             {!state.ok && state.error && (

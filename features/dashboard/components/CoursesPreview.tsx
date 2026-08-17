@@ -1,6 +1,11 @@
 // features/dashboard/components/CoursesPreview.tsx
-// A short preview grid (not the full list) with a "View all" link, used
-// on both teacher and student dashboards.
+// A short preview grid (not the full list), used on both teacher and
+// student dashboards. No longer shows a "View all" link — the full
+// course list is already reachable from the sidebar/nav, so a second
+// link to the same destination was redundant. The top-right slot is
+// now used for a "+ Create course" action on the teacher dashboard
+// instead (see createCourseHref), and stays empty on the student
+// dashboard.
 //
 // Low-count handling per DESIGN-LMS.md §8.6 (v1.1 correction): a single
 // course stays left-aligned, same as any other count — verified against
@@ -16,21 +21,30 @@ type CourseItem = {
 
 type CoursesPreviewProps = {
     courses: CourseItem[]
-    viewAllHref: string
     courseHrefBase: string
     emptyMessage: string
+    /** Teacher dashboard only: shows a "+ Create course" button top-right. Omit on student dashboard. */
+    createCourseHref?: string
 }
 
 export function CoursesPreview({
     courses,
-    viewAllHref,
     courseHrefBase,
     emptyMessage,
+    createCourseHref,
 }: CoursesPreviewProps) {
     if (courses.length === 0) {
         return (
             <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                <p className="text-body-md text-text-secondary">{emptyMessage}</p>
+                <p className="text-body-md text-text-secondary mb-4">{emptyMessage}</p>
+                {createCourseHref && (
+                    <Link
+                        href={createCourseHref}
+                        className="inline-flex items-center justify-center h-11 px-6 rounded-md bg-brand text-on-ink text-body-md font-semibold hover:bg-brand-hover"
+                    >
+                        Create class
+                    </Link>
+                )}
             </div>
         )
     }
@@ -39,9 +53,14 @@ export function CoursesPreview({
         <div>
             <div className="flex items-center justify-between mb-4">
                 <h2 className="font-heading text-h2 text-ink">Your classes</h2>
-                <Link href={viewAllHref} className="text-caption text-brand hover:underline">
-                    View all
-                </Link>
+                {createCourseHref && (
+                    <Link
+                        href={createCourseHref}
+                        className="inline-flex items-center justify-center h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
+                    >
+                        Create class
+                    </Link>
+                )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {courses.map((course) => (

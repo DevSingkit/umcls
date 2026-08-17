@@ -1,15 +1,16 @@
 // app/page.tsx
 //
 // Landing page — UMCLSI LMS
-// Design system: DESIGN-LMS.md v1.0 (UMCLSI Classroom Design System)
+// Design system: DESIGN-LMS.md v1.8 (see §8.9)
 //
-// Redesigned 2026-07-16: shifted from a "product/system" pitch to a
-// school-story pitch. Removed the feature grid (lessons/quizzes/AI/etc.
-// as software capabilities) and the "one system, three roles" section
-// entirely — those framed the page around the LMS as a product. Replaced
-// with content about the school itself: who UMCLSI is, how its teachers
-// actually teach, and what a family can expect. Header sign-in, permit
-// badges, and footer are unchanged.
+// Merged with the login page 2026-08-17: there is no longer a separate
+// /login route reached by a button. The login form itself now lives
+// directly in the hero section — stacked above the hero copy on
+// mobile (order-first, so it's the first thing a returning parent/
+// teacher sees without scrolling), and side-by-side with the hero
+// copy on desktop (lg:grid-cols-2). All standalone "Sign in" buttons/
+// links that used to point at /login have been removed since that
+// destination no longer exists as its own page.
 
 import Image from "next/image";
 import Link from "next/link";
@@ -21,9 +22,10 @@ import {
   HandHeart,
   Phone,
   MapPin,
-  ArrowRight,
   ArrowUpRight,
 } from "lucide-react";
+
+import { LoginForm } from "@/features/auth/components/LoginForm";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -72,62 +74,63 @@ export default function LandingPage() {
               className="h-8 w-auto object-contain"
             />
           </Link>
-
-          <Link
-            href="/login"
-            className="inline-flex h-11 items-center gap-2 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink transition-colors hover:bg-brand-hover"
-          >
-            Sign in
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
         </div>
       </header>
 
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="px-4 pb-16 pt-12 sm:px-6 md:pb-24 md:pt-16">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">
-            Elementary · United Methodist Cooperative
-          </p>
-
-          <h1 className="mt-4 max-w-3xl font-heading text-h1 text-ink md:text-[3rem] md:leading-[1.1]">
-            A school where every child is known, not just enrolled
-          </h1>
-
-          <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
-            &ldquo;At UMCLSI, every child in elementary gets a teacher who
-            knows them by name, and a lesson that meets them where they
-            are.&rdquo;
-          </p>
-
-          <p className="mt-4 max-w-xl text-body-md text-text-secondary">
-            We&rsquo;re a small Christian elementary school in Tala, Caloocan
-            City, built around one idea: teaching should adjust to the child,
-            not the other way around.
-          </p>
-
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Link
-              href="/login"
-              className="inline-flex h-11 items-center gap-2 rounded-md bg-brand px-7 text-body-md font-semibold text-on-ink transition-colors hover:bg-brand-hover"
-            >
-              Sign in to your account
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-
-            <Link
-              href="#teaching"
-              className="inline-flex h-11 items-center gap-2 rounded-md border-[1.5px] border-hairline-strong bg-surface px-7 text-body-md font-semibold text-ink transition-colors hover:bg-surface-sunken"
-            >
-              How we teach
-            </Link>
+      {/* ── Hero + Login ─────────────────────────────────────────────────── */}
+      {/* Spacing uses the named scale (xxs–xxl, DESIGN-LMS.md §4) rather
+          than raw Tailwind numbers, since this is a new section: gap-xl
+          (48px) stacking gap on mobile, gap-xxl (64px) between the two
+          desktop columns. pb-24/pt-16 at md: are kept as raw Tailwind
+          values — 96px has no equivalent named token, and forcing one
+          would distort the section's original vertical rhythm. */}
+      <section className="px-4 pb-xl pt-lg sm:px-6 md:pb-24 md:pt-16">
+        <div className="mx-auto grid max-w-[1200px] gap-xl lg:grid-cols-2 lg:items-center lg:gap-xxl">
+          {/* Login form — first in visual order on mobile (order-1),
+              right column on desktop where the grid gives it its own
+              space next to the hero copy. */}
+          <div className="order-1 lg:order-2">
+            <LoginForm />
           </div>
 
-          <div className="mt-10 flex flex-wrap gap-2.5">
-            <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
-              <HandHeart className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-              DepEd NCR Recognized
-            </span>
+          {/* Hero copy — second in visual order on mobile, left column
+              on desktop. */}
+          <div className="order-2 lg:order-1">
+            <p className="text-label text-text-secondary">
+              Elementary · United Methodist Cooperative
+            </p>
+
+            <h1 className="mt-4 font-heading text-h1 text-ink md:text-[3rem] md:leading-[1.1]">
+              A school where every child is known, not just enrolled
+            </h1>
+
+            <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
+              &ldquo;At UMCLSI, every child in elementary gets a teacher who
+              knows them by name, and a lesson that meets them where they
+              are.&rdquo;
+            </p>
+
+            <p className="mt-4 max-w-xl text-body-md text-text-secondary">
+              We&rsquo;re a small Christian elementary school in Tala, Caloocan
+              City, built around one idea: teaching should adjust to the child,
+              not the other way around.
+            </p>
+
+            <div className="mt-10 flex flex-wrap items-center gap-4">
+              <Link
+                href="#teaching"
+                className="inline-flex h-11 items-center gap-2 rounded-md border-[1.5px] border-hairline-strong bg-surface px-7 text-body-md font-semibold text-ink transition-colors hover:bg-surface-sunken"
+              >
+                How we teach
+              </Link>
+            </div>
+
+            <div className="mt-10 flex flex-wrap gap-2.5">
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
+                <HandHeart className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+                DepEd NCR Recognized
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -193,31 +196,6 @@ export default function LandingPage() {
                 </p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA band ─────────────────────────────────────────────────────── */}
-      <section className="px-4 py-20 sm:px-6 md:py-24">
-        <div className="mx-auto max-w-[1200px]">
-          <div className="rounded-md bg-ink px-8 py-16 text-center md:px-16">
-            <h2 className="font-heading text-h2 text-on-ink">
-              Already a UMCLSI family?
-            </h2>
-
-            <p className="mx-auto mt-4 max-w-md text-body-md text-on-ink/70">
-              If you&rsquo;re a teacher or parent at UMCLSI, your account has
-              already been created. Sign in with the credentials sent to your
-              email.
-            </p>
-
-            <Link
-              href="/login"
-              className="mt-8 inline-flex h-11 items-center gap-2 rounded-md bg-brand px-7 text-body-md font-semibold text-on-ink transition-colors hover:bg-brand-hover"
-            >
-              Sign in
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
           </div>
         </div>
       </section>

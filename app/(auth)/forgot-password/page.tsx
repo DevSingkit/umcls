@@ -1,29 +1,20 @@
-"use client";
-
 // app/forgot-password/page.tsx
 //
-// Design system: DESIGN-LMS.md v1.1 (Auth Flow — Forgot Password)
-// Same card treatment as app/login/page.tsx.
+// Design system: DESIGN-LMS.md v1.8
+//
+// No longer a self-service reset flow. As of 2026-08-17, password
+// resets are admin-only — an admin resets a user's password directly
+// (see features/admin, once that action exists) rather than the user
+// emailing themselves a reset link. This page is now a static notice
+// pointing them to their admin, and no longer calls
+// requestPasswordReset. The old email-a-link flow and its landing
+// page (app/reset-password/page.tsx) have been removed entirely.
 
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail } from "lucide-react";
-import { requestPasswordReset } from "@/features/auth/actions/request-password-reset";
+import { UserCog } from "lucide-react";
 
 export default function ForgotPasswordPage() {
-    const [submitted, setSubmitted] = useState(false);
-    const [isPending, setIsPending] = useState(false);
-
-    async function handleSubmit(formData: FormData) {
-        setIsPending(true);
-        await requestPasswordReset(formData);
-        // Always show the same confirmation, whether or not the email
-        // was found. See request-password-reset.ts for why.
-        setSubmitted(true);
-        setIsPending(false);
-    }
-
     return (
         <main
             id="main-content"
@@ -43,89 +34,34 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 {/* Card */}
-                <div className="rounded-md bg-surface p-8 shadow-modal sm:p-10">
-                    {submitted ? (
-                        <div className="text-center">
-                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-pill bg-canvas">
-                                <Mail className="h-6 w-6 text-ink" strokeWidth={1.5} />
-                            </div>
+                <div className="rounded-md bg-surface p-8 text-center shadow-modal sm:p-10">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-pill bg-canvas">
+                        <UserCog className="h-6 w-6 text-ink" strokeWidth={1.5} />
+                    </div>
 
-                            <p className="mt-5 flex items-center justify-center gap-1.5 text-label text-text-secondary">
-                                <span aria-hidden="true" className="text-amber">
-                                    •
-                                </span>
-                                Check your email
-                            </p>
+                    <p className="mt-5 flex items-center justify-center gap-1.5 text-label text-text-secondary">
+                        <span aria-hidden="true" className="text-amber">
+                            •
+                        </span>
+                        Forgot your password?
+                    </p>
 
-                            <h1 className="mt-2 font-heading text-h3 text-ink">
-                                Link sent
-                            </h1>
+                    <h1 className="mt-2 font-heading text-h3 text-ink">
+                        Contact your school admin
+                    </h1>
 
-                            <p className="mt-3 text-body-md text-text-secondary">
-                                If an account exists for that email, we&apos;ve sent a
-                                link to reset your password. The link expires in 1 hour.
-                            </p>
+                    <p className="mt-3 text-body-md text-text-secondary">
+                        For your account&apos;s security, password resets are
+                        handled by your school admin. Reach out to them directly
+                        and they&apos;ll set a new password for your account.
+                    </p>
 
-                            <Link
-                                href="/login"
-                                className="mt-8 inline-flex h-11 items-center justify-center text-body-md text-brand hover:underline"
-                            >
-                                Back to sign in
-                            </Link>
-                        </div>
-                    ) : (
-                        <>
-                            <p className="mb-3 flex items-center gap-1.5 text-label text-text-secondary">
-                                <span aria-hidden="true" className="text-amber">
-                                    •
-                                </span>
-                                Reset password
-                            </p>
-
-                            <h1 className="font-heading text-h3 text-ink">
-                                Forgot your password?
-                            </h1>
-                            <p className="mb-8 mt-2 text-body-md text-text-secondary">
-                                Enter your school email and we&apos;ll send you a link
-                                to reset it.
-                            </p>
-
-                            <form action={handleSubmit}>
-                                <div className="mb-6">
-                                    <label
-                                        htmlFor="email"
-                                        className="mb-2 block text-label text-text-secondary"
-                                    >
-                                        Email
-                                    </label>
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        autoComplete="email"
-                                        required
-                                        placeholder="you@school.edu"
-                                        className="h-11 w-full rounded-md border border-hairline-strong bg-surface px-5 text-body-md text-ink placeholder:text-text-muted focus:border-[1.5px] focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                                    />
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={isPending}
-                                    className="h-11 w-full rounded-md bg-brand text-body-md font-medium text-on-ink transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:bg-hairline disabled:text-text-muted"
-                                >
-                                    {isPending ? "Sending…" : "Send reset link"}
-                                </button>
-                            </form>
-
-                            <Link
-                                href="/login"
-                                className="mt-6 block text-center text-body-md text-brand hover:underline"
-                            >
-                                Back to sign in
-                            </Link>
-                        </>
-                    )}
+                    <Link
+                        href="/"
+                        className="mt-8 inline-flex h-11 items-center justify-center text-body-md text-brand hover:underline"
+                    >
+                        Back to sign in
+                    </Link>
                 </div>
             </div>
         </main>

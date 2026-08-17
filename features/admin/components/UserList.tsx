@@ -2,7 +2,26 @@
 // Searchable/filterable user list with deactivate, reactivate, and
 // password-reset actions (PH2-002 full scope). Debounces search input
 // by 300ms per the task's acceptance criteria.
-import { useEffect, useState, useTransition, useCallback } from 'react'
+//
+// 2026-08-17: the per-row action buttons (Edit, Change role, Classes,
+// Reset password, Deactivate/Reactivate) are now collapsed into a
+// single "⋮" menu per row, instead of up to 6 always-visible buttons
+// that wrapped/crowded on smaller screens. Every existing handler and
+// xTargetId state is unchanged — menu items call the exact same
+// functions the old buttons did, so the drop-below expand panels
+// (edit form, reset-password form, role select, enrollments) still
+// open in exactly the same place, under the same row, as before.
+// EraseUserButton stays as its own separate, always-visible button
+// outside the menu, since it's the single most destructive action
+// here and shouldn't be one click away inside a collapsed menu.
+//
+// Also new: Deactivate no longer fires immediately on click. It opens
+// a confirmation dialog first ("Deactivate this account?") — there
+// was previously no warning at all before locking someone out.
+// Reactivate stays a single click, since it's reversible and low-risk
+// by comparison.
+import { useEffect, useState, useTransition, useCallback, useRef } from 'react'
+import { MoreVertical, AlertTriangle } from 'lucide-react'
 import {
     listUsers,
     deactivateUser,
@@ -40,6 +59,15 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
     const [enrollError, setEnrollError] = useState<string | null>(null)
     const [unenrollPendingId, setUnenrollPendingId] = useState<string | null>(null)
 
+    // Which row's "⋮" menu is currently open, if any.
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
+
+    // The user pending deactivation confirmation, if any. Holding the
+    // user object (not just an id) so the confirmation dialog can show
+    // their name without an extra lookup.
+    const [deactivateConfirmUser, setDeactivateConfirmUser] = useState<UserRow | null>(null)
+
     const refresh = useCallback(() => {
         startTransition(async () => {
             const result = await listUsers({ search, role, status })
@@ -54,6 +82,17 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
         return () => clearTimeout(timer)
     }, [refresh])
 
+    // Close the open "⋮" menu on outside click.
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setOpenMenuId(null)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
     function handleDeactivate(userId: string) {
         setToggleActiveError(null)
         startTransition(async () => {
@@ -64,6 +103,13 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                 setToggleActiveError(result.error)
             }
         })
+    }
+
+    // Called only after the confirmation dialog is accepted.
+    function confirmDeactivate() {
+        if (!deactivateConfirmUser) return
+        handleDeactivate(deactivateConfirmUser.id)
+        setDeactivateConfirmUser(null)
     }
 
     function handleReactivate(userId: string) {
@@ -203,10 +249,12 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                             key={user.id}
                             className="bg-surface rounded-md shadow-card p-5 flex flex-col gap-3"
                         >
-                        {/* Header row: name + action buttons. Always its own row,
-                            never sharing flex space with the expand sections below
-                            — that mixing is what caused the button-squeeze/wrap
-                            bug when Edit/Reset password/Change role were open. */}
+                        {/* Header row: name + actions. Always its own row, never
+                            sharing flex space with the expand sections below —
+                            that mixing is what caused the earlier button-squeeze/
+                            wrap bug when Edit/Reset password/Change role were
+                            open. Actions are now a single "⋮" menu plus the
+                            always-visible EraseUserButton. */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
                                 <p className="text-body-emphasis text-ink">{user.full_name}</p>
@@ -218,71 +266,101 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                     </span>
                                 </p>
                             </div>
-                            <div className="flex gap-2 flex-wrap">
-                                <button
-                                    onClick={() => {
-                                        setEditTargetId(editTargetId === user.id ? null : user.id)
-                                        setEditError(null)
-                                    }}
-                                    className={`h-9 px-4 rounded-md border-[1.5px] text-caption font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                                        editTargetId === user.id
-                                            ? 'border-brand bg-brand text-on-ink hover:bg-brand-hover'
-                                            : 'border-hairline-strong bg-surface text-ink hover:bg-surface-sunken'
-                                    }`}
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => handleOpenRoleChange(user.id)}
-                                    disabled={roleCheckPending}
-                                    className={`h-9 px-4 rounded-md border-[1.5px] text-caption font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 ${
-                                        roleTargetId === user.id
-                                            ? 'border-brand bg-brand text-on-ink hover:bg-brand-hover'
-                                            : 'border-hairline-strong bg-surface text-ink hover:bg-surface-sunken'
-                                    }`}
-                                >
-                                    {roleCheckPending ? 'Checking…' : 'Change role'}
-                                </button>
-                                {user.role === 'student' && (
+                            <div className="flex items-center gap-2 shrink-0">
+                                <div className="relative" ref={openMenuId === user.id ? menuRef : undefined}>
                                     <button
-                                        onClick={() => handleOpenEnrollments(user.id)}
-                                        className={`h-9 px-4 rounded-md border-[1.5px] text-caption font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                                            enrollTargetId === user.id
-                                                ? 'border-brand bg-brand text-on-ink hover:bg-brand-hover'
-                                                : 'border-hairline-strong bg-surface text-ink hover:bg-surface-sunken'
+                                        onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
+                                        aria-haspopup="menu"
+                                        aria-expanded={openMenuId === user.id}
+                                        aria-label={`Actions for ${user.full_name}`}
+                                        className={`flex h-9 w-9 items-center justify-center rounded-md border-[1.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                                            openMenuId === user.id
+                                                ? 'border-brand bg-brand-soft'
+                                                : 'border-hairline-strong bg-surface hover:bg-surface-sunken'
                                         }`}
                                     >
-                                        Classes
+                                        <MoreVertical className="h-4 w-4 text-ink" strokeWidth={2} aria-hidden="true" />
                                     </button>
-                                )}
-                                <button
-                                    onClick={() => setResetTargetId(resetTargetId === user.id ? null : user.id)}
-                                    className={`h-9 px-4 rounded-md border-[1.5px] text-caption font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                                        resetTargetId === user.id
-                                            ? 'border-brand bg-brand text-on-ink hover:bg-brand-hover'
-                                            : 'border-hairline-strong bg-surface text-ink hover:bg-surface-sunken'
-                                    }`}
-                                >
-                                    Reset password
-                                </button>
-                                {user.is_active ? (
-                                    <button
-                                        onClick={() => handleDeactivate(user.id)}
-                                        disabled={isPending}
-                                        className="h-9 px-4 rounded-md border-[1.5px] border-error bg-surface text-error text-caption font-medium hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
-                                    >
-                                        Deactivate
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => handleReactivate(user.id)}
-                                        disabled={isPending}
-                                        className="h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
-                                    >
-                                        Reactivate
-                                    </button>
-                                )}
-                                <EraseUserButton userId={user.id} fullName={user.full_name} />
+
+                                    {openMenuId === user.id && (
+                                        <div
+                                            role="menu"
+                                            className="absolute right-0 z-20 mt-1 w-56 overflow-hidden rounded-md border border-hairline-strong bg-surface shadow-card-hover"
+                                        >
+                                            <button
+                                                role="menuitem"
+                                                onClick={() => {
+                                                    setEditTargetId(editTargetId === user.id ? null : user.id)
+                                                    setEditError(null)
+                                                    setOpenMenuId(null)
+                                                }}
+                                                className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken"
+                                            >
+                                                Edit details
+                                            </button>
+                                            <button
+                                                role="menuitem"
+                                                disabled={roleCheckPending}
+                                                onClick={async () => {
+                                                    setOpenMenuId(null)
+                                                    await handleOpenRoleChange(user.id)
+                                                }}
+                                                className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken disabled:opacity-60"
+                                            >
+                                                {roleCheckPending ? 'Checking…' : 'Change role'}
+                                            </button>
+                                            {user.role === 'student' && (
+                                                <button
+                                                    role="menuitem"
+                                                    onClick={async () => {
+                                                        setOpenMenuId(null)
+                                                        await handleOpenEnrollments(user.id)
+                                                    }}
+                                                    className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken"
+                                                >
+                                                    Classes
+                                                </button>
+                                            )}
+                                            <button
+                                                role="menuitem"
+                                                onClick={() => {
+                                                    setResetTargetId(resetTargetId === user.id ? null : user.id)
+                                                    setOpenMenuId(null)
+                                                }}
+                                                className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken"
+                                            >
+                                                Reset password
+                                            </button>
+                                            <div className="border-t border-hairline" />
+                                            {user.is_active ? (
+                                                <button
+                                                    role="menuitem"
+                                                    disabled={isPending}
+                                                    onClick={() => {
+                                                        setOpenMenuId(null)
+                                                        setDeactivateConfirmUser(user)
+                                                    }}
+                                                    className="block w-full px-4 py-2.5 text-left text-caption font-medium text-error hover:bg-error-soft disabled:opacity-60"
+                                                >
+                                                    Deactivate
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    role="menuitem"
+                                                    disabled={isPending}
+                                                    onClick={() => {
+                                                        setOpenMenuId(null)
+                                                        handleReactivate(user.id)
+                                                    }}
+                                                    className="block w-full px-4 py-2.5 text-left text-caption font-medium text-brand hover:bg-brand-soft disabled:opacity-60"
+                                                >
+                                                    Reactivate
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <EraseUserButton userId={user.id} fullName={user.full_name} onErased={refresh} />
                             </div>
                         </div>
 
@@ -422,6 +500,56 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                 <p className="text-caption text-error mt-3" role="alert">
                     {enrollError}
                 </p>
+            )}
+
+            {/* Deactivation confirmation modal — replaces the previous
+                immediate-fire behavior, where clicking Deactivate had
+                no warning step at all before locking the account out. */}
+            {deactivateConfirmUser && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="deactivate-confirm-title"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
+                    onClick={() => setDeactivateConfirmUser(null)}
+                >
+                    <div
+                        className="w-full max-w-sm rounded-md bg-surface p-6 shadow-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-error-soft">
+                                <AlertTriangle className="h-5 w-5 text-error" strokeWidth={2} aria-hidden="true" />
+                            </div>
+                            <div>
+                                <h2 id="deactivate-confirm-title" className="font-heading text-body-emphasis text-ink">
+                                    Deactivate this account?
+                                </h2>
+                                <p className="mt-2 text-caption text-text-secondary">
+                                    <span className="font-medium text-ink">{deactivateConfirmUser.full_name}</span>{' '}
+                                    ({deactivateConfirmUser.email}) will immediately lose access and won&apos;t be
+                                    able to sign in until this account is reactivated.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-2">
+                            <button
+                                onClick={() => setDeactivateConfirmUser(null)}
+                                className="h-10 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDeactivate}
+                                disabled={isPending}
+                                className="h-10 px-4 rounded-md bg-error text-on-ink text-caption font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                            >
+                                {isPending ? 'Deactivating…' : 'Deactivate'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     )

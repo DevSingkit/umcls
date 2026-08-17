@@ -5,6 +5,20 @@
 import { useEffect, useState, useTransition, useCallback } from 'react'
 import { getAuditLogs, type AuditLogRow } from '@/features/admin/actions/audit-logs'
 
+// "CREATE_USER" -> "Create user"
+function toSentenceCase(value: string) {
+    const spaced = value.replace(/_/g, ' ').toLowerCase()
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+}
+
+// "8/17/2026, 2:18:09 PM" -> date + "2:18 PM" (no seconds)
+function formatWhen(isoString: string) {
+    const d = new Date(isoString)
+    const date = d.toLocaleDateString()
+    const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    return { date, time }
+}
+
 export function AuditLogViewer({
     initialData,
     actors,
@@ -15,6 +29,7 @@ export function AuditLogViewer({
     actionTypes: string[]
 }) {
     const [data, setData] = useState(initialData)
+    const [search, setSearch] = useState('')
     const [actorId, setActorId] = useState('')
     const [actionType, setActionType] = useState('')
     const [dateFrom, setDateFrom] = useState('')
@@ -45,13 +60,31 @@ export function AuditLogViewer({
         setPage(1)
     }
 
+    // Client-side search over the current page (actor name/role + action label).
+    const visibleRows = data.rows.filter((row) => {
+        if (!search.trim()) return true
+        const q = search.trim().toLowerCase()
+        const haystack = [row.actor_name, row.actor_role, toSentenceCase(row.action)]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+        return haystack.includes(q)
+    })
+
     return (
         <div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-6">
+                <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by actor or action"
+                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption placeholder:text-text-muted focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-56"
+                />
                 <select
                     value={actorId}
                     onChange={(e) => updateFilter(setActorId, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
                 >
                     <option value="">All actors</option>
                     {actors.map((actor) => (
@@ -63,33 +96,41 @@ export function AuditLogViewer({
                 <select
                     value={actionType}
                     onChange={(e) => updateFilter(setActionType, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
                 >
                     <option value="">All actions</option>
                     {actionTypes.map((type) => (
                         <option key={type} value={type}>
-                            {type}
+                            {toSentenceCase(type)}
                         </option>
                     ))}
                 </select>
-                <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => updateFilter(setDateFrom, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
-                    aria-label="From date"
-                />
-                <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => updateFilter(setDateTo, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
-                    aria-label="To date"
-                />
+
+                {/* Single combined date-range control. Each date input has its own
+                    min-width so "mm/dd/yyyy" never gets clipped. */}
+                <div className="h-11 flex items-center gap-2 rounded-md border border-hairline-strong bg-surface px-3 focus-within:border-[1.5px] focus-within:border-brand w-full sm:w-auto">
+                    <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => updateFilter(setDateFrom, e.target.value)}
+                        className="h-full min-w-[130px] flex-1 sm:flex-none bg-transparent outline-none text-caption"
+                        aria-label="From date"
+                    />
+                    <span className="text-text-muted shrink-0">–</span>
+                    <input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => updateFilter(setDateTo, e.target.value)}
+                        className="h-full min-w-[130px] flex-1 sm:flex-none bg-transparent outline-none text-caption"
+                        aria-label="To date"
+                    />
+                </div>
             </div>
 
-            <div className="bg-surface rounded-md shadow-card overflow-hidden">
-                <table className="w-full text-left">
+            {/* overflow-x-auto lets the whole table, including the When column,
+                scroll horizontally together on narrow screens. */}
+            <div className="bg-surface rounded-md shadow-card overflow-x-auto">
+                <table className="w-full text-left min-w-[640px]">
                     <thead>
                         <tr className="border-b border-hairline">
                             <th className="p-4 text-label text-text-secondary">When</th>
@@ -98,27 +139,30 @@ export function AuditLogViewer({
                         </tr>
                     </thead>
                     <tbody>
-                        {data.rows.length === 0 ? (
+                        {visibleRows.length === 0 ? (
                             <tr>
                                 <td colSpan={3} className="p-8 text-center text-body-md text-text-secondary">
                                     No audit log entries match these filters.
                                 </td>
                             </tr>
                         ) : (
-                            data.rows.map((row) => (
-                                <tr key={row.id} className="border-b border-hairline last:border-0">
-                                    <td className="p-4 text-caption text-text-secondary whitespace-nowrap">
-                                        {new Date(row.created_at).toLocaleString()}
-                                    </td>
-                                    <td className="p-4 text-caption text-ink">
-                                        {row.actor_name ?? (row.actor_role ?? 'system')}
-                                        {row.actor_name && row.actor_role && (
-                                            <span className="text-text-secondary"> ({row.actor_role})</span>
-                                        )}
-                                    </td>
-                                    <td className="p-4 text-caption text-ink font-medium">{row.action}</td>
-                                </tr>
-                            ))
+                            visibleRows.map((row) => {
+                                const { date, time } = formatWhen(row.created_at)
+                                return (
+                                    <tr key={row.id} className="border-b border-hairline last:border-0">
+                                        <td className="p-4 text-caption text-text-secondary whitespace-nowrap">
+                                            {date} <span className="text-text-muted">·</span> {time}
+                                        </td>
+                                        <td className="p-4 text-caption text-ink whitespace-nowrap">
+                                            {row.actor_name ?? toSentenceCase(row.actor_role ?? 'system')}
+                                            {row.actor_name && row.actor_role && (
+                                                <span className="text-text-secondary"> ({toSentenceCase(row.actor_role)})</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-caption text-ink font-medium whitespace-nowrap">{toSentenceCase(row.action)}</td>
+                                    </tr>
+                                )
+                            })
                         )}
                     </tbody>
                 </table>

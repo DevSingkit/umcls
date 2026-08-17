@@ -7,13 +7,13 @@ export default async function TeacherDashboardPage() {
 
     return (
         <div>
-            <h1 className="font-heading text-h1 text-ink mb-8">Welcome back</h1>
+            <h1 className="font-heading text-h1 text-ink mb-8">Dashboard</h1>
 
             <CoursesPreview
                 courses={coursesPreview}
-                viewAllHref="/teacher/courses"
                 courseHrefBase="/teacher/courses"
                 emptyMessage="You have not created a course yet. Use the Create button to get started."
+                createCourseHref="/teacher/courses/new"
             />
 
             <div className="mb-10 mt-10">

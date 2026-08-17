@@ -2,33 +2,31 @@ import { getStudentDashboardData } from '@/features/dashboard/actions/student-da
 import { getMyTodoItems } from '@/features/todo/queries/todo-items'
 import { TodoList } from '@/features/todo/components/TodoList'
 import { ContinueLearning } from '@/features/dashboard/components/ContinueLearning'
-import { RecentGrades } from '@/features/dashboard/components/RecentGrades'
 import { CoursesPreview } from '@/features/dashboard/components/CoursesPreview'
 
 // Student home page. Order follows §8.6: orient before act. Courses
 // preview comes first so a student sees what class they're in before
 // being handed a task list; To-Do and Continue Learning sit together
-// after that, Recent Grades last.
+// after that. Recent Grades section removed per design review.
 export default async function StudentDashboardPage() {
-    const [{ continueLearning, recentGrades, coursesPreview, courseNameById }, todoItems] = await Promise.all([
+    const [{ continueLearning, coursesPreview, courseNameById }, todoItems] = await Promise.all([
         getStudentDashboardData(),
         getMyTodoItems(),
     ])
 
     return (
         <div>
-            <h1 className="font-heading text-h1 text-ink mb-8">Welcome back</h1>
+            <h1 className="font-heading text-h1 text-ink mb-8">Dashboard</h1>
 
             <div className="mb-10">
                 <CoursesPreview
                     courses={coursesPreview}
-                    viewAllHref="/student/courses"
                     courseHrefBase="/student/courses"
                     emptyMessage="You are not enrolled in any course yet. Ask your school admin to add you."
                 />
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-[1fr_320px] mb-10">
+            <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
                 <div className="order-2 lg:order-1">
                     <h2 className="font-heading text-h2 text-ink mb-4">Continue learning</h2>
                     <ContinueLearning items={continueLearning} />
@@ -38,11 +36,6 @@ export default async function StudentDashboardPage() {
                     <h2 className="font-heading text-h2 text-ink mb-4">To-Do</h2>
                     <TodoList items={todoItems} courseNameById={courseNameById} />
                 </div>
-            </div>
-
-            <div>
-                <h2 className="font-heading text-h2 text-ink mb-4">Recent grades</h2>
-                <RecentGrades items={recentGrades} />
             </div>
         </div>
     )

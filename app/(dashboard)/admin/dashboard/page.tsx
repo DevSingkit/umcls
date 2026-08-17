@@ -43,7 +43,7 @@ export default async function AdminDashboardPage() {
         <div>
             <DashboardAutoRefresh />
 
-            <h1 className="mb-8 font-heading text-h1 text-ink">Admin Dashboard</h1>
+            <h1 className="mb-8 font-heading text-h1 text-ink">Dashboard</h1>
 
             <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
                 <div className="bg-surface rounded-md shadow-card p-3 sm:p-6">

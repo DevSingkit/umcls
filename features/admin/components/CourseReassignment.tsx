@@ -1,9 +1,15 @@
 'use client'
 // Lets an admin reassign which teacher owns a course (FR-ADMIN-10 /
-// US-010). Simple two-dropdown form, no styling beyond the existing
-// admin form pattern.
+// US-010).
+//
+// 2026-08-17: replaced both native <select> dropdowns with
+// SearchableSelect — type to filter, click to pick — since the course
+// and teacher lists can get long enough that scrolling a plain
+// dropdown isn't practical.
+
 import { useActionState } from 'react'
 import { assignCourseTeacher, type AssignTeacherResult } from '@/features/admin/actions/users'
+import { SearchableSelect } from './SearchableSelect'
 
 const initialState: AssignTeacherResult = { ok: false, error: '' }
 
@@ -23,42 +29,35 @@ export function CourseReassignment({
     return (
         <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
             <div>
-                <label htmlFor="courseId" className="text-label text-text-secondary block mb-2">
+                <label htmlFor="courseId-search" className="text-label text-text-secondary block mb-2">
                     Course
                 </label>
-                <select
-                    id="courseId"
+                <SearchableSelect
                     name="courseId"
                     required
-                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface outline-none focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
-                >
-                    <option value="">Choose a course</option>
-                    {courses.map((course) => (
-                        <option key={course.id} value={course.id}>
-                            {course.title}
-                            {course.subject ? ` — ${course.subject}` : ''}
-                        </option>
-                    ))}
-                </select>
+                    placeholder="Search for a course…"
+                    options={courses.map((course) => ({
+                        id: course.id,
+                        label: course.title,
+                        sublabel: course.subject ?? undefined,
+                    }))}
+                />
             </div>
 
             <div>
-                <label htmlFor="teacherId" className="text-label text-text-secondary block mb-2">
+                <label htmlFor="teacherId-search" className="text-label text-text-secondary block mb-2">
                     Assign to teacher
                 </label>
-                <select
-                    id="teacherId"
+                <SearchableSelect
                     name="teacherId"
                     required
-                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface outline-none focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
-                >
-                    <option value="">Choose a teacher</option>
-                    {teachers.map((teacher) => (
-                        <option key={teacher.id} value={teacher.id}>
-                            {teacher.full_name} ({teacher.email})
-                        </option>
-                    ))}
-                </select>
+                    placeholder="Search for a teacher…"
+                    options={teachers.map((teacher) => ({
+                        id: teacher.id,
+                        label: teacher.full_name,
+                        sublabel: teacher.email,
+                    }))}
+                />
             </div>
 
             {!state.ok && state.error && (

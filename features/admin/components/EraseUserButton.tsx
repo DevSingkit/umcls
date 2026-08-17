@@ -3,10 +3,27 @@
 // button only becomes clickable once the admin types the exact full
 // name of the person being erased, making this hard to trigger by
 // accident, since this action cannot be undone.
+//
+// 2026-08-17: added an onErased callback, called right after a
+// successful erase. Previously this component only swapped itself to
+// a static "Account erased." label in place — the surrounding
+// UserList never learned the erase happened, so the row kept showing
+// the person's old name/email (now stale/erased server-side) until a
+// manual page reload. onErased lets the parent call its existing
+// refresh() the same way it already does after deactivate/reactivate/
+// edit, so the list re-fetches and reflects reality immediately.
 import { useState } from 'react'
 import { eraseUser } from '@/features/admin/actions/erase-user'
 
-export function EraseUserButton({ userId, fullName }: { userId: string; fullName: string }) {
+export function EraseUserButton({
+    userId,
+    fullName,
+    onErased,
+}: {
+    userId: string
+    fullName: string
+    onErased?: () => void
+}) {
     const [isOpen, setIsOpen] = useState(false)
     const [typedName, setTypedName] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -39,6 +56,7 @@ export function EraseUserButton({ userId, fullName }: { userId: string; fullName
         }
         setDone(true)
         setIsOpen(false)
+        onErased?.()
     }
 
     if (done) {

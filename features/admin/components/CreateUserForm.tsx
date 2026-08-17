@@ -3,8 +3,14 @@
 // Extracted from admin/users/page.tsx so that page can become a server
 // component and load the user list alongside this form. See
 // features/admin/actions/create-user.ts for what happens on submit.
+//
+// 2026-08-17: all fields are now controlled. Previously, on a failed
+// submit (e.g. duplicate email), the browser could clear the entire
+// form depending on browser/autofill behavior, forcing the admin to
+// retype everything just to fix one field. Now every value is held in
+// React state and only ever cleared on a genuinely successful create.
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { createUser, type CreateUserResult } from '@/features/admin/actions/create-user'
 
 const initialState: CreateUserResult = { ok: false, error: '' }
@@ -19,6 +25,22 @@ async function createUserAction(_prevState: CreateUserResult, formData: FormData
 export function CreateUserForm() {
     const [state, formAction, isPending] = useActionState(createUserAction, initialState)
 
+    const [fullName, setFullName] = useState('')
+    const [email, setEmail] = useState('')
+    const [role, setRole] = useState('teacher')
+    const [temporaryPassword, setTemporaryPassword] = useState('')
+
+    // Only reset the form on a confirmed successful create — never on
+    // error, and never as a side effect of anything else re-rendering.
+    useEffect(() => {
+        if (state.ok) {
+            setFullName('')
+            setEmail('')
+            setRole('teacher')
+            setTemporaryPassword('')
+        }
+    }, [state]);
+
     return (
         <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
             <div>
@@ -30,6 +52,8 @@ export function CreateUserForm() {
                     name="fullName"
                     type="text"
                     required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="e.g. Maria Santos"
                 />
@@ -44,6 +68,10 @@ export function CreateUserForm() {
                     name="email"
                     type="email"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    aria-describedby={!state.ok && state.error ? 'create-user-error' : undefined}
+                    aria-invalid={!state.ok && state.error ? true : undefined}
                     className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="name@school.edu"
                 />
@@ -57,8 +85,9 @@ export function CreateUserForm() {
                     id="role"
                     name="role"
                     required
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
                     className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                    defaultValue="teacher"
                 >
                     <option value="teacher">Teacher</option>
                     <option value="student">Student</option>
@@ -76,6 +105,8 @@ export function CreateUserForm() {
                     type="text"
                     required
                     minLength={12}
+                    value={temporaryPassword}
+                    onChange={(e) => setTemporaryPassword(e.target.value)}
                     className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="At least 12 characters, with upper, lower, and a number"
                 />
@@ -85,7 +116,7 @@ export function CreateUserForm() {
             </div>
 
             {!state.ok && state.error && (
-                <p className="text-caption text-error" role="alert">
+                <p id="create-user-error" className="text-caption text-error" role="alert">
                     {state.error}
                 </p>
             )}
