@@ -4,23 +4,21 @@
 // UI-UX-REDESIGN-BRIEF.md §2/§4.1 — the biggest single fix for the
 // "too many competing buttons" problem.
 //
-// Quiz is a button, not a plain Link like Lesson/Assignment — clicking
-// it creates a draft quiz ("Untitled quiz") immediately via
-// createDraftQuiz and navigates straight to its edit page, skipping the
-// old title-first /quizzes/new step. The title is just an editable
-// field on the edit page now, same as lessons/assignments.
-import { useRef, useState, useEffect, useTransition } from 'react'
+// 2026-08-19: Quiz is now a plain Link, same as Lesson/Assignment,
+// pointing at /quizzes/new instead of calling createDraftQuiz. The
+// old behavior — inserting an empty draft quiz the instant this was
+// clicked, before the teacher entered anything — meant a titled-and-
+// empty quiz row existed in the database immediately and showed up in
+// the course stream with zero content. The new /quizzes/new page
+// collects a title and first question before anything is written to
+// the database at all (see create-quiz.ts's createQuizWithFirstQuestion).
+import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { ChevronDown, FileText, HelpCircle, ClipboardList } from 'lucide-react'
-import { createDraftQuiz } from '@/features/quizzes/actions/create-quiz'
 
 export function CreateMenu({ courseId }: { courseId: string }) {
     const [isOpen, setIsOpen] = useState(false)
-    const [isPending, startTransition] = useTransition()
-    const [error, setError] = useState<string | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
-    const router = useRouter()
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -31,19 +29,6 @@ export function CreateMenu({ courseId }: { courseId: string }) {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
-
-    function handleCreateQuiz() {
-        setError(null)
-        startTransition(async () => {
-            const result = await createDraftQuiz(courseId)
-            if (!result.ok) {
-                setError(result.error)
-                return
-            }
-            setIsOpen(false)
-            router.push(`/teacher/courses/${courseId}/quizzes/${result.quizId}/edit`)
-        })
-    }
 
     return (
         <div ref={containerRef} className="relative">
@@ -71,15 +56,15 @@ export function CreateMenu({ courseId }: { courseId: string }) {
                         <FileText size={20} aria-hidden="true" className="text-text-secondary" />
                         Lesson
                     </Link>
-                    <button
+                    <Link
+                        href={`/teacher/courses/${courseId}/quizzes/new`}
                         role="menuitem"
-                        onClick={handleCreateQuiz}
-                        disabled={isPending}
-                        className="flex h-11 w-full items-center gap-3 px-4 text-left text-body-md text-ink hover:bg-surface-sunken disabled:opacity-60"
+                        onClick={() => setIsOpen(false)}
+                        className="flex h-11 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
                     >
                         <HelpCircle size={20} aria-hidden="true" className="text-text-secondary" />
-                        {isPending ? 'Creating…' : 'Quiz'}
-                    </button>
+                        Quiz
+                    </Link>
                     <Link
                         href={`/teacher/courses/${courseId}/assignments/new`}
                         role="menuitem"
@@ -90,12 +75,6 @@ export function CreateMenu({ courseId }: { courseId: string }) {
                         Assignment
                     </Link>
                 </div>
-            )}
-
-            {error && (
-                <p className="absolute right-0 top-full mt-1 w-52 text-caption text-error" role="alert">
-                    {error}
-                </p>
             )}
         </div>
     )

@@ -1,29 +1,32 @@
 'use client'
-// One "Save changes" button for the quiz settings still here: time
-// limit, max attempts, deadline, and results visibility. Grading
-// component and passing score were both removed — grading component
-// because it's no longer read anywhere (a manual gradebook column now
-// carries its own component, see gradebook-items.ts and migration
-// 077), passing score because quizzes no longer have pass/fail
-// (migration 071).
-// Question content itself (adding/editing individual questions via
-// AddQuestionForm/QuestionCard) stays separate on the edit page — that's
-// content, not a setting, and each question already has its own
-// dedicated save action per card.
+// features/quizzes/components/QuizSettingsForm.tsx
 //
-// The remaining setters run in parallel via Promise.all rather than
-// sequentially — they're independent columns on the same `quizzes` row,
-// so there's no ordering dependency, and running them together means
-// one combined "Saving…" state instead of separate ones.
+// 2026-08-19 — MERGED with the old PostQuizButton.tsx. Previously
+// this form had its own "Save changes" button, and posting the quiz
+// was a completely separate button further down the page — explicit
+// feedback was that two buttons for what felt like one decision
+// ("set this up, then make it live") was confusing. Now there is one
+// button: it saves every setting below AND posts the quiz in the same
+// action, via the new saveQuizSettingsAndPublish (one combined
+// database update, replacing four separate setter calls +
+// toggleQuizPublish run separately).
+//
+// The individual setters (setTimeLimit, setMaxAttempts, etc.) and
+// toggleQuizPublish are untouched and still exported from
+// create-quiz.ts, just no longer called from here.
+//
+// Unposting (an already-published quiz going back to draft) is kept
+// as its own small, separate action below the main button — that's a
+// distinct "take this down" decision, not part of "set up and post,"
+// so collapsing it into the same button would hide a fairly
+// consequential action inside routine settings edits.
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Clock } from 'lucide-react'
 import {
-    setTimeLimit,
-    setMaxAttempts,
-    setQuizDeadline,
-    setResultsVisibility,
+    saveQuizSettingsAndPublish,
+    toggleQuizPublish,
     type ResultsVisibility,
 } from '@/features/quizzes/actions/create-quiz'
 
@@ -45,25 +48,31 @@ function toDatetimeLocalValue(iso: string | null): string {
 
 export function QuizSettingsForm({
     quizId,
+    courseId,
     currentTimeLimitMinutes,
     currentMaxAttempts,
     currentAvailableUntil,
     currentAllowLate,
     totalQuestions,
     currentVisibility,
+    isPublished,
 }: {
     quizId: string
+    courseId: string
     currentTimeLimitMinutes: number | null
     currentMaxAttempts: number
     currentAvailableUntil: string | null
     currentAllowLate: boolean
     totalQuestions: number
     currentVisibility: ResultsVisibility
+    isPublished: boolean
 }) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
+    const [isUnposting, startUnpostTransition] = useTransition()
     const [saved, setSaved] = useState(false)
     const [errors, setErrors] = useState<string[]>([])
+    const [published, setPublished] = useState(isPublished)
 
     const [timerEnabled, setTimerEnabled] = useState(currentTimeLimitMinutes !== null)
     const [timeLimitMinutes, setTimeLimitMinutes] = useState(currentTimeLimitMinutes?.toString() ?? '')
@@ -75,7 +84,9 @@ export function QuizSettingsForm({
 
     const [visibility, setVisibility] = useState<ResultsVisibility>(currentVisibility)
 
-    function handleSaveAll() {
+    const hasQuestions = totalQuestions > 0
+
+    function handleSaveAndPost() {
         setSaved(false)
         setErrors([])
 
@@ -90,24 +101,48 @@ export function QuizSettingsForm({
             return
         }
 
+        if (!hasQuestions) {
+            setErrors(['Add at least one question before posting.'])
+            return
+        }
+
         const dueAtISO = dueAt ? new Date(dueAt).toISOString() : null
 
+        const formData = new FormData()
+        formData.set('quizId', quizId)
+        if (parsedTimeLimit !== null) formData.set('timeLimitMinutes', String(parsedTimeLimit))
+        formData.set('maxAttempts', String(maxAttempts))
+        formData.set('resultsVisibility', visibility)
+        if (dueAtISO) formData.set('availableUntil', dueAtISO)
+        formData.set('allowLate', String(allowLate))
+        formData.set('publish', 'true')
+
         startTransition(async () => {
-            const results = await Promise.all([
-                setTimeLimit(quizId, parsedTimeLimit),
-                setMaxAttempts(quizId, maxAttempts),
-                setQuizDeadline(quizId, dueAtISO, allowLate),
-                setResultsVisibility(quizId, visibility),
-            ])
+            const result = await saveQuizSettingsAndPublish(formData)
 
-            const failures = results.filter((r) => !r.ok).map((r: any) => r.error as string)
-
-            if (failures.length > 0) {
-                setErrors(failures)
+            if (!result.ok) {
+                setErrors([result.error])
                 return
             }
 
+            setPublished(true)
             setSaved(true)
+            // Posting is the "I'm done" action — send the teacher back
+            // to the course page to see it live, same as posting an
+            // assignment/lesson already does.
+            router.push(`/teacher/courses/${courseId}`)
+        })
+    }
+
+    function handleUnpost() {
+        setErrors([])
+        startUnpostTransition(async () => {
+            const result = await toggleQuizPublish(quizId, false)
+            if (!result.ok) {
+                setErrors([result.error])
+                return
+            }
+            setPublished(false)
             router.refresh()
         })
     }
@@ -247,19 +282,56 @@ export function QuizSettingsForm({
                 </div>
             )}
 
-            <div className="border-t border-hairline pt-6 flex items-center gap-3">
-                <button
-                    type="button"
-                    onClick={handleSaveAll}
-                    disabled={isPending}
-                    className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60"
-                >
-                    {isPending ? 'Saving…' : 'Save changes'}
-                </button>
-                {saved && !isPending && (
-                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft text-brand text-caption font-semibold px-3 py-1">
-                        All settings saved
-                    </span>
+            <div className="border-t border-hairline pt-6">
+                {published ? (
+                    <div className="flex items-center justify-between gap-4 bg-brand-soft rounded-md p-5">
+                        <div>
+                            <p className="text-body-emphasis text-brand">Posted</p>
+                            <p className="text-caption text-text-secondary mt-0.5">
+                                Students in this course can see this quiz. Settings above still
+                                save and apply immediately — no need to unpost first.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                            <button
+                                type="button"
+                                onClick={handleSaveAndPost}
+                                disabled={isPending}
+                                className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60"
+                            >
+                                {isPending ? 'Saving…' : 'Save settings'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleUnpost}
+                                disabled={isUnposting}
+                                className="h-11 px-5 rounded-md border-[1.5px] border-hairline-strong text-body-md font-semibold text-ink hover:bg-surface-sunken disabled:opacity-60"
+                            >
+                                {isUnposting ? 'Working…' : 'Unpost'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={handleSaveAndPost}
+                            disabled={isPending || !hasQuestions}
+                            className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60"
+                        >
+                            {isPending ? 'Posting…' : 'Save & Post'}
+                        </button>
+                        {!hasQuestions && (
+                            <span className="text-caption text-text-secondary">
+                                Add at least one question first
+                            </span>
+                        )}
+                        {saved && !isPending && (
+                            <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft text-brand text-caption font-semibold px-3 py-1">
+                                Posted
+                            </span>
+                        )}
+                    </div>
                 )}
             </div>
         </div>

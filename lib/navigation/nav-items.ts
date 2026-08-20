@@ -22,7 +22,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     admin: [
         { label: "Dashboard", href: "/admin/dashboard", icon: Home, isV1: true },
         {
-            label: "Archive Class",
+            label: "Archive",
             href: "/admin/courses",
             icon: BookOpen,
             isV1: true, 

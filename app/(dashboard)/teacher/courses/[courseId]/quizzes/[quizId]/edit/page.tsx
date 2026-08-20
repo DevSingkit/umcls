@@ -3,7 +3,6 @@ import { getQuizForTeacher } from '@/features/quizzes/actions/create-quiz'
 import { AddQuestionForm } from '@/features/quizzes/components/AddQuestionForm'
 import { QuizSettingsForm } from '@/features/quizzes/components/QuizSettingsForm'
 import { QuestionCard } from '@/features/quizzes/components/QuestionCard'
-import { PostQuizButton } from '@/features/quizzes/components/PostQuizButton'
 import { QuizTitleField } from '@/features/quizzes/components/QuizTitleField'
 import Link from 'next/link'
 
@@ -26,9 +25,15 @@ export const fetchCache = 'force-no-store'
 // Shows the quiz being built, Google Forms-style: each saved question
 // is a card showing the question text and its options, with the
 // correct one marked. The "add question" form is pinned at the bottom
-// as the next card, followed by the Post button — the quiz stays a
-// draft (is_published defaults to false, migration 051) until the
-// teacher explicitly posts it here.
+// as the next card, followed by the settings/post form.
+//
+// 2026-08-19: PostQuizButton removed — posting is now handled by
+// QuizSettingsForm's single "Save & Post" button (see that
+// component's own comment). A quiz's actual creation (title + first
+// question) also no longer happens on this page at all — it now
+// requires an existing quiz, created via
+// /teacher/courses/[courseId]/quizzes/new, so this page is reached
+// only once real content already exists.
 export default async function QuizEditPage({
     params,
 }: {
@@ -45,9 +50,7 @@ export default async function QuizEditPage({
 
     return (
         <div className="max-w-2xl">
-            <h1 className="font-heading text-h1 text-ink mb-6">
-                {quiz.title ? 'Edit Quiz' : 'Create Quiz'}
-            </h1>
+            <h1 className="font-heading text-h1 text-ink mb-6">Edit Quiz</h1>
 
             <div className="mb-2">
                 <QuizTitleField quizId={quiz.id} initialTitle={quiz.title} />
@@ -74,20 +77,6 @@ export default async function QuizEditPage({
                 </div>
             )}
 
-            <div className="mb-6">
-                <QuizSettingsForm
-                    quizId={quiz.id}
-                    currentTimeLimitMinutes={quiz.time_limit_minutes}
-                    currentMaxAttempts={quiz.max_attempts}
-                    currentAvailableUntil={quiz.available_until}
-                    currentAllowLate={quiz.allow_late}
-                    totalQuestions={questions.length}
-                    currentVisibility={quiz.show_results_after}
-                />
-            </div>
-
-            
-
             {questions.length > 0 && (
                 <div className="space-y-4 mb-8">
                     {questions.map((question, index) => (
@@ -99,11 +88,16 @@ export default async function QuizEditPage({
             <AddQuestionForm quizId={quiz.id} />
 
             <div className="mt-8">
-                <PostQuizButton
+                <QuizSettingsForm
                     quizId={quiz.id}
                     courseId={courseId}
+                    currentTimeLimitMinutes={quiz.time_limit_minutes}
+                    currentMaxAttempts={quiz.max_attempts}
+                    currentAvailableUntil={quiz.available_until}
+                    currentAllowLate={quiz.allow_late}
+                    totalQuestions={questions.length}
+                    currentVisibility={quiz.show_results_after}
                     isPublished={quiz.is_published}
-                    hasQuestions={questions.length > 0}
                 />
             </div>
         </div>

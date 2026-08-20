@@ -11,9 +11,10 @@
 // functions the old buttons did, so the drop-below expand panels
 // (edit form, reset-password form, role select, enrollments) still
 // open in exactly the same place, under the same row, as before.
-// EraseUserButton stays as its own separate, always-visible button
-// outside the menu, since it's the single most destructive action
-// here and shouldn't be one click away inside a collapsed menu.
+// "Erase User Data" also moved into this same menu — it used to be
+// its own always-visible button (EraseUserButton.tsx), now removed
+// in favor of a menu item plus a controlled confirmation modal
+// (EraseUserModal.tsx), same pattern as the deactivate confirmation.
 //
 // Also new: Deactivate no longer fires immediately on click. It opens
 // a confirmation dialog first ("Deactivate this account?") — there
@@ -37,7 +38,7 @@ import {
     unenrollStudent,
     type StudentEnrollment,
 } from '@/features/admin/actions/enroll-student'
-import { EraseUserButton } from '@/features/admin/components/EraseUserButton'
+import { EraseUserModal } from '@/features/admin/components/EraseUserModal'
 
 export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
     const [users, setUsers] = useState(initialUsers)
@@ -45,15 +46,36 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
     const [role, setRole] = useState<'all' | 'admin' | 'teacher' | 'student'>('all')
     const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all')
     const [isPending, startTransition] = useTransition()
-    const [resetTargetId, setResetTargetId] = useState<string | null>(null)
+
+    // 2026-08-17: consolidated from four independent xTargetId states
+    // (resetTargetId, editTargetId, roleTargetId, enrollTargetId) into
+    // one shared slot. Previously each panel toggled only its own
+    // state, so nothing stopped Edit and Reset password (or any other
+    // pair) from being open on the same row, or on two different rows,
+    // at once. With a single slot, opening any panel automatically
+    // closes whichever other panel was open — there is only ever one
+    // open at a time, on one row at a time.
+    type OpenPanel = { type: 'reset' | 'edit' | 'role' | 'enroll'; userId: string } | null
+    const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
+
+    const resetTargetId = openPanel?.type === 'reset' ? openPanel.userId : null
+    const editTargetId = openPanel?.type === 'edit' ? openPanel.userId : null
+    const roleTargetId = openPanel?.type === 'role' ? openPanel.userId : null
+    const enrollTargetId = openPanel?.type === 'enroll' ? openPanel.userId : null
+
+    // Toggles a panel open/closed: clicking the same action again on
+    // the same row closes it (matches the old per-panel toggle
+    // behavior); clicking any action while a different panel is open
+    // replaces it, since there's only one slot to hold the state now.
+    function togglePanel(type: NonNullable<OpenPanel>['type'], userId: string) {
+        setOpenPanel((prev) => (prev?.type === type && prev.userId === userId ? null : { type, userId }))
+    }
+
     const [resetError, setResetError] = useState<string | null>(null)
-    const [editTargetId, setEditTargetId] = useState<string | null>(null)
     const [editError, setEditError] = useState<string | null>(null)
-    const [roleTargetId, setRoleTargetId] = useState<string | null>(null)
     const [roleError, setRoleError] = useState<string | null>(null)
     const [roleCheckPending, setRoleCheckPending] = useState(false)
     const [toggleActiveError, setToggleActiveError] = useState<string | null>(null)
-    const [enrollTargetId, setEnrollTargetId] = useState<string | null>(null)
     const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([])
     const [enrollLoading, setEnrollLoading] = useState(false)
     const [enrollError, setEnrollError] = useState<string | null>(null)
@@ -67,6 +89,11 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
     // user object (not just an id) so the confirmation dialog can show
     // their name without an extra lookup.
     const [deactivateConfirmUser, setDeactivateConfirmUser] = useState<UserRow | null>(null)
+
+    // Same pattern, for the erase confirmation modal — "Erase User
+    // Data" now lives inside the "⋮" menu instead of its own
+    // always-visible button.
+    const [eraseConfirmUser, setEraseConfirmUser] = useState<UserRow | null>(null)
 
     const refresh = useCallback(() => {
         startTransition(async () => {
@@ -128,7 +155,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
         setResetError(null)
         const result = await resetUserPassword(formData)
         if (result.ok) {
-            setResetTargetId(null)
+            setOpenPanel(null)
         } else {
             setResetError(result.error)
         }
@@ -138,7 +165,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
         setEditError(null)
         const result = await updateUserProfile(formData)
         if (result.ok) {
-            setEditTargetId(null)
+            setOpenPanel(null)
             refresh()
         } else {
             setEditError(result.error)
@@ -154,7 +181,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
     async function handleOpenRoleChange(userId: string) {
         setRoleError(null)
         if (roleTargetId === userId) {
-            setRoleTargetId(null)
+            setOpenPanel(null)
             return
         }
         setRoleCheckPending(true)
@@ -164,7 +191,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
             setRoleError(eligibility.reason)
             return
         }
-        setRoleTargetId(userId)
+        setOpenPanel({ type: 'role', userId })
     }
 
     function handleChangeRole(userId: string, newRole: 'admin' | 'teacher' | 'student') {
@@ -172,7 +199,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
         startTransition(async () => {
             const result = await changeUserRole(userId, newRole)
             if (result.ok) {
-                setRoleTargetId(null)
+                setOpenPanel(null)
                 refresh()
             } else {
                 setRoleError(result.error)
@@ -183,10 +210,10 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
     async function handleOpenEnrollments(userId: string) {
         setEnrollError(null)
         if (enrollTargetId === userId) {
-            setEnrollTargetId(null)
+            setOpenPanel(null)
             return
         }
-        setEnrollTargetId(userId)
+        setOpenPanel({ type: 'enroll', userId })
         setEnrollLoading(true)
         const result = await getStudentEnrollments(userId)
         setEnrollments(result)
@@ -253,8 +280,8 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                             sharing flex space with the expand sections below —
                             that mixing is what caused the earlier button-squeeze/
                             wrap bug when Edit/Reset password/Change role were
-                            open. Actions are now a single "⋮" menu plus the
-                            always-visible EraseUserButton. */}
+                            open. All row actions, including Erase User Data,
+                            now live inside a single "⋮" menu. */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
                                 <p className="text-body-emphasis text-ink">{user.full_name}</p>
@@ -290,13 +317,13 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                             <button
                                                 role="menuitem"
                                                 onClick={() => {
-                                                    setEditTargetId(editTargetId === user.id ? null : user.id)
+                                                    togglePanel('edit', user.id)
                                                     setEditError(null)
                                                     setOpenMenuId(null)
                                                 }}
                                                 className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken"
                                             >
-                                                Edit details
+                                                Edit
                                             </button>
                                             <button
                                                 role="menuitem"
@@ -324,7 +351,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                             <button
                                                 role="menuitem"
                                                 onClick={() => {
-                                                    setResetTargetId(resetTargetId === user.id ? null : user.id)
+                                                    togglePanel('reset', user.id)
                                                     setOpenMenuId(null)
                                                 }}
                                                 className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken"
@@ -357,10 +384,19 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                     Reactivate
                                                 </button>
                                             )}
+                                            <button
+                                                role="menuitem"
+                                                onClick={() => {
+                                                    setOpenMenuId(null)
+                                                    setEraseConfirmUser(user)
+                                                }}
+                                                className="block w-full px-4 py-2.5 text-left text-caption font-medium text-error hover:bg-error-soft"
+                                            >
+                                                Erase User Data
+                                            </button>
                                         </div>
                                     )}
                                 </div>
-                                <EraseUserButton userId={user.id} fullName={user.full_name} onErased={refresh} />
                             </div>
                         </div>
 
@@ -550,6 +586,19 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {eraseConfirmUser && (
+                <EraseUserModal
+                    userId={eraseConfirmUser.id}
+                    fullName={eraseConfirmUser.full_name}
+                    isOpen={true}
+                    onClose={() => setEraseConfirmUser(null)}
+                    onErased={() => {
+                        setEraseConfirmUser(null)
+                        refresh()
+                    }}
+                />
             )}
         </div>
     )

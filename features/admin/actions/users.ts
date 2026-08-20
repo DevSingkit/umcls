@@ -134,6 +134,38 @@ export async function reactivateUser(userId: string): Promise<ToggleActiveResult
     return { ok: true }
 }
 
+// Every deleted user, for the Archives page's "Deleted accounts"
+// section — mirrors getAllCoursesForManagement's shape in
+// course-management.ts exactly. Only deleted_at IS NOT NULL rows: this
+// is specifically the recovery list, not the main user list (that's
+// listUsers above, which excludes these).
+export type ArchivedUserRow = {
+    id: string
+    full_name: string
+    email: string
+    role: 'admin' | 'teacher' | 'student'
+    deletedAt: string
+}
+
+export async function getAllDeletedUsers(): Promise<ArchivedUserRow[]> {
+    await requireRole(['admin'])
+    const supabase = await createClient()
+
+    const { data } = await supabase
+        .from('users')
+        .select('id, full_name, email, role, deleted_at')
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false })
+
+    return (data ?? []).map((u) => ({
+        id: u.id,
+        full_name: u.full_name,
+        email: u.email,
+        role: u.role,
+        deletedAt: u.deleted_at as string,
+    }))
+}
+
 const resetPasswordSchema = z.object({
     userId: z.string().uuid(),
     newPassword: z

@@ -1,92 +1,105 @@
 'use server'
-// GDPR Right-to-Erasure (PH2-SEC-01). Turns GDPR_ERASURE_RUNBOOK.md's
-// four manual steps into one action, so an admin clicks a button
-// instead of running SQL and Admin API calls by hand.
+// 2026-08-17 — REWORKED per explicit requirement: nothing in this app
+// permanently destroys data anymore. Every delete/erase action must be
+// reversible from the admin Archives page. This used to be a genuine
+// GDPR-style anonymization (scrub full_name/email, delete the Auth
+// login) — that is intentionally removed. eraseUser now does exactly
+// what archiveCourse does in course-management.ts: it sets a
+// deleted_at timestamp and nothing else. All of the person's real
+// data — name, email, login, academic records — stays completely
+// intact and is fully restored by restoreUser.
 //
-// This is anonymization, not full row deletion, matching SECURITY.md
-// §8.2: academic records (quiz scores, lesson completions) stay, keyed
-// to the now-anonymized user id. Only personally identifying fields
-// are scrubbed. Audit log entries about this user also stay, per the
-// runbook's "what is intentionally not deleted" section.
+// Function names (eraseUser) and the UI label ("Erase User Data") are
+// kept as-is on purpose — the *behavior* changed, not what the button
+// says, so nothing calling this needs to change and the day-to-day
+// experience for the admin stays familiar. The confirmation copy in
+// EraseUserModal.tsx was updated to honestly describe this as
+// recoverable via Archives, since it no longer is permanent.
+//
+// IMPORTANT — this file no longer satisfies GDPR-style "right to
+// erasure" in the sense the old comment described (real anonymization
+// + login deletion). If there's ever a genuine legal erasure request,
+// that would need a different, actually-permanent action — this one
+// is deliberately just a soft delete now.
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 
 export type EraseUserResult = { ok: true } | { ok: false; error: string }
 
 export async function eraseUser(userId: string): Promise<EraseUserResult> {
-    // Only an admin can do this, checked before touching anything.
     await requireRole(['admin'])
 
     if (!userId) {
         return { ok: false, error: 'No user was specified.' }
     }
 
-    const supabaseAdmin = createAdminClient()
     const supabase = await createClient()
 
-    // An admin should never be able to erase their own account this
-    // way. That would lock them out mid-action and leaves no clean way
-    // to confirm the request was legitimate.
+    // An admin should never be able to "delete" their own account this
+    // way — same guard as before, still relevant even though this is
+    // now reversible, since it would still sign them out mid-action.
     const { data: caller } = await supabase.auth.getUser()
     if (caller.user?.id === userId) {
-        return { ok: false, error: 'You cannot erase your own account.' }
+        return { ok: false, error: 'You cannot delete your own account.' }
     }
 
-    // Step 1: anonymize the users row. Runbook's exact placeholder
-    // pattern, so an anonymized row is always recognizable at a glance.
-    const { error: anonymizeError } = await supabaseAdmin
+    // Soft delete only — same shape as archiveCourse in
+    // course-management.ts. No anonymization, no Auth deletion. Name,
+    // email, and login all stay exactly as they were; deleted_at is
+    // the only thing that changes.
+    const { data, error } = await supabase
         .from('users')
-        .update({
-            full_name: `Deleted User ${userId.slice(0, 8)}`,
-            email: `deleted_${userId}@erased.invalid`,
-            avatar_url: null,
-            metadata: {},
-            deleted_at: new Date().toISOString(),
-        })
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', userId)
+        .select('id')
 
-    if (anonymizeError) {
-        return { ok: false, error: 'Could not anonymize this account. Nothing else was changed.' }
+    if (error) {
+        return { ok: false, error: 'Could not delete this account. Nothing was changed.' }
+    }
+    // update() reports error: null even if RLS silently filtered every
+    // row — confirm a row actually came back rather than trusting the
+    // absence of an error alone (same defensive check as
+    // deactivateUser/archiveCourse).
+    if (!data || data.length === 0) {
+        return { ok: false, error: 'The account was not updated. You may not have permission to change it.' }
     }
 
-    // Step 2: delete the Supabase Auth login. No SQL equivalent, this
-    // must go through the Admin API.
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
-    if (authDeleteError) {
-        // The users row is already anonymized at this point. We don't
-        // attempt to undo that: a partially-anonymized-but-still-
-        // logged-in-able account is a worse state than an anonymized
-        // account whose login deletion needs a retry.
-        return {
-            ok: false,
-            error:
-                'The account details were anonymized, but deleting the login itself failed. Please try again or check manually.',
-        }
-    }
-
-    // Step 3: remove any submission files. Usually a no-op in V1 since
-    // Assignments/Materials haven't shipped yet, but run it anyway so
-    // this doesn't silently miss files once those features exist.
-    const { data: submissions } = await supabaseAdmin
-        .from('assignment_submissions')
-        .select('file_path')
-        .eq('student_id', userId)
-
-    for (const submission of submissions ?? []) {
-        if (submission.file_path) {
-            await supabaseAdmin.storage.from('submissions').remove([submission.file_path])
-        }
-    }
-
-    // Step 4: audit log entry. Uses the regular client so
-    // log_audit_event correctly records the acting admin via
-    // auth.uid(), same pattern as every other action in this project.
     await supabase.rpc('log_audit_event', {
-        p_action: 'USER_GDPR_ERASED',
+        p_action: 'USER_DELETED',
         p_target_table: 'users',
         p_target_id: userId,
-        p_metadata: { method: 'admin_ui' },
+        p_metadata: { method: 'admin_ui', reversible: true },
+    })
+
+    return { ok: true }
+}
+
+export async function restoreUser(userId: string): Promise<EraseUserResult> {
+    await requireRole(['admin'])
+
+    if (!userId) {
+        return { ok: false, error: 'No user was specified.' }
+    }
+
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+        .from('users')
+        .update({ deleted_at: null })
+        .eq('id', userId)
+        .select('id')
+
+    if (error) {
+        return { ok: false, error: 'Could not restore this account.' }
+    }
+    if (!data || data.length === 0) {
+        return { ok: false, error: 'The account was not updated. You may not have permission to change it.' }
+    }
+
+    await supabase.rpc('log_audit_event', {
+        p_action: 'USER_RESTORED',
+        p_target_table: 'users',
+        p_target_id: userId,
     })
 
     return { ok: true }

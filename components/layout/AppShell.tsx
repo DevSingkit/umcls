@@ -1,10 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { NotificationBell } from "./NotificationBell";
+import { BackButton } from "@/components/ui/BackButton";
 import type { Role } from "@/lib/navigation/nav-items";
 
 export interface ShellUser {
@@ -18,12 +20,19 @@ interface AppShellProps {
     children: ReactNode;
 }
 
+// Dashboard home routes — there's nothing meaningful to go "back" to
+// from these, so the back button is skipped here even on desktop.
+const DASHBOARD_HOME_PATHS = ["/admin/dashboard", "/teacher/dashboard", "/student/dashboard"];
+
 /**
  * Role-aware app chrome: desktop sidebar (≥ 1024px) or mobile top bar +
  * bottom tab bar (< 1024px), wrapping every (dashboard) page.
  * See tasks.md PH0-006 and DESIGN-LMS.md §6.
  */
 export function AppShell({ user, children }: AppShellProps) {
+    const pathname = usePathname();
+    const showBackButton = !DASHBOARD_HOME_PATHS.includes(pathname);
+
     return (
         <div className="min-h-screen bg-canvas">
             {/* Accessibility §9 — first focusable element on every page */}
@@ -43,7 +52,10 @@ export function AppShell({ user, children }: AppShellProps) {
                 <NotificationBell userId={user.id} />
             </div>
             <main id="main-content" className="pb-20 lg:pb-8 lg:pl-[240px]">
-                <div className="mx-auto max-w-[1200px] px-4 py-6 lg:px-16 lg:py-8">{children}</div>
+                <div className="mx-auto max-w-[1200px] px-4 py-6 lg:px-16 lg:py-8">
+                    {showBackButton && <BackButton />}
+                    <div className={showBackButton ? "mt-2" : undefined}>{children}</div>
+                </div>
             </main>
 
             <MobileBottomNav role={user.role} />
