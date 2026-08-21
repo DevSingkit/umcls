@@ -69,18 +69,23 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
 
     return (
         // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
-        <div className="max-w-2xl mx-auto pb-16">
-            <h1 className="font-heading text-h1 text-ink mb-2">
+        // No mx-auto — every other form in the app (NewQuizForm,
+        // CreateUserForm, EnrollForm, CourseReassignment) sits left-
+        // aligned within the page container, not centered.
+        <div className="max-w-2xl pb-16">
+            <h1 className="font-heading text-h1 text-ink mb-6">
                 Create a new lesson
             </h1>
-            <p className="text-body-md text-text-secondary mb-8">
-                Fill in the lesson and attach any files or links now — everything is saved together
-                in one step. Materials can&apos;t be added later, so add everything you need here.
-            </p>
-
-            <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-8">
+            <form action={formAction} className="bg-surface rounded-md shadow-card px-8 pb-8 pt-5">
+                {/* Moved out of the space-y-8 flow below on purpose —
+                    a hidden input still counts as a sibling for
+                    space-y's margin calculation even though it renders
+                    with zero height, which was silently adding an
+                    extra 32px gap above "Lesson title" on top of the
+                    card's own top padding. */}
                 <input type="hidden" name="courseId" value={courseId} />
 
+                <div className="space-y-8">
                 <div>
                     <label htmlFor="title" className="block text-label text-ink mb-2">
                         Lesson title
@@ -269,6 +274,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                 >
                     {isPending ? 'Creating lesson…' : 'Create lesson'}
                 </button>
+                </div>
             </form>
         </div>
     )

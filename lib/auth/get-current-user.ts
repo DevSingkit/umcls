@@ -56,10 +56,10 @@ export async function getCurrentUser() {
 export async function requireUser() {
     const user = await getCurrentUser()
     if (!user) {
-        redirect('/login')
+        redirect('/')
     }
     if (isSessionInactive(user.lastSeenAt)) {
-        redirect('/login?reason=timeout')
+        redirect('/?reason=timeout')
     }
     return user
 }

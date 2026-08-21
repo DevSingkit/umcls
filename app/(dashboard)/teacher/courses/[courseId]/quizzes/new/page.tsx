@@ -20,11 +20,7 @@ export default async function NewQuizPage({
 
     return (
         <div className="max-w-2xl">
-            <h1 className="font-heading text-h1 text-ink mb-2">Create Quiz</h1>
-            <p className="text-caption text-text-secondary mb-6">
-                Add a title and your first question to create this quiz. You can add more
-                questions and change settings once it&apos;s created.
-            </p>
+            <h1 className="font-heading text-h1 text-ink mb-6">Create Quiz</h1>
 
             <NewQuizForm courseId={courseId} />
         </div>

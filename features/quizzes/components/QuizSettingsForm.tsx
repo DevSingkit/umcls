@@ -1,34 +1,28 @@
 'use client'
 // features/quizzes/components/QuizSettingsForm.tsx
 //
-// 2026-08-19 — MERGED with the old PostQuizButton.tsx. Previously
-// this form had its own "Save changes" button, and posting the quiz
-// was a completely separate button further down the page — explicit
-// feedback was that two buttons for what felt like one decision
-// ("set this up, then make it live") was confusing. Now there is one
-// button: it saves every setting below AND posts the quiz in the same
-// action, via the new saveQuizSettingsAndPublish (one combined
-// database update, replacing four separate setter calls +
-// toggleQuizPublish run separately).
+// 2026-08-19 — MERGED with the old PostQuizButton.tsx, then further
+// simplified per explicit feedback: no more separate Unpost action at
+// all. Publishing from this page is now one-way — once a quiz is
+// posted, there is no button anywhere on this page to send it back to
+// draft. One button only:
+//   - Still a draft: "Save & Post" — saves settings and publishes,
+//     same as before.
+//   - Already posted: "Update" — saves settings only. Publish state is
+//     never touched again once true; clicking Update never changes it.
+// Settings only ever apply when this button is clicked — there is no
+// auto-save on blur/change anywhere in this form.
 //
 // The individual setters (setTimeLimit, setMaxAttempts, etc.) and
 // toggleQuizPublish are untouched and still exported from
-// create-quiz.ts, just no longer called from here.
-//
-// Unposting (an already-published quiz going back to draft) is kept
-// as its own small, separate action below the main button — that's a
-// distinct "take this down" decision, not part of "set up and post,"
-// so collapsing it into the same button would hide a fairly
-// consequential action inside routine settings edits.
+// create-quiz.ts (toggleQuizPublish is simply no longer called from
+// here), in case something else still needs them.
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Clock } from 'lucide-react'
-import {
-    saveQuizSettingsAndPublish,
-    toggleQuizPublish,
-    type ResultsVisibility,
-} from '@/features/quizzes/actions/create-quiz'
+import { saveQuizSettingsAndPublish, type ResultsVisibility } from '@/features/quizzes/actions/create-quiz'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 
 const VISIBILITY_OPTIONS: { value: ResultsVisibility; label: string }[] = [
     { value: 'submission', label: 'Right after submitting' },
@@ -69,7 +63,6 @@ export function QuizSettingsForm({
 }) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
-    const [isUnposting, startUnpostTransition] = useTransition()
     const [saved, setSaved] = useState(false)
     const [errors, setErrors] = useState<string[]>([])
     const [published, setPublished] = useState(isPublished)
@@ -86,7 +79,12 @@ export function QuizSettingsForm({
 
     const hasQuestions = totalQuestions > 0
 
-    function handleSaveAndPost() {
+    // Handles both cases with one function: saving settings on an
+    // already-posted quiz, and saving-plus-posting a still-draft one.
+    // The only thing that differs is what happens after a successful
+    // save (redirect vs. stay + refresh) and, for a still-draft quiz,
+    // the "must have a question first" guard.
+    function handleSave() {
         setSaved(false)
         setErrors([])
 
@@ -101,7 +99,7 @@ export function QuizSettingsForm({
             return
         }
 
-        if (!hasQuestions) {
+        if (!published && !hasQuestions) {
             setErrors(['Add at least one question before posting.'])
             return
         }
@@ -115,7 +113,13 @@ export function QuizSettingsForm({
         formData.set('resultsVisibility', visibility)
         if (dueAtISO) formData.set('availableUntil', dueAtISO)
         formData.set('allowLate', String(allowLate))
+        // Publish is monotonic from this form — once a quiz has been
+        // posted, this always sends true again; there is no path here
+        // that ever sends false. An already-posted quiz simply stays
+        // posted, and a draft becomes posted on this same click.
         formData.set('publish', 'true')
+
+        const wasAlreadyPublished = published
 
         startTransition(async () => {
             const result = await saveQuizSettingsAndPublish(formData)
@@ -127,23 +131,17 @@ export function QuizSettingsForm({
 
             setPublished(true)
             setSaved(true)
-            // Posting is the "I'm done" action — send the teacher back
-            // to the course page to see it live, same as posting an
-            // assignment/lesson already does.
-            router.push(`/teacher/courses/${courseId}`)
-        })
-    }
 
-    function handleUnpost() {
-        setErrors([])
-        startUnpostTransition(async () => {
-            const result = await toggleQuizPublish(quizId, false)
-            if (!result.ok) {
-                setErrors([result.error])
-                return
+            if (wasAlreadyPublished) {
+                // Just an update — stay on the page, refresh server
+                // data so the header/status reflects the saved values.
+                router.refresh()
+            } else {
+                // First time posting — same "I'm done" behavior as
+                // before, send the teacher back to the course page to
+                // see it live.
+                router.push(`/teacher/courses/${courseId}`)
             }
-            setPublished(false)
-            router.refresh()
         })
     }
 
@@ -225,12 +223,7 @@ export function QuizSettingsForm({
                     limit running out.
                 </p>
                 <div className="flex items-center gap-3 flex-wrap">
-                    <input
-                        type="datetime-local"
-                        value={dueAt}
-                        onChange={(e) => setDueAt(e.target.value)}
-                        className="h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                    />
+                    <DateTimePicker value={dueAt} onChange={setDueAt} placeholder="No deadline" />
                     <button
                         type="button"
                         onClick={() => setDueAt('')}
@@ -262,7 +255,7 @@ export function QuizSettingsForm({
                     id="resultsVisibilitySetting"
                     value={visibility}
                     onChange={(e) => setVisibility(e.target.value as ResultsVisibility)}
-                    className="min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
+                    className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
                 >
                     {VISIBILITY_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -288,34 +281,24 @@ export function QuizSettingsForm({
                         <div>
                             <p className="text-body-emphasis text-brand">Posted</p>
                             <p className="text-caption text-text-secondary mt-0.5">
-                                Students in this course can see this quiz. Settings above still
-                                save and apply immediately — no need to unpost first.
+                                Students in this course can see this quiz. Click Update to save
+                                any changes above — nothing changes until you click it.
                             </p>
                         </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                            <button
-                                type="button"
-                                onClick={handleSaveAndPost}
-                                disabled={isPending}
-                                className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60"
-                            >
-                                {isPending ? 'Saving…' : 'Save settings'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleUnpost}
-                                disabled={isUnposting}
-                                className="h-11 px-5 rounded-md border-[1.5px] border-hairline-strong text-body-md font-semibold text-ink hover:bg-surface-sunken disabled:opacity-60"
-                            >
-                                {isUnposting ? 'Working…' : 'Unpost'}
-                            </button>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={isPending}
+                            className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
+                        >
+                            {isPending ? 'Saving…' : 'Update'}
+                        </button>
                     </div>
                 ) : (
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
-                            onClick={handleSaveAndPost}
+                            onClick={handleSave}
                             disabled={isPending || !hasQuestions}
                             className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60"
                         >

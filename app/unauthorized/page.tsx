@@ -9,7 +9,7 @@ import { ROLE_DASHBOARD } from "@/lib/navigation/nav-items";
 // back into this page.
 export default async function UnauthorizedPage() {
     const user = await getCurrentUser();
-    const backHref = user ? ROLE_DASHBOARD[user.role] : "/login";
+    const backHref = user ? ROLE_DASHBOARD[user.role] : "/";
     const backLabel = user ? "Back to your dashboard" : "Back to login";
 
     return (

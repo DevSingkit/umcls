@@ -8,7 +8,7 @@ export default async function NewAssignmentPage({
     const { courseId } = await params
     return (
         <div>
-            <h1 className="font-heading text-h1 text-ink mb-8">New Assignment</h1>
+            <h1 className="font-heading text-h1 text-ink mb-6">New Assignment</h1>
             <NewAssignmentForm courseId={courseId} />
         </div>
     )

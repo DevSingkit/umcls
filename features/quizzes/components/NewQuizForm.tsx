@@ -20,6 +20,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createQuizWithFirstQuestion } from '@/features/quizzes/actions/create-quiz'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 
 type QuestionType = 'multiple_choice_single' | 'true_false' | 'checklist' | 'short_answer'
 
@@ -428,13 +429,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                         Deadline (optional)
                     </label>
                     <div className="flex items-center gap-3 flex-wrap">
-                        <input
-                            id="newQuizDueAt"
-                            type="datetime-local"
-                            value={dueAt}
-                            onChange={(e) => setDueAt(e.target.value)}
-                            className="h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                        />
+                        <DateTimePicker id="newQuizDueAt" value={dueAt} onChange={setDueAt} placeholder="No deadline" />
                         <button
                             type="button"
                             onClick={() => setDueAt('')}
@@ -466,7 +461,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                         id="newQuizVisibility"
                         value={visibility}
                         onChange={(e) => setVisibility(e.target.value as 'submission' | 'grading' | 'never')}
-                        className="min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
+                        className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
                     >
                         <option value="submission">Right after submitting</option>
                         <option value="grading">Only after grading is complete</option>

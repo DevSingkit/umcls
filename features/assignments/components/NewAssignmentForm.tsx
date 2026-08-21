@@ -2,6 +2,7 @@
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createAssignment } from '@/features/assignments/actions/assignments'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 
 let linkRowKeySeed = 0
 function nextLinkRowKey() {
@@ -19,8 +20,7 @@ function formatFileSize(bytes: number) {
 export function NewAssignmentForm({ courseId }: { courseId: string }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
-    const [dueDate, setDueDate] = useState('')
-    const [dueTime, setDueTime] = useState('')
+    const [dueAt, setDueAt] = useState('')
     const [linkRows, setLinkRows] = useState<{ key: string; url: string; label: string }[]>([])
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [selectedFiles, setSelectedFiles] = useState<File[]>([])
@@ -232,48 +232,33 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                 </div>
             </div>
             <div>
-                <label className="block text-label text-ink-soft">Due date (optional)</label>
-                <div className="mt-1 grid grid-cols-2 gap-3">
-                    <input
-                        id="dueDate"
-                        type="date"
-                        value={dueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
-                        className="h-11 w-full px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                    />
-                    <input
-                        id="dueTime"
-                        type="time"
-                        value={dueTime}
-                        onChange={(e) => setDueTime(e.target.value)}
-                        className="h-11 w-full px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                    />
+                <label className="block text-label text-ink-soft mb-2">Due date (optional)</label>
+                <div className="flex items-center gap-3 flex-wrap">
+                    <DateTimePicker value={dueAt} onChange={setDueAt} placeholder="No due date" />
+                    <button
+                        type="button"
+                        onClick={() => setDueAt('')}
+                        disabled={!dueAt}
+                        className="text-caption font-medium text-text-secondary hover:text-error disabled:opacity-40"
+                    >
+                        Clear
+                    </button>
                 </div>
                 {/*
-                    BUG FIX (2026-08-03): previously this hidden input sent
-                    a naive "YYYY-MM-DDTHH:mm" string straight through, with
-                    no timezone marker at all. due_at is a `timestamptz`
-                    column, so Postgres interpreted those digits using its
-                    own session timezone (UTC on Supabase), not the
-                    teacher's actual local time (Manila, UTC+8) — an "Aug 2,
-                    11:59 PM" due date silently became "Aug 3, 7:59 AM" once
-                    stored, letting students submit 8 hours past when the
-                    teacher actually meant to cut them off.
-
-                    Fix: `new Date("YYYY-MM-DDTHH:mm")` (no trailing "Z" or
-                    offset) is parsed by the JS engine as LOCAL time — i.e.
-                    the browser's own timezone, which for this school is
-                    the only timezone that matters. Calling .toISOString()
-                    on that then converts it to a real, unambiguous UTC
-                    instant before it ever leaves the browser, so the server
-                    and database no longer have to guess what timezone the
-                    naive digits were supposed to mean.
+                    BUG FIX (2026-08-03), still applies: due_at is a
+                    `timestamptz` column, so a naive "YYYY-MM-DDTHH:mm"
+                    string sent as-is would be interpreted using the
+                    database's session timezone (UTC), not the
+                    teacher's actual local time. `new Date(dueAt)` (no
+                    trailing "Z"/offset) is parsed as LOCAL time by the
+                    JS engine, so .toISOString() here produces a real,
+                    unambiguous UTC instant before it ever leaves the
+                    browser. DateTimePicker's value is already in this
+                    same naive format, so this conversion is unchanged
+                    from before — only how dueAt gets built changed
+                    (clicking a calendar instead of typing two fields).
                 */}
-                <input
-                    type="hidden"
-                    name="dueAt"
-                    value={dueDate ? new Date(`${dueDate}T${dueTime || '23:59'}`).toISOString() : ''}
-                />
+                <input type="hidden" name="dueAt" value={dueAt ? new Date(dueAt).toISOString() : ''} />
             </div>
             <div>
                 <label htmlFor="maxScore" className="text-label text-ink-soft">Max score</label>
@@ -307,7 +292,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
             <button
                 type="submit"
                 disabled={isPending}
-                className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 justify-self-start"
+                className="w-full h-11 rounded-md bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover disabled:opacity-60 transition-colors"
             >
                 {isPending ? 'Creating…' : 'Create assignment'}
             </button>

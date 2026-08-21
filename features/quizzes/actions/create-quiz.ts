@@ -952,7 +952,7 @@ export async function saveQuizSettingsAndPublish(formData: FormData): Promise<Sa
 
     const { data: quiz } = await supabase
         .from('quizzes')
-        .select('id, courses!inner(teacher_id)')
+        .select('id, is_published, courses!inner(teacher_id)')
         .eq('id', quizId)
         .single()
 
@@ -982,7 +982,17 @@ export async function saveQuizSettingsAndPublish(formData: FormData): Promise<Sa
         typeof availableUntilRaw === 'string' && availableUntilRaw.trim() !== '' ? availableUntilRaw : null
     const allowLate = formData.get('allowLate') === 'true'
 
-    const publish = formData.get('publish') === 'true'
+    // 2026-08-19 — publishing is now one-way from this action, per
+    // explicit requirement (no more separate Unpost button, and no
+    // way to send a posted quiz back to draft from this page at all).
+    // The UI only ever sends publish=true, but that's not enforced
+    // just by trusting the client — once a quiz is already published,
+    // this line makes it structurally impossible for this action to
+    // flip it back to false, no matter what the request contains.
+    // toggleQuizPublish (unchanged, still exported) is the only
+    // remaining way to unpublish a quiz, and nothing calls it anymore.
+    const requestedPublish = formData.get('publish') === 'true'
+    const publish = (quiz as any).is_published ? true : requestedPublish
 
     const { data: updated, error } = await supabase
         .from('quizzes')

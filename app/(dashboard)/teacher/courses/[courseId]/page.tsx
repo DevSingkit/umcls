@@ -50,7 +50,7 @@ export default async function TeacherCourseDetailPage({
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <div className="flex items-center gap-3">
                         <h1 className="font-heading text-h1 text-ink">{course.title}</h1>
@@ -69,7 +69,7 @@ export default async function TeacherCourseDetailPage({
                         </p>
                     )}
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 sm:shrink-0">
                     <EnrollStudentForm courseId={courseId} students={enrollableStudents} />
                     <CreateMenu courseId={courseId} />
                     <CourseMenu courseId={course.id} isPublished={course.is_published} />

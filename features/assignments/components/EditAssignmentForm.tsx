@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { updateAssignment } from '@/features/assignments/actions/assignments'
 import { uploadMaterial, addMaterialLink, deleteMaterial, listMaterials } from '@/features/materials/actions/materials'
 import { PostAssignmentButton } from '@/features/assignments/components/PostAssignmentButton'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 
 type Material = Awaited<ReturnType<typeof listMaterials>>[number]
 
@@ -51,6 +52,10 @@ export function EditAssignmentForm({
     const [isUploading, startUploading] = useTransition()
     const fileFormRef = useRef<HTMLFormElement>(null)
     const linkFormRef = useRef<HTMLFormElement>(null)
+    // DateTimePicker is a controlled component (unlike the old
+    // datetime-local input, which used defaultValue and needed no
+    // React state at all) — seeded once from initialDueAt here.
+    const [dueAt, setDueAt] = useState(toDatetimeLocalValue(initialDueAt))
 
     function handleSave(formData: FormData) {
         setError(null)
@@ -155,14 +160,22 @@ export function EditAssignmentForm({
                     <label htmlFor="dueAt" className="block text-label text-ink mb-2">
                         Due date (optional)
                     </label>
-                    <input
-                        id="dueAt"
-                        name="dueAt"
-                        type="datetime-local"
-                        defaultValue={toDatetimeLocalValue(initialDueAt)}
-                        className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                    />
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <DateTimePicker id="dueAt" value={dueAt} onChange={setDueAt} placeholder="No due date" />
+                        <button
+                            type="button"
+                            onClick={() => setDueAt('')}
+                            disabled={!dueAt}
+                            className="text-caption font-medium text-text-secondary hover:text-error disabled:opacity-40"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                    {/* handleSave reads this by name via formData.get('dueAt')
+                        and converts it to a real UTC ISO instant — same
+                        naive "YYYY-MM-DDTHH:mm" contract as before, DateTimePicker
+                        just changed how that string gets built. */}
+                    <input type="hidden" name="dueAt" value={dueAt} />
                 </div>
 
                 <div>

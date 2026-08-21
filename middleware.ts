@@ -126,7 +126,7 @@ export async function middleware(request: NextRequest) {
 
         if (!profile?.is_active) {
             return applyResponseHeaders(
-                NextResponse.redirect(new URL('/login?reason=deactivated', request.url), 303),
+                NextResponse.redirect(new URL('/?reason=deactivated', request.url), 303),
                 csp
             )
         }
@@ -139,7 +139,7 @@ export async function middleware(request: NextRequest) {
 
         if (!justSignedIn && isSessionInactive(profile.last_seen_at)) {
             return applyResponseHeaders(
-                NextResponse.redirect(new URL('/login?reason=timeout', request.url), 303),
+                NextResponse.redirect(new URL('/?reason=timeout', request.url), 303),
                 csp
             )
         }
