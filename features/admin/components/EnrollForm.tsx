@@ -1,14 +1,9 @@
 'use client'
 // Form to enroll one student into one course.
 //
-// 2026-08-17: replaced both native <select> dropdowns with
-// SearchableSelect — type to filter, click to pick — same reasoning
-// as CourseReassignment.tsx, student and course lists can get long.
-//
-// No longer wraps itself in max-w-2xl — this form lives inside
-// admin/users/page.tsx's own max-w-3xl container alongside
-// CourseReassignment and the user list, so it fills that container's
-// width like its siblings do, not a narrower width of its own.
+// No max-w wrapper of its own — fills whatever container the page
+// puts it in. The enroll page now applies max-w-2xl directly (§7.8
+// single-form content), so this form's card fills that width exactly.
 
 import { useActionState } from 'react'
 import { enrollStudent, type EnrollResult } from '@/features/admin/actions/enroll-student'

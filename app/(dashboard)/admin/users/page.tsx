@@ -1,65 +1,26 @@
 import { requireRole } from '@/lib/auth/get-current-user'
-import { listUsers, getAllTeachers } from '@/features/admin/actions/users'
-import { getAllCourses, getStudents } from '@/features/admin/actions/enroll-student'
-import { CreateUserForm } from '@/features/admin/components/CreateUserForm'
+import { listUsers } from '@/features/admin/actions/users'
 import { UserList } from '@/features/admin/components/UserList'
-import { CourseReassignment } from '@/features/admin/components/CourseReassignment'
-import { EnrollForm } from '@/features/admin/components/EnrollForm'
 
-// Full admin user management (PH2-002): create accounts, search/filter
-// the user list, deactivate/reactivate, reset passwords, and reassign
-// which teacher owns a course.
+// Admin user browsing — one job: search/filter/manage existing
+// accounts. Create/Enroll/Reassign live on their own routes.
+//
+// Design pass: this is data content (a searchable/filterable list),
+// so per §7.8 it fills the full container width, not the max-w-3xl
+// single-form cap it had before. Removed the bare "• ADMIN" eyebrow
+// label — §10's "don't bring back uppercase eyebrows everywhere" from
+// the old system applies here; the page title plus its position under
+// Admin nav already says what section this is.
 export default async function AdminUsersPage() {
     await requireRole(['admin'])
 
-    const [users, teachers, courses, students] = await Promise.all([
-        listUsers({}),
-        getAllTeachers(),
-        getAllCourses(),
-        getStudents(),
-    ])
+    const users = await listUsers({})
 
     return (
-        <div className="min-h-screen bg-canvas px-md py-xxl">
-            <div className="mx-auto max-w-3xl space-y-12">
-                <div>
-                    <p className="text-label uppercase tracking-wide text-text-secondary">• ADMIN</p>
-                    <h1 className="text-h1 text-ink mt-2 mb-8">Create a new account</h1>
-                    <CreateUserForm />
-                </div>
+        <div>
+            <h1 className="text-h1 text-ink mb-8">Users</h1>
 
-                <div>
-                    <h2 className="text-body-emphasis text-ink mb-4">Reassign a class to teacher</h2>
-                    {courses.length === 0 || teachers.length === 0 ? (
-                        <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                            <p className="text-body-md text-text-secondary">
-                                Reassignment needs at least one class and one teacher to exist first.
-                            </p>
-                        </div>
-                    ) : (
-                        <CourseReassignment courses={courses} teachers={teachers} />
-                    )}
-                </div>
-
-                <div>
-                    <h2 className="text-body-emphasis text-ink mb-4">Enroll a student</h2>
-                    {students.length === 0 || courses.length === 0 ? (
-                        <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                            <p className="text-body-md text-text-secondary">
-                                Enrollment needs at least one student and one course to exist first.
-                            </p>
-                        </div>
-                    ) : (
-                        <EnrollForm students={students} courses={courses} />
-                    )}
-                </div>
-
-                <div>
-                    <h2 className="text-body-emphasis text-ink mb-4">All users</h2>
-                    <UserList initialUsers={users} />
-                </div>
-                
-            </div>
+            <UserList initialUsers={users} />
         </div>
     )
 }

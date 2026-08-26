@@ -12,16 +12,6 @@ import { createClient } from '@/lib/supabase/server'
 // to set it right away, same reasoning the migration used for making
 // the column nullable. It's used to scope what grade level Simplify
 // generation targets, once set.
-//
-// FIX: FormData.get() returns `null` for an empty or missing field,
-// never `undefined` — but z.string().optional() only treats
-// `undefined` as "not present." A blank Description or Subject field
-// was sending `null` straight into safeParse, which Zod rejected with
-// its raw internal message ("Expected string, received null"),
-// surfaced directly to the user instead of a real validation error.
-// z.string().nullable().optional() accepts both, then .transform
-// normalizes either one to undefined so the rest of this file's logic
-// (description || null, etc.) doesn't need to change.
 const optionalString = z
     .string()
     .nullable()
@@ -69,7 +59,7 @@ export async function createCourse(formData: FormData): Promise<CreateCourseResu
     if (error) {
         return { ok: false, error: 'Could not create the course. Please try again.' }
     }
-    redirect('/teacher/courses')
+    redirect('/teacher/dashboard')
 }
 
 // Lets a teacher edit their own course's title/description/subject/
@@ -160,7 +150,65 @@ export async function toggleCoursePublish(courseId: string, publish: boolean) {
     return { ok: true as const }
 }
 
-// --- People tab additions ---
+// --- People tab ---
+// avatar_url is a plain public URL now (public bucket, G4) — no
+// signed-URL resolution needed anywhere below, it's passed straight
+// through exactly as stored.
+
+export type CoursePerson = {
+    id: string
+    fullName: string
+    avatarUrl: string | null
+}
+
+// Teacher's own People tab: they ARE the teacher. Goes through a real
+// query rather than echoing the session user, so the shape matches
+// CoursePerson and ownership is verified the same way every other
+// teacher-scoped action in this file does it.
+export async function getCourseTeacherForTeacher(courseId: string): Promise<CoursePerson | null> {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+
+    const { data: course } = await supabase
+        .from('courses')
+        .select('id, users!courses_teacher_id_fkey(id, full_name, avatar_url)')
+        .eq('id', courseId)
+        .eq('teacher_id', user.id)
+        .single()
+
+    if (!course) return null
+    const teacher = (course as any).users
+    return { id: teacher.id, fullName: teacher.full_name, avatarUrl: teacher.avatar_url ?? null }
+}
+
+// Student's People tab: the course's teacher, regardless of the
+// show_classmates toggle — that toggle is about PEER visibility only,
+// a student should always see who teaches their own course. Returns
+// null if the student isn't actively enrolled.
+export async function getCourseTeacherForStudent(courseId: string): Promise<CoursePerson | null> {
+    const user = await requireRole(['student'])
+    const supabase = await createClient()
+
+    const { data: enrollment } = await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('course_id', courseId)
+        .eq('student_id', user.id)
+        .eq('status', 'active')
+        .single()
+
+    if (!enrollment) return null
+
+    const { data: course } = await supabase
+        .from('courses')
+        .select('users!courses_teacher_id_fkey(id, full_name, avatar_url)')
+        .eq('id', courseId)
+        .single()
+
+    if (!course) return null
+    const teacher = (course as any).users
+    return { id: teacher.id, fullName: teacher.full_name, avatarUrl: teacher.avatar_url ?? null }
+}
 
 // Teacher's full roster for one of their own courses. No RLS change
 // needed here — teachers can already see enrolled students' names via
@@ -180,7 +228,7 @@ export async function getCourseRoster(courseId: string) {
 
     const { data: enrollments } = await supabase
         .from('enrollments')
-        .select('student_id, enrolled_at, users!enrollments_student_id_fkey(full_name)')
+        .select('student_id, enrolled_at, users!enrollments_student_id_fkey(full_name, avatar_url)')
         .eq('course_id', courseId)
         .eq('status', 'active')
         .order('enrolled_at', { ascending: true })
@@ -188,17 +236,17 @@ export async function getCourseRoster(courseId: string) {
     return (enrollments ?? []).map((e: any) => ({
         studentId: e.student_id as string,
         studentName: (e.users?.full_name as string) ?? 'Unknown',
+        avatarUrl: (e.users?.avatar_url as string | null) ?? null,
         enrolledAt: e.enrolled_at as string,
     }))
 }
 
-// Student's classmates for a course they're enrolled in. Name only,
-// via the get_classmates() DB function (migration 030) rather than
-// querying users/enrollments directly — see DATABASE.md's added note
-// for why this stays a scoped function instead of a loosened RLS
-// policy. Returns an empty array (not an error) if the student isn't
-// actually enrolled, or if the teacher has turned classmates off for
-// this course — same defensive shape as the function itself.
+// Student's classmates for a course they're enrolled in. Via the
+// get_classmates() DB function (migration 030, revised in G4's
+// migration 084 to also return avatar_url) rather than querying
+// users/enrollments directly. Returns an empty array (not an error)
+// if the student isn't actually enrolled, or if the teacher has
+// turned classmates off for this course.
 export async function getClassmates(courseId: string) {
     await requireRole(['student'])
     const supabase = await createClient()
@@ -206,7 +254,7 @@ export async function getClassmates(courseId: string) {
     const { data, error } = await supabase.rpc('get_classmates', { p_course_id: courseId })
 
     if (error) return []
-    return (data ?? []) as { id: string; full_name: string }[]
+    return (data ?? []) as { id: string; full_name: string; avatar_url: string | null }[]
 }
 
 // Lets a teacher turn the classmates list on/off for one of their own

@@ -3,8 +3,10 @@ import { getCourseActivityForAdmin } from '@/features/admin/actions/course-activ
 import { CourseActivityAccordion } from '@/features/admin/components/CourseActivityAccordion'
 
 // Admin, read-only activity view grouped by course. Reached from a
-// dashboard card (see admin/dashboard/page.tsx), not a nav tab — admin
-// nav is intentionally at 3 tabs, see HANDOFF.md §7.
+// dashboard card, not a nav tab — admin nav is intentionally at 3
+// tabs, see HANDOFF.md §7. Data content per §7.8, full width, no
+// change needed to width/wrapper here (was already unwrapped and
+// full-width, unlike Courses/Users which had incorrect form-width caps).
 export default async function AdminCourseActivityPage() {
     await requireRole(['admin'])
     const courses = await getCourseActivityForAdmin()

@@ -7,12 +7,13 @@ import { TopNav } from "./TopNav";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { NotificationBell } from "./NotificationBell";
 import { BackButton } from "@/components/ui/BackButton";
-import type { Role } from "@/lib/navigation/nav-items";
+import { NAV_ITEMS, type Role } from "@/lib/navigation/nav-items";
 
 export interface ShellUser {
     id: string;
     fullName: string;
     role: Role;
+    avatarUrl: string | null;
 }
 
 interface AppShellProps {
@@ -20,22 +21,34 @@ interface AppShellProps {
     children: ReactNode;
 }
 
-// Dashboard home routes — there's nothing meaningful to go "back" to
-// from these, so the back button is skipped here even on desktop.
-const DASHBOARD_HOME_PATHS = ["/admin/dashboard", "/teacher/dashboard", "/student/dashboard"];
-
 /**
  * Role-aware app chrome: desktop sidebar (≥ 1024px) or mobile top bar +
  * bottom tab bar (< 1024px), wrapping every (dashboard) page.
  * See tasks.md PH0-006 and DESIGN-LMS.md §6.
+ *
+ * Content offset is a FIXED lg:pl-[72px] — matching Sidebar's
+ * collapsed width, not its expanded one. Per §6.1a, the sidebar
+ * overlays the page on hover/pin rather than pushing it, so this
+ * value never changes regardless of Sidebar's own expanded state.
+ * Sidebar's expanded (240px) state uses a higher z-index and its own
+ * shadow to read as "floating over" the page, not "resizing" it.
+ *
+ * Back button visibility: derived from NAV_ITEMS[role] instead of a
+ * hardcoded dashboard-only path list — a hardcoded list silently
+ * missed every OTHER primary nav destination (My Courses, Archived,
+ * To-do), which wrongly showed a "Back" button on pages the person
+ * already reached directly from the sidebar/bottom nav. Any exact
+ * match against this role's own nav item hrefs is a primary
+ * destination and never gets a back button; everything else (a course
+ * detail page, a create form, etc.) does.
  */
 export function AppShell({ user, children }: AppShellProps) {
     const pathname = usePathname();
-    const showBackButton = !DASHBOARD_HOME_PATHS.includes(pathname);
+    const primaryNavPaths = NAV_ITEMS[user.role].map((item) => item.href);
+    const showBackButton = !primaryNavPaths.includes(pathname);
 
     return (
         <div className="min-h-screen bg-canvas">
-            {/* Accessibility §9 — first focusable element on every page */}
             <a
                 href="#main-content"
                 className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-brand focus:px-4 focus:py-2 focus:text-on-ink"
@@ -43,15 +56,12 @@ export function AppShell({ user, children }: AppShellProps) {
                 Skip to main content
             </a>
 
-            <Sidebar role={user.role} fullName={user.fullName} />
-            <TopNav role={user.role} fullName={user.fullName} userId={user.id} />
-            {/* Desktop only — on mobile, NotificationBell renders inline inside
-                TopNav instead, so it sits next to the account menu instead of
-                floating on top of it. */}
+            <Sidebar role={user.role} fullName={user.fullName} avatarUrl={user.avatarUrl} />
+            <TopNav role={user.role} fullName={user.fullName} userId={user.id} avatarUrl={user.avatarUrl} />
             <div className="hidden lg:block">
                 <NotificationBell userId={user.id} />
             </div>
-            <main id="main-content" className="pb-20 lg:pb-8 lg:pl-[240px]">
+            <main id="main-content" className="pb-20 lg:pb-8 lg:pl-[72px]">
                 <div className="mx-auto max-w-[1200px] px-4 py-6 lg:px-16 lg:py-8">
                     {showBackButton && <BackButton />}
                     <div className={showBackButton ? "mt-2" : undefined}>{children}</div>

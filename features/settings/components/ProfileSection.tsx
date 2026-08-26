@@ -1,9 +1,10 @@
 'use client'
 // features/settings/components/ProfileSection.tsx
-// Name + avatar editable, email shown but read-only (§7.7 forms rules:
-// label above field, 16px minimum, never placeholder-only).
-import { useState } from 'react'
-import { updateProfile } from '@/features/settings/actions/settings'
+// Real file upload with live preview, avatar_url is a public URL
+// (see settings.ts). Name is saved separately via updateProfile.
+
+import { useRef, useState } from 'react'
+import { updateProfile, uploadAvatar, removeAvatar } from '@/features/settings/actions/settings'
 
 type ProfileSectionProps = {
     initialFullName: string
@@ -13,33 +14,117 @@ type ProfileSectionProps = {
 
 export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl }: ProfileSectionProps) {
     const [fullName, setFullName] = useState(initialFullName)
-    const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? '')
-    const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-    const [error, setError] = useState<string | null>(null)
+    const [nameStatus, setNameStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+    const [nameError, setNameError] = useState<string | null>(null)
 
-    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
+    const [avatarStatus, setAvatarStatus] = useState<'idle' | 'uploading' | 'error'>('idle')
+    const [avatarError, setAvatarError] = useState<string | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const initial = fullName?.trim()?.charAt(0)?.toUpperCase() || '?'
+
+    async function handleNameSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
-        setStatus('saving')
-        setError(null)
+        setNameStatus('saving')
+        setNameError(null)
 
         const formData = new FormData()
         formData.set('fullName', fullName)
-        formData.set('avatarUrl', avatarUrl)
 
         const result = await updateProfile(formData)
         if (result.ok) {
-            setStatus('saved')
-            setTimeout(() => setStatus('idle'), 2000)
+            setNameStatus('saved')
+            setTimeout(() => setNameStatus('idle'), 2000)
         } else {
-            setStatus('error')
-            setError(result.error)
+            setNameStatus('error')
+            setNameError(result.error)
+        }
+    }
+
+    async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setAvatarStatus('uploading')
+        setAvatarError(null)
+
+        const formData = new FormData()
+        formData.set('avatar', file)
+
+        const result = await uploadAvatar(formData)
+        if (result.ok) {
+            setAvatarUrl(result.avatarUrl)
+            setAvatarStatus('idle')
+        } else {
+            setAvatarStatus('error')
+            setAvatarError(result.error)
+        }
+
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+
+    async function handleRemove() {
+        setAvatarStatus('uploading')
+        setAvatarError(null)
+        const result = await removeAvatar()
+        if (result.ok) {
+            setAvatarUrl(null)
+            setAvatarStatus('idle')
+        } else {
+            setAvatarStatus('error')
+            setAvatarError(result.error)
         }
     }
 
     return (
         <section className="bg-surface rounded-md shadow-card p-6">
             <h2 className="font-heading text-h3 text-ink mb-4">Your profile</h2>
-            <form onSubmit={handleSubmit} className="grid gap-4 max-w-md">
+
+            <div className="flex items-center gap-4 mb-6">
+                <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-pill bg-brand-soft text-h3 text-brand overflow-hidden">
+                    {avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- public storage URL
+                        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                        initial
+                    )}
+                </span>
+
+                <div>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleFileChange}
+                        disabled={avatarStatus === 'uploading'}
+                        className="hidden"
+                        id="avatarFile"
+                    />
+                    <div className="flex items-center gap-3">
+                        <label
+                            htmlFor="avatarFile"
+                            className="inline-flex h-9 items-center rounded-md border-[1.5px] border-hairline-strong px-4 text-caption font-semibold text-ink cursor-pointer hover:bg-surface-sunken"
+                        >
+                            {avatarStatus === 'uploading' ? 'Uploading…' : avatarUrl ? 'Change photo' : 'Upload photo'}
+                        </label>
+                        {avatarUrl && (
+                            <button
+                                type="button"
+                                onClick={handleRemove}
+                                disabled={avatarStatus === 'uploading'}
+                                className="text-caption text-text-secondary hover:text-error"
+                            >
+                                Remove
+                            </button>
+                        )}
+                    </div>
+                    <p className="text-caption text-text-secondary mt-1">JPEG, PNG, or WEBP. Max 5 MB.</p>
+                    {avatarError && <p className="text-caption text-error mt-1">{avatarError}</p>}
+                </div>
+            </div>
+
+            <form onSubmit={handleNameSubmit} className="grid gap-4 max-w-md">
                 <div>
                     <label htmlFor="fullName" className="text-label text-ink block mb-1">
                         Full name
@@ -70,31 +155,17 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
                     </p>
                 </div>
 
-                <div>
-                    <label htmlFor="avatarUrl" className="text-label text-ink block mb-1">
-                        Photo link (optional)
-                    </label>
-                    <input
-                        id="avatarUrl"
-                        type="url"
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        placeholder="https://..."
-                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                    />
-                </div>
-
-                {error && <p className="text-caption text-error">{error}</p>}
+                {nameError && <p className="text-caption text-error">{nameError}</p>}
 
                 <div className="flex items-center gap-3">
                     <button
                         type="submit"
-                        disabled={status === 'saving'}
+                        disabled={nameStatus === 'saving'}
                         className="h-11 px-6 rounded-md bg-brand text-on-ink text-body-md font-semibold hover:bg-brand-hover disabled:opacity-60"
                     >
-                        {status === 'saving' ? 'Saving...' : 'Save changes'}
+                        {nameStatus === 'saving' ? 'Saving...' : 'Save changes'}
                     </button>
-                    {status === 'saved' && <span className="text-caption text-brand">Saved</span>}
+                    {nameStatus === 'saved' && <span className="text-caption text-brand">Saved</span>}
                 </div>
             </form>
         </section>

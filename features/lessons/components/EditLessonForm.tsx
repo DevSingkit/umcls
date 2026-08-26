@@ -1,4 +1,9 @@
 'use client'
+// Design pass: the "Remove" button on each material row used plain
+// text-error with only a hover underline — violates §7.1a ("every
+// clickable action must look like one at rest, never plain text that
+// only changes on hover"). Given a real button-ghost treatment
+// instead. No save/upload/delete logic touched.
 import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateLesson } from '@/features/lessons/actions/lessons'
@@ -77,7 +82,6 @@ export function EditLessonForm({
     }
 
     return (
-        // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
         <div className="max-w-2xl mx-auto pb-16">
             <h1 className="font-heading text-h1 text-ink mb-8">Edit lesson</h1>
 
@@ -191,10 +195,6 @@ export function EditLessonForm({
     )
 }
 
-// MaterialList's built-in delete calls router.refresh() internally,
-// which won't update this page's local `materials` state — so delete
-// is handled here instead, via a thin wrapper, then state is refreshed
-// from the same listMaterials source of truth.
 function MaterialListWithDelete({
     materials,
     onDelete,
@@ -220,7 +220,7 @@ function MaterialListWithDelete({
                     <span className="text-body-emphasis text-ink truncate">{material.file_name}</span>
                     <button
                         onClick={() => onDelete(material.id)}
-                        className="text-caption font-medium text-error hover:underline shrink-0"
+                        className="h-9 px-4 rounded-md border-[1.5px] border-red text-red text-caption font-medium hover:bg-red-soft shrink-0"
                     >
                         Remove
                     </button>

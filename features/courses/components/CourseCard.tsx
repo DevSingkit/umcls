@@ -1,9 +1,20 @@
 import Link from 'next/link'
+import { Avatar } from '@/components/ui/Avatar'
 
-// Classroom-style course tile: colored header band + title, subject
-// shown as a small label if present. Color is derived deterministically
-// from the course id so the same course always gets the same color
-// across renders/sessions, without needing to store a color on the row.
+// Classroom-style course tile. Per latest product direction, the
+// colored band is no longer a plain decorative strip on top — it's the
+// actual background for the identifying content (teacher avatar,
+// subject, section, description), same way real Classroom's banner
+// carries its title/section text directly on the color. The white
+// body below is now just the footer action.
+//
+// Avatar is grouped top-left with the subject/section text (not
+// bottom-right overlapping the seam, which is real Classroom's own
+// placement) — deliberate product choice, called out explicitly.
+//
+// Color is derived deterministically from the course id so the same
+// course always gets the same color across renders/sessions, without
+// needing to store a color on the row.
 const BAND_COLORS = ['bg-brand', 'bg-info', 'bg-amber', 'bg-role-student', 'bg-role-admin'] as const
 
 function bandColorFor(id: string) {
@@ -18,10 +29,23 @@ interface CourseCardProps {
     id: string
     title: string
     subject?: string | null
+    description?: string | null
+    isPublished?: boolean
+    teacherName?: string | null
+    teacherAvatarUrl?: string | null
     href: string
 }
 
-export function CourseCard({ id, title, subject, href }: CourseCardProps) {
+export function CourseCard({
+    id,
+    title,
+    subject,
+    description,
+    isPublished = true,
+    teacherName,
+    teacherAvatarUrl,
+    href,
+}: CourseCardProps) {
     const band = bandColorFor(id)
 
     return (
@@ -29,19 +53,38 @@ export function CourseCard({ id, title, subject, href }: CourseCardProps) {
             href={href}
             className="group block overflow-hidden rounded-md bg-surface shadow-card transition-shadow hover:shadow-card-hover"
         >
-            <div className={`h-20 ${band} px-5 py-4 flex flex-col justify-end`}>
-                {subject && (
-
-                <span className="text-caption font-semibold text-on-ink/80 mb-1">
-                    {title}
-                </span>
-
-                )}
-                <span className="text-body-emphasis text-on-ink leading-tight line-clamp-2">
-                    {subject}
-                </span>
+            <div className={`${band} px-5 py-4`}>
+                <div className="flex items-start gap-3">
+                    {teacherName && (
+                        <Avatar
+                            fullName={teacherName}
+                            avatarUrl={teacherAvatarUrl ?? null}
+                            size="sm"
+                            toneClassName="bg-white/20 text-on-ink"
+                        />
+                    )}
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                            <p className="font-heading text-h3 text-on-ink leading-tight line-clamp-2">
+                                {subject || title}
+                            </p>
+                            {!isPublished && (
+                                <span className="shrink-0 inline-flex items-center rounded-full bg-warning-soft px-2 py-0.5 text-caption font-semibold text-warning">
+                                    Draft
+                                </span>
+                            )}
+                        </div>
+                        {subject && (
+                            <p className="text-caption text-on-ink/80 mt-0.5 line-clamp-1">{title}</p>
+                        )}
+                        {description && (
+                            <p className="text-caption text-on-ink/70 mt-1 line-clamp-2">{description}</p>
+                        )}
+                    </div>
+                </div>
             </div>
-            <div className="px-5 py-3">
+
+            <div className="border-t border-hairline px-5 py-3">
                 <span className="text-caption text-brand font-semibold group-hover:underline">
                     Open class
                 </span>

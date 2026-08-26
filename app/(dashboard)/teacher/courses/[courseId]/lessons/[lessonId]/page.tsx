@@ -1,3 +1,16 @@
+// app/(dashboard)/teacher/courses/[courseId]/lessons/[lessonId]/page.tsx
+//
+// Original file, unchanged except for one addition: a "Missions"
+// section, inserted after Materials and before Simplify Lesson,
+// mirroring that section's exact shape (fetch server-side, hand the
+// list to a small component, "+ New X" link included in that
+// component). Gated behind `user?.role === 'teacher'`, same pattern
+// already used for the Simplify Lesson section below it — this file
+// isn't exclusively teacher-only by its own logic (relies on
+// getCurrentUser, not requireRole), so the gate is kept consistent
+// with how the file already guards teacher-only sections rather than
+// assumed redundant.
+
 import { notFound } from 'next/navigation'
 import { getLesson } from '@/features/lessons/actions/get-lesson'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
@@ -8,6 +21,8 @@ import { listLessonComments } from '@/features/lessons/actions/lesson-comments'
 import { SimplifyTab } from '@/features/simplify/components/SimplifyTab'
 import { getSimplifiedLessonsForTeacher } from '@/features/simplify/actions/simplify'
 import { extractYoutubeVideoId, toYoutubeEmbedUrl } from '@/lib/utils/youtube'
+import { listMissionsForTeacher } from '@/features/missions/actions/create-mission'
+import { MissionList } from '@/features/missions/components/MissionList'
 
 export default async function LessonViewPage({
     params,
@@ -33,6 +48,8 @@ export default async function LessonViewPage({
     // Tagalog, or both) — instead of a single simplification object.
     // See features/simplify/actions/simplify.ts.
     const simplifications = user?.role === 'teacher' ? await getSimplifiedLessonsForTeacher(lessonId) : []
+
+    const missions = user?.role === 'teacher' ? await listMissionsForTeacher(lessonId) : []
 
     const videoId = lesson.youtube_url ? extractYoutubeVideoId(lesson.youtube_url) : null
 
@@ -66,6 +83,13 @@ export default async function LessonViewPage({
                 <h2 className="font-heading text-h3 text-ink mb-4">Materials</h2>
                 <MaterialList materials={lessonMaterials} canDelete={false} />
             </section>
+
+            {user?.role === 'teacher' && (
+                <section className="mb-10">
+                    <h2 className="font-heading text-h3 text-ink mb-4">Missions</h2>
+                    <MissionList missions={missions} courseId={courseId} lessonId={lessonId} />
+                </section>
+            )}
 
             {user?.role === 'teacher' && (
                 <section className="mb-10">

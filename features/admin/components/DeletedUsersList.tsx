@@ -1,8 +1,12 @@
 'use client'
 // List of deleted (soft-deleted) user accounts with a Restore action,
-// for the admin Archives page. Mirrors AdminCourseList.tsx's exact
-// pattern — client state for immediate feedback, per-row error
-// surfacing, no silent failures.
+// for the admin Archives page. Mirrors AdminCourseList.tsx's pattern —
+// client state for immediate feedback, per-row error surfacing.
+//
+// Design pass: deletion status now shows as a real §7.3 badge next to
+// the name, instead of being folded into the metadata caption as plain
+// colored text. Restore stays a single click (no confirm modal) since
+// it's a reversible, low-risk action, same reasoning as Reactivate.
 
 import { useState, useTransition } from 'react'
 import { restoreUser } from '@/features/admin/actions/erase-user'
@@ -41,20 +45,22 @@ export function DeletedUsersList({ initialUsers }: { initialUsers: ArchivedUserR
                     className="bg-surface rounded-md shadow-card p-5 flex flex-col gap-3"
                 >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div>
-                            <p className="text-body-emphasis text-ink">{user.full_name}</p>
-                            <p className="text-caption text-text-secondary">
-                                {user.email} · {user.role}
-                                {' · '}
-                                <span className="text-error">
-                                    Deleted {new Date(user.deletedAt).toLocaleDateString()}
-                                </span>
-                            </p>
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <div>
+                                <p className="text-body-emphasis text-ink">{user.full_name}</p>
+                                <p className="text-caption text-text-secondary">
+                                    {user.email} · {user.role}
+                                </p>
+                            </div>
+                            <span className="inline-flex items-center gap-1.5 rounded-pill bg-red-soft px-3 py-1 text-caption font-semibold text-red">
+                                <span className="h-1.5 w-1.5 rounded-pill bg-red" aria-hidden="true" />
+                                Deleted {new Date(user.deletedAt).toLocaleDateString()}
+                            </span>
                         </div>
                         <button
                             onClick={() => handleRestore(user.id)}
                             disabled={isPending}
-                            className="h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                            className="h-11 px-6 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
                         >
                             Restore
                         </button>

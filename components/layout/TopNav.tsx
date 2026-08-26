@@ -1,15 +1,19 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/features/auth/actions/sign-out";
 import { ROLE_LABELS, type Role } from "@/lib/navigation/nav-items";
 import { NotificationBell } from "./NotificationBell";
+import { Avatar } from "@/components/ui/Avatar";
 
 interface TopNavProps {
     role: Role;
     fullName: string;
     userId: string;
+    avatarUrl: string | null;
 }
 
 /**
@@ -18,13 +22,11 @@ interface TopNavProps {
  * The notification bell renders inline here on mobile (not fixed) so it
  * sits next to the account menu instead of floating on top of it.
  *
- * Logo sits in a white rounded-pill chip, sized up (56px chip / 44px mark)
- * to match the landing page's header treatment — the plain small logo
- * directly on the pink background was hard to make out at a glance.
+ * No collapse/expand concept here — that's desktop-Sidebar-only per
+ * §6.1a. Account dropdown now includes Settings (added alongside Sign
+ * Out), matching the desktop Sidebar's bottom section.
  */
-export function TopNav({ role, fullName, userId }: TopNavProps) {
-    const initial = fullName?.trim()?.charAt(0)?.toUpperCase() || "?";
-
+export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
     return (
        <header className="sticky top-0 z-30 flex items-center justify-between gap-2 bg-sidebar px-4 py-3 lg:hidden">
     <div className="flex min-w-0 items-center gap-3">
@@ -40,21 +42,25 @@ export function TopNav({ role, fullName, userId }: TopNavProps) {
     <div className="flex items-center gap-2">
         <NotificationBell userId={userId} />
 
-                {/* Native <details>/<summary> gives us a keyboard- and screen-reader
-                    operable disclosure without extra client state — good enough for
-                    a two-item account menu. */}
                 <details className="relative">
                     <summary
                         aria-label={`Account menu for ${fullName}`}
                         className={cn(
-                            "flex h-11 w-11 list-none items-center justify-center rounded-pill bg-white/10 text-body-emphasis text-on-ink",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
+                            "list-none",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar rounded-pill"
                         )}
                     >
-                        {initial}
+                        <Avatar fullName={fullName} avatarUrl={avatarUrl} size="md" toneClassName="bg-white/10 text-on-ink" />
                     </summary>
                     <div className="absolute right-0 z-40 mt-2 w-44 rounded-md bg-surface p-2 shadow-modal">
                         <p className="truncate px-2 py-1 text-caption text-text-secondary">{fullName}</p>
+                        <Link
+                            href="/settings"
+                            className="flex items-center gap-2 rounded-md px-2 py-2 text-body-md text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        >
+                            <Settings size={16} aria-hidden="true" />
+                            Settings
+                        </Link>
                         <form action={signOut}>
                             <button
                                 type="submit"

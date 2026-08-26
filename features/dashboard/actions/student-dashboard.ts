@@ -6,6 +6,13 @@
 // is a deliberate simpler stand-in, confirmed with the team. It cannot
 // tell "never opened" apart from "opened but not marked complete," and
 // it cannot resume mid-lesson; both are accepted trade-offs.
+//
+// RecentGradeItem/recentGrades REMOVED (2026-08-23) — the dashboard
+// page stopped rendering this section per an earlier, unrelated design
+// review, and the per-item Grades tab (features/grades/queries/
+// get-my-scores.ts) already covers this exact need properly scoped to
+// a course. Confirmed unused anywhere else before deleting the
+// computation, not just the display component.
 
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/get-current-user'
@@ -17,21 +24,13 @@ export type ContinueLearningItem = {
     lessonTitle: string
 }
 
-export type RecentGradeItem = {
-    id: string
-    kind: 'assignment' | 'quiz'
-    title: string
-    courseName: string
-    score: number
-    maxScore: number
-    gradedAt: string
-    href: string
-}
-
 export type StudentCoursePreview = {
     id: string
     title: string
     subject: string | null
+    description: string | null
+    teacherName: string | null
+    teacherAvatarUrl: string | null
 }
 
 export async function getStudentDashboardData() {
@@ -40,7 +39,9 @@ export async function getStudentDashboardData() {
 
     const { data: enrollments } = await supabase
         .from('enrollments')
-        .select('course_id, courses!inner(id, title, subject, created_at)')
+        .select(
+            'course_id, courses!inner(id, title, subject, description, created_at, users!courses_teacher_id_fkey(full_name, avatar_url))'
+        )
         .eq('student_id', user.id)
         .eq('status', 'active')
         .order('created_at', { referencedTable: 'courses', ascending: false })
@@ -51,14 +52,14 @@ export async function getStudentDashboardData() {
     if (courseIds.length === 0) {
         return {
             continueLearning: [] as ContinueLearningItem[],
-            recentGrades: [] as RecentGradeItem[],
             coursesPreview: [] as StudentCoursePreview[],
+            courseNameById: new Map<string, string>(),
         }
     }
 
     const courseNameById = new Map(courseList.map((c: any) => [c.id, c.title]))
 
-    const [lessonsResult, completionsResult, submissionsResult, quizAttemptsResult] = await Promise.all([
+    const [lessonsResult, completionsResult] = await Promise.all([
         // All published lessons in the student's courses, ordered so the
         // first not-completed one per course is easy to pick out below.
         supabase
@@ -73,28 +74,6 @@ export async function getStudentDashboardData() {
             .from('lesson_completions')
             .select('lesson_id')
             .eq('student_id', user.id),
-
-        // Graded assignment submissions, most recent first.
-        supabase
-            .from('assignment_submissions')
-            .select(
-                'id, score, graded_at, assignment_id, assignments!inner(title, max_score, course_id)'
-            )
-            .eq('student_id', user.id)
-            .eq('status', 'graded')
-            .not('graded_at', 'is', null)
-            .order('graded_at', { ascending: false })
-            .limit(10),
-
-        // Graded quiz attempts, most recent first.
-        supabase
-            .from('quiz_attempts')
-            .select('id, score, graded_at, quiz_id, quizzes!inner(title, course_id)')
-            .eq('student_id', user.id)
-            .eq('status', 'graded')
-            .not('graded_at', 'is', null)
-            .order('graded_at', { ascending: false })
-            .limit(10),
     ])
 
     const completedLessonIds = new Set((completionsResult.data ?? []).map((c) => c.lesson_id))
@@ -114,37 +93,14 @@ export async function getStudentDashboardData() {
         }
     }
 
-    const assignmentGrades: RecentGradeItem[] = (submissionsResult.data ?? []).map((s: any) => ({
-        id: s.id,
-        kind: 'assignment' as const,
-        title: s.assignments?.title ?? 'Assignment',
-        courseName: courseNameById.get(s.assignments?.course_id) ?? 'Course',
-        score: s.score ?? 0,
-        maxScore: s.assignments?.max_score ?? 100,
-        gradedAt: s.graded_at,
-        href: `/student/courses/${s.assignments?.course_id}/assignments/${s.assignment_id}`,
-    }))
-
-    const quizGrades: RecentGradeItem[] = (quizAttemptsResult.data ?? []).map((a: any) => ({
-        id: a.id,
-        kind: 'quiz' as const,
-        title: a.quizzes?.title ?? 'Quiz',
-        courseName: courseNameById.get(a.quizzes?.course_id) ?? 'Course',
-        score: a.score ?? 0,
-        maxScore: 100,
-        gradedAt: a.graded_at,
-        href: `/student/courses/${a.quizzes?.course_id}/quizzes/${a.quiz_id}/results`,
-    }))
-
-    const recentGrades = [...assignmentGrades, ...quizGrades]
-        .sort((a, b) => new Date(b.gradedAt).getTime() - new Date(a.gradedAt).getTime())
-        .slice(0, 6)
-
     const coursesPreview: StudentCoursePreview[] = courseList.slice(0, 4).map((c: any) => ({
         id: c.id,
         title: c.title,
         subject: c.subject,
+        description: c.description,
+        teacherName: c.users?.full_name ?? null,
+        teacherAvatarUrl: c.users?.avatar_url ?? null,
     }))
 
-    return { continueLearning, recentGrades, coursesPreview, courseNameById }
+    return { continueLearning, coursesPreview, courseNameById }
 }

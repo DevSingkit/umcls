@@ -6,12 +6,12 @@ import { getWeeklyLoginCounts } from '@/features/admin/actions/dashboard-stats'
 import { WeeklyActivityChart } from '@/features/admin/components/WeeklyActivityChart'
 import { DashboardAutoRefresh } from '@/features/admin/components/DashboardAutoRefresh'
 
-// Admin home page (PH2-001, full scope). The count cards and links
-// below are unchanged from session two. Weekly login graph added on
-// top. Recent Activity feed removed (2026-08-02) — the school admin
-// flagged it as redundant with the full /admin/audit-logs page, and
-// the Users/Enroll nav tabs were removed the same day for the same
-// reason (both already reachable via the cards below).
+// Admin home page (PH2-001, full scope). Logic unchanged from session
+// two — same three counts, same weekly login query, same removed
+// Recent Activity feed (redundant with /admin/audit-logs) and removed
+// Users/Enroll nav tabs. This pass only reworks the markup to follow
+// DESIGN-LMS.md v2.0 §7.5a (every content area gets one outer surface
+// card) and §7.8 (dashboards are full-width data content, not capped).
 export default async function AdminDashboardPage() {
     await requireRole(['admin'])
     const supabase = await createClient()
@@ -39,72 +39,84 @@ export default async function AdminDashboardPage() {
         getWeeklyLoginCounts(),
     ])
 
+    const shortcuts = [
+        {
+            href: '/admin/users',
+            icon: Users,
+            iconBg: 'bg-brand-soft text-brand',
+            title: 'Manage accounts',
+            description: 'Add, edit, or enroll teachers and students.',
+        },
+        {
+            href: '/admin/grades',
+            icon: GraduationCap,
+            iconBg: 'bg-info-soft text-info',
+            title: 'View grades',
+            description: "See every class's gradebook.",
+        },
+        {
+            href: '/admin/course-activity',
+            icon: ClipboardList,
+            iconBg: 'bg-amber-soft text-amber',
+            title: 'Class activity',
+            description: 'Every lesson, quiz, and assignment.',
+        },
+    ]
+
     return (
         <div>
             <DashboardAutoRefresh />
 
             <h1 className="mb-8 font-heading text-h1 text-ink">Dashboard</h1>
 
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
-                <div className="bg-surface rounded-md shadow-card p-3 sm:p-6">
-                    <p className="text-caption sm:text-label text-text-secondary mb-1 sm:mb-2">Teachers</p>
-                    <p className="text-body-emphasis sm:text-data-lg text-ink">{teacherCount ?? 0}</p>
+            {/* Stat cards — 3 max per §8.2, each its own small surface card. */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
+                <div className="bg-surface rounded-md shadow-card p-4 sm:p-6">
+                    <p className="text-caption text-text-secondary mb-1 sm:mb-2">Teachers</p>
+                    <p className="text-data-md sm:text-data-lg text-ink">{teacherCount ?? 0}</p>
                 </div>
-                <div className="bg-surface rounded-md shadow-card p-3 sm:p-6">
-                    <p className="text-caption sm:text-label text-text-secondary mb-1 sm:mb-2">Students</p>
-                    <p className="text-body-emphasis sm:text-data-lg text-ink">{studentCount ?? 0}</p>
+                <div className="bg-surface rounded-md shadow-card p-4 sm:p-6">
+                    <p className="text-caption text-text-secondary mb-1 sm:mb-2">Students</p>
+                    <p className="text-data-md sm:text-data-lg text-ink">{studentCount ?? 0}</p>
                 </div>
-                <div className="bg-surface rounded-md shadow-card p-3 sm:p-6">
-                    <p className="text-caption sm:text-label text-text-secondary mb-1 sm:mb-2">Classes</p>
-                    <p className="text-body-emphasis sm:text-data-lg text-ink">{courseCount ?? 0}</p>
+                <div className="bg-surface rounded-md shadow-card p-4 sm:p-6">
+                    <p className="text-caption text-text-secondary mb-1 sm:mb-2">Classes</p>
+                    <p className="text-data-md sm:text-data-lg text-ink">{courseCount ?? 0}</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
-                <Link
-                    href="/admin/users"
-                    className="bg-surface rounded-md shadow-card p-3 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 text-center sm:text-left hover:bg-surface-sunken"
-                >
-                    <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-md bg-brand-soft text-brand">
-                        <Users size={16} className="sm:hidden" aria-hidden="true" />
-                        <Users size={20} className="hidden sm:block" aria-hidden="true" />
-                    </div>
-                    <div>
-                        <span className="text-caption sm:text-body-emphasis text-ink block sm:mb-1">Manage accounts</span>
-                        <span className="hidden sm:block text-caption text-text-secondary">Add, edit, or enroll teachers and students.</span>
-                    </div>
-                </Link>
-                <Link
-                    href="/admin/grades"
-                    className="bg-surface rounded-md shadow-card p-3 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 text-center sm:text-left hover:bg-surface-sunken"
-                >
-                    <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-md bg-info-soft text-info">
-                        <GraduationCap size={16} className="sm:hidden" aria-hidden="true" />
-                        <GraduationCap size={20} className="hidden sm:block" aria-hidden="true" />
-                    </div>
-                    <div>
-                        <span className="text-caption sm:text-body-emphasis text-ink block sm:mb-1">View grades</span>
-                        <span className="hidden sm:block text-caption text-text-secondary">See every classes&apos; grades.</span>
-                    </div>
-                </Link>
-                <Link
-                    href="/admin/course-activity"
-                    className="bg-surface rounded-md shadow-card p-3 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 text-center sm:text-left hover:bg-surface-sunken"
-                >
-                    <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-md bg-amber-soft text-amber">
-                        <ClipboardList size={16} className="sm:hidden" aria-hidden="true" />
-                        <ClipboardList size={20} className="hidden sm:block" aria-hidden="true" />
-                    </div>
-                    <div>
-                        <span className="text-caption sm:text-body-emphasis text-ink block sm:mb-1">Class activity</span>
-                        <span className="hidden sm:block text-caption text-text-secondary">Every lesson, quiz, and assignment.</span>
-                    </div>
-                </Link>
+            {/* Shortcuts — §7.5a: heading outside on canvas, one outer surface
+                card, nested rows inside separated by hairline dividers (same
+                density as an 8.7a Stream row) instead of 3 separately
+                shadowed cards. Description text stays visible at every size —
+                §1 "big, obvious, few" means fewer items, not hidden meaning. */}
+            <h2 className="mb-3 font-heading text-h3 text-ink">Shortcuts</h2>
+            <div className="bg-surface rounded-md shadow-card mb-8 overflow-hidden">
+                {shortcuts.map((shortcut, index) => {
+                    const Icon = shortcut.icon
+                    return (
+                        <Link
+                            key={shortcut.href}
+                            href={shortcut.href}
+                            className={`flex items-center gap-4 p-4 sm:p-5 hover:bg-surface-sunken ${
+                                index > 0 ? 'border-t border-hairline' : ''
+                            }`}
+                        >
+                            <div
+                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${shortcut.iconBg}`}
+                            >
+                                <Icon size={20} aria-hidden="true" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-body-emphasis text-ink">{shortcut.title}</p>
+                                <p className="text-caption text-text-secondary">{shortcut.description}</p>
+                            </div>
+                        </Link>
+                    )
+                })}
             </div>
 
-            <div className="mb-10">
-                <WeeklyActivityChart data={weeklyLogins} />
-            </div>
+            <WeeklyActivityChart data={weeklyLogins} />
         </div>
     )
 }

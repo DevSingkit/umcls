@@ -71,7 +71,7 @@ export function EraseUserModal({
                     <button
                         onClick={handleErase}
                         disabled={isSubmitting}
-                        className="h-11 px-6 flex items-center rounded-md bg-error text-on-ink font-medium disabled:opacity-40"
+                        className="h-11 px-6 flex items-center rounded-md bg-red text-on-ink font-medium disabled:opacity-40"
                     >
                         {isSubmitting ? 'Erasing…' : 'Erase User Data'}
                     </button>

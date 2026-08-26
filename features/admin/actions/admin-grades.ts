@@ -1,10 +1,11 @@
 'use server'
 // Admin course listing for the grades section. Actual grade viewing
-// and editing now goes through the shared gradebook-items.ts actions
-// (getGradebookForCourseGrid, setGradebookScore, etc.), which already
-// accept admin the same as the owning teacher — see migration 072 and
-// the "admin edits underlying scores, same as teacher" decision. This
-// file only supplies the course picker list.
+// now goes through gradebook.ts's getGradebookForCourseGrid, which
+// already accepts admin the same as the owning teacher. That grid is
+// read-only (see gradebook.ts's header comment) — admin views scores
+// the same way a teacher does, editing happens through each
+// submission's own grading flow, not here. This file only supplies
+// the course picker list.
 
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'

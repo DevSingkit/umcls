@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 import { getCourseStream } from '@/features/courses/actions/get-course-stream'
 import { CourseStream } from '@/features/courses/components/CourseStream'
+import { CourseTabs } from '@/components/layout/CourseTabs'
 
 export default async function StudentCourseDetailPage({
     params,
@@ -49,6 +50,8 @@ export default async function StudentCourseDetailPage({
             {course.description && (
                 <p className="text-body-md text-text-secondary mb-8">{course.description}</p>
             )}
+
+            <CourseTabs courseId={courseId} role="student" />
 
             {totalLessons > 0 && (
                 <div className="mb-8">

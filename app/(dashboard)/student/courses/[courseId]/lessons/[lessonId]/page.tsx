@@ -11,6 +11,8 @@ import {
     getSimplifiedLessonForStudent,
     getAvailableSimplifyLanguages,
 } from '@/features/simplify/actions/simplify'
+import { getMissionsForStudent } from '@/features/missions/actions/get-mission-for-student'
+import { MissionPath } from '@/features/missions/components/MissionPath'
 
 type SimplifyLanguage = 'english' | 'tagalog'
 
@@ -19,6 +21,16 @@ type SimplifyLanguage = 'english' | 'tagalog'
 // already happen inside getLesson. Completion tracking (scroll depth)
 // happens client-side inside LessonReader. Materials and comments are
 // read/write (comments) or read-only (materials) below the reader.
+//
+// Missions section added — same shape as the equivalent addition to
+// the teacher lesson page: fetched server-side, handed to a small
+// component. Placed Materials -> Missions -> Simplify -> Comments,
+// matching the section order already used on the teacher side, for
+// consistency between the two lesson pages rather than for any
+// reason specific to this file. Unlike the teacher page's Missions
+// section, this one isn't gated behind a role check — this file is
+// already student-only (StudentLessonViewPage), so there's nothing to
+// gate.
 export default async function StudentLessonViewPage({
     params,
     searchParams,
@@ -48,9 +60,10 @@ export default async function StudentLessonViewPage({
     const requestedLanguage: SimplifyLanguage =
         lang === 'tagalog' ? 'tagalog' : lang === 'english' ? 'english' : (user?.preferredSimplifyLanguage ?? 'english')
 
-    const [simplification, availableLanguages] = await Promise.all([
+    const [simplification, availableLanguages, missions] = await Promise.all([
         getSimplifiedLessonForStudent(lessonId, requestedLanguage),
         getAvailableSimplifyLanguages(lessonId),
+        getMissionsForStudent(lessonId),
     ])
 
     return (
@@ -66,6 +79,11 @@ export default async function StudentLessonViewPage({
             <h2 className="font-heading text-body-emphasis text-ink mb-4 mt-8">Materials</h2>
             <div className="mb-8">
                 <MaterialList materials={lessonMaterials} canDelete={false} />
+            </div>
+
+            <h2 className="font-heading text-body-emphasis text-ink mb-4">Missions</h2>
+            <div className="mb-8">
+                <MissionPath missions={missions} courseId={courseId} lessonId={lessonId} />
             </div>
 
             <h2 className="font-heading text-body-emphasis text-ink mb-4">Simplify Lesson</h2>

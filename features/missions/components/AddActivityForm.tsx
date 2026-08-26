@@ -1,0 +1,261 @@
+'use client'
+// features/missions/components/AddActivityForm.tsx
+//
+// Mirrors features/quizzes/components/AddQuestionForm.tsx: add one
+// activity at a time, options as individual rows, correct answer
+// marked by clicking its bullet rather than retyping it below.
+//
+// Differences from AddQuestionForm.tsx:
+// - No checklist or short_answer types — see create-mission.ts's
+//   header for why short_answer is excluded for now.
+// - Has a hint field (activities have hint_text; questions don't).
+// - No "reset attempts" confirm step after adding to an already-live
+//   mission. AddQuestionForm.tsx's equivalent calls resetQuizAttempts
+//   (a migration-062 RPC) — no equivalent RPC exists yet for
+//   mission_progress/attempt_events (which is service-role-only per
+//   HANDOFF.md's Day-1 note), so that parity gap is deferred to
+//   whenever Day 4 builds the mastery-loop write path. For now, adding
+//   an activity to a published mission just saves silently; students
+//   already partway through won't be prompted to retake anything.
+
+import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { addActivity } from '@/features/missions/actions/create-activity'
+
+type ActivityType = 'multiple_choice_single' | 'true_false'
+
+let optionKeySeed = 0
+function nextOptionKey() {
+    optionKeySeed += 1
+    return `option-${optionKeySeed}`
+}
+
+function makeEmptyOption() {
+    return { key: nextOptionKey(), text: '' }
+}
+
+export function AddActivityForm({ missionId }: { missionId: string }) {
+    const router = useRouter()
+    const [activityType, setActivityType] = useState<ActivityType>('multiple_choice_single')
+    const [prompt, setPrompt] = useState('')
+    const [options, setOptions] = useState([makeEmptyOption(), makeEmptyOption()])
+    const [correctIndex, setCorrectIndex] = useState<number | null>(null)
+    const [correctTf, setCorrectTf] = useState<'True' | 'False'>('True')
+    const [hintText, setHintText] = useState('')
+    const [error, setError] = useState('')
+    const [isPending, setIsPending] = useState(false)
+    const formRef = useRef<HTMLFormElement>(null)
+
+    function updateOptionText(key: string, text: string) {
+        setOptions((prev) => prev.map((o) => (o.key === key ? { ...o, text } : o)))
+    }
+
+    function addOptionRow() {
+        setOptions((prev) => [...prev, makeEmptyOption()])
+    }
+
+    function removeOptionRow(key: string) {
+        setOptions((prev) => {
+            const removedIndex = prev.findIndex((o) => o.key === key)
+            const next = prev.filter((o) => o.key !== key)
+            if (correctIndex !== null) {
+                if (removedIndex === correctIndex) setCorrectIndex(null)
+                else if (removedIndex < correctIndex) setCorrectIndex(correctIndex - 1)
+            }
+            return next
+        })
+    }
+
+    function resetForm() {
+        setPrompt('')
+        setOptions([makeEmptyOption(), makeEmptyOption()])
+        setCorrectIndex(null)
+        setCorrectTf('True')
+        setHintText('')
+        setActivityType('multiple_choice_single')
+    }
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault()
+        setError('')
+
+        if (activityType === 'multiple_choice_single') {
+            const filledOptions = options.map((o) => o.text.trim()).filter(Boolean)
+            if (filledOptions.length < 2) {
+                setError('Add at least two answer options.')
+                return
+            }
+            if (correctIndex === null || !options[correctIndex]?.text.trim()) {
+                setError('Click the bullet next to the correct answer.')
+                return
+            }
+        }
+
+        const formData = new FormData()
+        formData.set('missionId', missionId)
+        formData.set('prompt', prompt)
+        formData.set('activityType', activityType)
+        if (hintText.trim()) formData.set('hintText', hintText.trim())
+
+        if (activityType === 'true_false') {
+            formData.set('correctAnswer', correctTf)
+        } else {
+            const filledOptions = options.map((o) => o.text.trim()).filter(Boolean)
+            const correctOption = correctIndex !== null ? options[correctIndex] : undefined
+            formData.set('options', filledOptions.join(','))
+            formData.set('correctAnswer', correctOption?.text.trim() ?? '')
+        }
+
+        setIsPending(true)
+        const result = await addActivity(formData)
+        setIsPending(false)
+
+        if (!result.ok) {
+            setError(result.error)
+            return
+        }
+
+        resetForm()
+        router.refresh()
+    }
+
+    return (
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-5 bg-surface rounded-md border border-hairline shadow-card p-6">
+            <div>
+                <label htmlFor="addActivityType" className="text-label text-ink-soft block mb-2">
+                    Activity type
+                </label>
+                <select
+                    id="addActivityType"
+                    value={activityType}
+                    onChange={(e) => setActivityType(e.target.value as ActivityType)}
+                    className="w-full h-11 px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                >
+                    <option value="multiple_choice_single">Multiple choice</option>
+                    <option value="true_false">True / False</option>
+                </select>
+            </div>
+
+            <textarea
+                aria-label="Activity prompt"
+                rows={2}
+                required
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                placeholder="Type the activity prompt here"
+            />
+
+            {activityType === 'multiple_choice_single' && (
+                <div className="space-y-2">
+                    <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
+                    {options.map((option, index) => (
+                        <div key={option.key} className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                aria-label={`Mark option ${index + 1} as correct`}
+                                onClick={() => setCorrectIndex(index)}
+                                className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctIndex === index
+                                        ? 'border-brand bg-brand text-on-ink'
+                                        : 'border-hairline-strong hover:border-brand'
+                                    }`}
+                            >
+                                {correctIndex === index && (
+                                    <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                )}
+                            </button>
+                            <input
+                                type="text"
+                                value={option.text}
+                                onChange={(e) => updateOptionText(option.key, e.target.value)}
+                                placeholder={`Option ${index + 1}`}
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                            />
+                            {options.length > 2 && (
+                                <button
+                                    type="button"
+                                    aria-label={`Remove option ${index + 1}`}
+                                    onClick={() => removeOptionRow(option.key)}
+                                    className="text-text-secondary hover:text-error text-body-md px-2"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={addOptionRow}
+                        className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
+                    >
+                        + Add option
+                    </button>
+                </div>
+            )}
+
+            {activityType === 'true_false' && (
+                <div className="space-y-2">
+                    <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
+                    {(['True', 'False'] as const).map((label) => (
+                        <div key={label} className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                aria-label={`Mark ${label} as correct`}
+                                onClick={() => setCorrectTf(label)}
+                                className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctTf === label
+                                        ? 'border-brand bg-brand text-on-ink'
+                                        : 'border-hairline-strong hover:border-brand'
+                                    }`}
+                            >
+                                {correctTf === label && (
+                                    <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                )}
+                            </button>
+                            <span className="text-body-md text-ink">{label}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <div>
+                <label htmlFor="addActivityHint" className="text-label text-ink-soft block mb-2">
+                    Hint (optional — shown after 2 wrong attempts)
+                </label>
+                <textarea
+                    id="addActivityHint"
+                    rows={2}
+                    value={hintText}
+                    onChange={(e) => setHintText(e.target.value)}
+                    placeholder="A nudge in the right direction, not the answer itself"
+                    className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                />
+            </div>
+
+            {error && (
+                <p className="text-caption text-error" role="alert">
+                    {error}
+                </p>
+            )}
+
+            <button
+                type="submit"
+                disabled={isPending}
+                className="w-full h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+            >
+                {isPending ? 'Adding…' : 'Add activity'}
+            </button>
+        </form>
+    )
+}

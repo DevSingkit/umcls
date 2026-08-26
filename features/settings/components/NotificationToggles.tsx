@@ -27,19 +27,39 @@ function ToggleRow({ label, description, checked, onChange }: ToggleRowProps) {
                 <p className="text-body-emphasis text-ink">{label}</p>
                 <p className="text-caption text-text-secondary">{description}</p>
             </div>
+            {/*
+                Built to DESIGN-LMS.md §7.1b's fixed proportions, not
+                eyeballed per instance — this is the exact bug that
+                section documents: sizing track/border/knob
+                independently silently breaks the math as soon as a
+                border is added.
+                  - Track: h-6 w-11 (24x44px), border is part of the
+                    track's own box, not layered on top.
+                  - Knob: h-4 w-4 (16x16px), anchored with BOTH top-0.5
+                    and left-0.5 — omitting left-0.5 lets the browser's
+                    default left:0 sit the knob flush against the
+                    border with no room to slide.
+                  - Slide distance: translate-x-5 (20px), derived from
+                    track inner width (42px) minus knob width (16px)
+                    minus the knob's own 2px left anchor, leaving 2px
+                    clearance on both edges.
+                  - Off-state: bg-hairline fill + border-hairline-strong
+                    — never a bare hairline-strong fill alone (too
+                    close to canvas/surface-sunken, reads as active).
+            */}
             <button
                 type="button"
                 role="switch"
                 aria-checked={checked}
                 aria-label={label}
                 onClick={() => onChange(!checked)}
-                className={`relative h-8 w-14 shrink-0 rounded-pill transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
-                    checked ? 'bg-brand' : 'bg-hairline-strong'
+                className={`relative h-6 w-11 shrink-0 rounded-pill border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+                    checked ? 'bg-brand border-brand' : 'bg-hairline border-hairline-strong'
                 }`}
             >
                 <span
-                    className={`absolute top-1 h-6 w-6 rounded-pill bg-surface shadow-card transition-transform ${
-                        checked ? 'translate-x-7' : 'translate-x-1'
+                    className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-pill bg-surface transition-transform ${
+                        checked ? 'translate-x-5' : 'translate-x-0'
                     }`}
                 />
             </button>

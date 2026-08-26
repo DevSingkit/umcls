@@ -17,6 +17,10 @@ type CourseItem = {
     id: string
     title: string
     subject: string | null
+    description: string | null
+    isPublished?: boolean
+    teacherName?: string | null
+    teacherAvatarUrl?: string | null
 }
 
 type CoursesPreviewProps = {
@@ -69,6 +73,10 @@ export function CoursesPreview({
                         id={course.id}
                         title={course.title}
                         subject={course.subject}
+                        description={course.description}
+                        isPublished={course.isPublished}
+                        teacherName={course.teacherName}
+                        teacherAvatarUrl={course.teacherAvatarUrl}
                         href={`${courseHrefBase}/${course.id}`}
                     />
                 ))}

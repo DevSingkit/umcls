@@ -2,6 +2,12 @@
 // Upload screen for PH2-003 Bulk Import — Excel (.xlsx) in, Excel (.xlsx) out.
 // Admin downloads a template, fills it in, uploads it, then downloads a
 // credentials file for the accounts that were just created.
+//
+// Design pass: only the error-block and success-message tokens changed
+// (error/error-soft -> red/red-soft, success stays as-is since it's a
+// semantic/status color, not a button) to match the rest of the admin
+// pages' destructive-color convention. No upload/parsing/import logic
+// touched.
 import { useState } from 'react'
 import { bulkImportUsers, type BulkImportResult } from '@/features/admin/actions/bulk-import'
 import {
@@ -49,8 +55,6 @@ export function BulkImportForm() {
         const outcome = await bulkImportUsers(rows)
         setResult(outcome)
         setIsLoading(false)
-        // Let the admin upload the same file again after fixing it,
-        // without needing to refresh the page.
         event.target.value = ''
     }
 
@@ -87,10 +91,10 @@ export function BulkImportForm() {
             )}
 
             {result && !result.ok && (
-                <div className="rounded-md bg-error-soft border border-error p-4 mb-4">
-                    <p className="text-body-md text-error mb-2">{result.error}</p>
+                <div className="rounded-md bg-red-soft border border-red p-4 mb-4">
+                    <p className="text-body-md text-red mb-2">{result.error}</p>
                     {result.rowErrors && result.rowErrors.length > 0 && (
-                        <ul className="text-caption text-error list-disc pl-5">
+                        <ul className="text-caption text-red list-disc pl-5">
                             {result.rowErrors.map((rowError, i) => (
                                 <li key={i}>
                                     Row {rowError.row}: {rowError.message}

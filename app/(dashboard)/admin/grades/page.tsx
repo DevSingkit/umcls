@@ -1,16 +1,22 @@
 import Link from 'next/link'
 import { BookOpen } from 'lucide-react'
 import { getAllCoursesForAdmin } from '@/features/admin/actions/admin-grades'
-import { getGradebookForCourseGrid, getLinkableItemsForCourse } from '@/features/grades/actions/gradebook-items'
+import { getGradebookForCourseGrid } from '@/features/grades/queries/gradebook'
 import { GradebookGrid } from '@/features/grades/components/GradebookGrid'
-import { GradesVisibilityToggle } from '@/features/grades/components/GradesVisibilityToggle'
 
-// Admin gradebook — no longer read-only. Admin edits the same
-// underlying gradebook_scores rows a teacher would, through the same
-// GradebookGrid component and the same setGradebookScore/
-// createGradebookItem/pullLinkedScores actions, which already accept
-// admin (see gradebook-items.ts). One grading system, one write path,
-// for both roles — not a separate admin override.
+// Admin gradebook, read-only — same Classroom-style grid a teacher
+// sees on their own course's Grades tab, just with a course picker
+// across every course in the school. Reuses getGradebookForCourseGrid
+// as-is (already accepts 'admin' with full cross-course access) — no
+// new query needed. Deliberately NOT an edit surface — see the
+// original header comment on this file for the full reasoning; that
+// logic is untouched.
+//
+// Design pass: course picker rows now use the §7.5a "one outer card,
+// nested rows with hairline dividers" pattern instead of each course
+// being its own separately shadowed card. This is the same fix as
+// AdminCourseList — a list of many small items shouldn't each carry
+// their own shadow when they live inside one section.
 export default async function AdminGradesPage({
     searchParams,
 }: {
@@ -19,31 +25,30 @@ export default async function AdminGradesPage({
     const { courseId } = await searchParams
     const courses = await getAllCoursesForAdmin()
     const gridData = courseId ? await getGradebookForCourseGrid(courseId) : null
-    const linkable = courseId ? await getLinkableItemsForCourse(courseId) : null
     const selectedCourse = courses.find((c) => c.id === courseId)
 
     return (
-        <div>
+        <div className="min-w-0">
             <h1 className="font-heading text-h1 text-ink mb-2">Grades</h1>
             <p className="text-body-md text-text-secondary mb-8">
-                You can view and edit your class&apos;s gradebook.
+                View any class&apos;s gradebook — activities and student scores.
             </p>
 
             {courses.length === 0 ? (
                 <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                    <p className="text-body-md text-text-secondary">No class have been created yet.</p>
+                    <p className="text-body-md text-text-secondary">No classes have been created yet.</p>
                 </div>
             ) : (
-                <div className="grid gap-3 mb-8">
-                    {courses.map((course) => {
+                <div className="bg-surface rounded-md shadow-card mb-8 min-w-0 overflow-hidden">
+                    {courses.map((course, index) => {
                         const isSelected = course.id === courseId
                         return (
                             <Link
                                 key={course.id}
                                 href={`/admin/grades?courseId=${course.id}`}
-                                className={`flex items-center gap-4 rounded-md p-5 shadow-card hover:shadow-card-hover ${
-                                    isSelected ? 'bg-brand-soft border-[1.5px] border-brand' : 'bg-surface'
-                                }`}
+                                className={`flex items-center gap-4 p-4 sm:p-5 ${
+                                    index > 0 ? 'border-t border-hairline' : ''
+                                } ${isSelected ? 'bg-brand-soft' : 'hover:bg-surface-sunken'}`}
                             >
                                 <span
                                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${
@@ -67,41 +72,28 @@ export default async function AdminGradesPage({
             )}
 
             {!courseId && courses.length > 0 && (
-                <p className="text-body-md text-text-secondary">Pick a class above to see its gradebook.</p>
+                <div className="bg-surface rounded-md shadow-card p-8 text-center">
+                    <p className="text-body-md text-text-secondary">Pick a class above to see its gradebook.</p>
+                </div>
             )}
 
             {courseId && gridData === null && (
-                <p className="text-body-md text-error">That class could not be found.</p>
+                <div className="bg-surface rounded-md shadow-card p-8 text-center">
+                    <p className="text-body-md text-error">That class could not be found.</p>
+                </div>
             )}
 
             {courseId && gridData !== null && (
                 <>
-                    <div className="mb-3">
-                        <h2 className="font-heading text-body-emphasis text-ink">{selectedCourse?.title}</h2>
-                        {selectedCourse && (
-                            <p className="text-caption text-text-secondary">
-                                {selectedCourse.subject ? `${selectedCourse.subject} · ` : ''}
-                                Taught by {selectedCourse.teacherName}
-                            </p>
-                        )}
-                    </div>
-
-                    {gridData.students.length === 0 ? (
-                        <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                            <p className="text-body-md text-text-secondary">No students enrolled in this class yet.</p>
-                        </div>
-                    ) : (
-                        <>
-                            <GradesVisibilityToggle courseId={courseId} initialVisible={gridData.gradesVisible} />
-                            <GradebookGrid
-                                courseId={courseId}
-                                initialData={gridData}
-                                canEdit
-                                assignmentOptions={linkable?.assignments ?? []}
-                                quizOptions={linkable?.quizzes ?? []}
-                            />
-                        </>
+                    <h2 className="mb-3 font-heading text-h3 text-ink">{selectedCourse?.title}</h2>
+                    {selectedCourse && (
+                        <p className="text-caption text-text-secondary mb-3">
+                            {selectedCourse.subject ? `${selectedCourse.subject} · ` : ''}
+                            Taught by {selectedCourse.teacherName}
+                        </p>
                     )}
+
+                    <GradebookGrid courseId={courseId} data={gridData} />
                 </>
             )}
         </div>

@@ -180,14 +180,14 @@ export function LoginForm() {
                     <div
                         id="login-error"
                         role="alert"
-                        className="mb-5 flex items-start gap-2 rounded-md bg-error-soft px-5 py-3"
+                        className="mb-5 flex items-start gap-2 rounded-md bg-red-soft px-5 py-3"
                     >
                         <AlertCircle
-                            className="mt-0.5 h-4 w-4 shrink-0 text-error"
+                            className="mt-0.5 h-4 w-4 shrink-0 text-red"
                             strokeWidth={2}
                             aria-hidden="true"
                         />
-                        <p className="text-caption text-error">
+                        <p className="text-caption text-red">
                             {state.error}
                         </p>
                     </div>

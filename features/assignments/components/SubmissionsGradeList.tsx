@@ -1,15 +1,22 @@
 'use client'
+// Updated for multiple files per submission (migration 085,
+// submissions.ts) — a submission's single file_name/getSubmissionDownloadUrl
+// is replaced with a files[] array, each downloadable independently via
+// getSubmissionFileDownloadUrl(fileId). Everything else (grading,
+// returning, notes, badges) is unchanged.
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { gradeSubmission, getSubmissionDownloadUrl, returnSubmission } from '@/features/assignments/actions/submissions'
+import { gradeSubmission, getSubmissionFileDownloadUrl, returnSubmission } from '@/features/assignments/actions/submissions'
 import { cn } from '@/lib/utils'
+
+type SubmissionFile = { id: string; file_name: string }
 
 type Row = {
     studentId: string
     studentName: string
     submission: {
         id: string
-        file_name: string
+        files: SubmissionFile[]
         response_text: string | null
         submitted_at: string
         is_late: boolean
@@ -40,8 +47,8 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
 
-    async function handleDownload(submissionId: string) {
-        const url = await getSubmissionDownloadUrl(submissionId)
+    async function handleDownload(fileId: string) {
+        const url = await getSubmissionFileDownloadUrl(fileId)
         if (url) window.open(url, '_blank', 'noopener,noreferrer')
     }
 
@@ -83,12 +90,19 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
                             <p className="text-body-emphasis text-ink">{row.studentName}</p>
                             {row.submission ? (
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <button
-                                        onClick={() => handleDownload(row.submission!.id)}
-                                        className="text-caption text-brand underline hover:text-brand-hover"
-                                    >
-                                        {row.submission.file_name}
-                                    </button>
+                                    {row.submission.files.length > 0 ? (
+                                        row.submission.files.map((f) => (
+                                            <button
+                                                key={f.id}
+                                                onClick={() => handleDownload(f.id)}
+                                                className="text-caption text-brand underline hover:text-brand-hover"
+                                            >
+                                                {f.file_name}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <span className="text-caption text-text-secondary">No files attached</span>
+                                    )}
                                     {row.submission.response_text && (
                                         <button
                                             onClick={() =>

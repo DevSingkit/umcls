@@ -1,4 +1,14 @@
 'use client'
+// LOGIC FIX (this pass): removing an attachment used to call
+// deleteMaterial immediately on click — a real database delete
+// completely disconnected from the "Save changes" button, so a
+// teacher had no way to undo a misclick and no single "did my edits
+// actually save" moment. Fixed: clicking Remove now only marks a
+// material for removal locally (pendingRemovalIds) with an Undo
+// option. The actual deleteMaterial calls only fire inside handleSave,
+// after updateAssignment succeeds — if the save fails, nothing is
+// deleted. This matches the requested behavior: "must have Update
+// button to update it, not automatic remove."
 import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateAssignment } from '@/features/assignments/actions/assignments'
@@ -8,14 +18,6 @@ import { DateTimePicker } from '@/components/ui/DateTimePicker'
 
 type Material = Awaited<ReturnType<typeof listMaterials>>[number]
 
-// BUG FIX (2026-08-03): converts a real UTC ISO timestamp (from the
-// database) into the "YYYY-MM-DDTHH:mm" format a datetime-local input
-// needs, using the BROWSER's actual local timezone — not a naive string
-// slice, which was the previous approach and silently mislabeled UTC
-// wall-clock digits as if they were already local time. Uses the local
-// getters (getFullYear/getMonth/etc, not getUTCFullYear/etc) precisely
-// because those are what return values already adjusted to the
-// environment's local timezone.
 function toDatetimeLocalValue(iso: string | null): string {
     if (!iso) return ''
     const d = new Date(iso)
@@ -38,7 +40,7 @@ export function EditAssignmentForm({
     assignmentId: string
     initialTitle: string
     initialInstructions: string
-    initialDueAt: string | null // raw ISO timestamp from the database, or null — NOT pre-formatted, see toDatetimeLocalValue above
+    initialDueAt: string | null
     initialMaxScore: number
     initialAllowLate: boolean
     initialIsPublished: boolean
@@ -48,27 +50,17 @@ export function EditAssignmentForm({
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
     const [materials, setMaterials] = useState(initialMaterials)
+    // Staged removals — material ids marked for deletion but not yet
+    // committed. Cleared/committed only inside handleSave.
+    const [pendingRemovalIds, setPendingRemovalIds] = useState<Set<string>>(new Set())
     const [uploadError, setUploadError] = useState<string | null>(null)
     const [isUploading, startUploading] = useTransition()
     const fileFormRef = useRef<HTMLFormElement>(null)
     const linkFormRef = useRef<HTMLFormElement>(null)
-    // DateTimePicker is a controlled component (unlike the old
-    // datetime-local input, which used defaultValue and needed no
-    // React state at all) — seeded once from initialDueAt here.
     const [dueAt, setDueAt] = useState(toDatetimeLocalValue(initialDueAt))
 
     function handleSave(formData: FormData) {
         setError(null)
-        // BUG FIX (2026-08-03): the datetime-local input gives back a
-        // naive "YYYY-MM-DDTHH:mm" string with no timezone marker. Sent
-        // as-is, that string would land in a `timestamptz` column and
-        // get interpreted using the database's session timezone (UTC),
-        // not the teacher's actual local time — the exact bug fixed in
-        // NewAssignmentForm.tsx. Same fix here: `new Date(rawString)`
-        // (no trailing "Z"/offset) is parsed as LOCAL time by the JS
-        // engine, so converting it to ISO here produces a real,
-        // unambiguous UTC instant before the form data ever reaches the
-        // server action.
         const rawDueAt = formData.get('dueAt')
         if (typeof rawDueAt === 'string' && rawDueAt) {
             formData.set('dueAt', new Date(rawDueAt).toISOString())
@@ -78,6 +70,13 @@ export function EditAssignmentForm({
             if (!result.ok) {
                 setError(result.error)
                 return
+            }
+            // Only now, after the save itself succeeded, actually commit
+            // any staged removals. A failed save leaves attachments
+            // untouched — nothing was deleted just because Remove was
+            // clicked earlier in this session.
+            if (pendingRemovalIds.size > 0) {
+                await Promise.all(Array.from(pendingRemovalIds).map((id) => deleteMaterial(id)))
             }
             router.push(`/teacher/courses/${courseId}/assignments/${assignmentId}`)
         })
@@ -114,13 +113,20 @@ export function EditAssignmentForm({
         })
     }
 
-    async function handleDeleteMaterial(materialId: string) {
-        await deleteMaterial(materialId)
-        await refreshMaterials()
+    // No server call here anymore — purely local staging.
+    function handleMarkForRemoval(materialId: string) {
+        setPendingRemovalIds((prev) => new Set(prev).add(materialId))
+    }
+
+    function handleUndoRemoval(materialId: string) {
+        setPendingRemovalIds((prev) => {
+            const next = new Set(prev)
+            next.delete(materialId)
+            return next
+        })
     }
 
     return (
-        // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
         <div className="max-w-2xl mx-auto pb-16">
             <h1 className="font-heading text-h1 text-ink mb-8">Edit assignment</h1>
 
@@ -171,10 +177,6 @@ export function EditAssignmentForm({
                             Clear
                         </button>
                     </div>
-                    {/* handleSave reads this by name via formData.get('dueAt')
-                        and converts it to a real UTC ISO instant — same
-                        naive "YYYY-MM-DDTHH:mm" contract as before, DateTimePicker
-                        just changed how that string gets built. */}
                     <input type="hidden" name="dueAt" value={dueAt} />
                 </div>
 
@@ -210,6 +212,13 @@ export function EditAssignmentForm({
                     If off, students can no longer submit or edit their
                     submission once the due date passes.
                 </p>
+
+                {pendingRemovalIds.size > 0 && (
+                    <p className="text-caption text-amber">
+                        {pendingRemovalIds.size} attachment{pendingRemovalIds.size === 1 ? '' : 's'} will be
+                        removed when you save.
+                    </p>
+                )}
 
                 {error && (
                     <p className="text-caption text-error" role="alert">
@@ -276,7 +285,12 @@ export function EditAssignmentForm({
             </div>
 
             <div className="mb-8">
-                <MaterialListWithDelete materials={materials} onDelete={handleDeleteMaterial} />
+                <MaterialListWithDelete
+                    materials={materials}
+                    pendingRemovalIds={pendingRemovalIds}
+                    onMarkForRemoval={handleMarkForRemoval}
+                    onUndoRemoval={handleUndoRemoval}
+                />
             </div>
 
             <PostAssignmentButton assignmentId={assignmentId} isPublished={initialIsPublished} />
@@ -284,15 +298,16 @@ export function EditAssignmentForm({
     )
 }
 
-// Mirrors EditLessonForm's MaterialListWithDelete — local state needs
-// its own refresh after delete, since listMaterials/deleteMaterial
-// don't trigger a router.refresh() the page would otherwise pick up.
 function MaterialListWithDelete({
     materials,
-    onDelete,
+    pendingRemovalIds,
+    onMarkForRemoval,
+    onUndoRemoval,
 }: {
     materials: Material[]
-    onDelete: (id: string) => void
+    pendingRemovalIds: Set<string>
+    onMarkForRemoval: (id: string) => void
+    onUndoRemoval: (id: string) => void
 }) {
     if (materials.length === 0) {
         return (
@@ -304,20 +319,42 @@ function MaterialListWithDelete({
 
     return (
         <div className="grid gap-2">
-            {materials.map((material) => (
-                <div
-                    key={material.id}
-                    className="bg-surface rounded-md shadow-card p-4 flex items-center justify-between gap-4"
-                >
-                    <span className="text-body-emphasis text-ink truncate">{material.file_name}</span>
-                    <button
-                        onClick={() => onDelete(material.id)}
-                        className="text-caption font-medium text-error hover:underline shrink-0"
+            {materials.map((material) => {
+                const isMarked = pendingRemovalIds.has(material.id)
+                return (
+                    <div
+                        key={material.id}
+                        className={`bg-surface rounded-md shadow-card p-4 flex items-center justify-between gap-4 ${
+                            isMarked ? 'opacity-50' : ''
+                        }`}
                     >
-                        Remove
-                    </button>
-                </div>
-            ))}
+                        <span
+                            className={`text-body-emphasis truncate ${
+                                isMarked ? 'text-text-muted line-through' : 'text-ink'
+                            }`}
+                        >
+                            {material.file_name}
+                        </span>
+                        {isMarked ? (
+                            <button
+                                type="button"
+                                onClick={() => onUndoRemoval(material.id)}
+                                className="h-9 px-4 rounded-md border-[1.5px] border-hairline-strong text-ink text-caption font-medium hover:bg-surface-sunken shrink-0"
+                            >
+                                Undo
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => onMarkForRemoval(material.id)}
+                                className="h-9 px-4 rounded-md border-[1.5px] border-red text-red text-caption font-medium hover:bg-red-soft shrink-0"
+                            >
+                                Remove
+                            </button>
+                        )}
+                    </div>
+                )
+            })}
         </div>
     )
 }

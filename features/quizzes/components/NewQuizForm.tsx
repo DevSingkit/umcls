@@ -276,7 +276,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="text-text-secondary hover:text-error text-body-md px-2"
+                                    className="flex h-8 w-8 items-center justify-center rounded-md border-[1.5px] border-hairline-strong text-text-secondary hover:border-red hover:text-red shrink-0"
                                 >
                                     ✕
                                 </button>
@@ -317,7 +317,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="text-text-secondary hover:text-error text-body-md px-2"
+                                    className="flex h-8 w-8 items-center justify-center rounded-md border-[1.5px] border-hairline-strong text-text-secondary hover:border-red hover:text-red shrink-0"
                                 >
                                     ✕
                                 </button>

@@ -5,6 +5,12 @@
 // four sections (profile, password, notifications, text size). Every
 // action below only ever reads or writes the calling user's own row;
 // nothing here takes a userId parameter from the client.
+//
+// G4 (avatar upload, public bucket): avatar_url now stores the
+// permanent public storage URL directly — no signed-URL resolution
+// needed anywhere, since the bucket is public. updateProfile no
+// longer accepts an avatarUrl field (the old paste-a-link input is
+// gone); uploadAvatar/removeAvatar handle the photo separately.
 
 import { z } from 'zod'
 import { requireUser } from '@/lib/auth/get-current-user'
@@ -25,9 +31,7 @@ export type MySettings = {
 // Reads everything the Settings page needs in one call: profile fields
 // from users, notification toggles from notification_preferences (may
 // not have a row yet for an existing user — defaults to all-on if so),
-// and the text-size preference, which lives in users.metadata (jsonb)
-// rather than its own column since it's a single small per-user flag,
-// same reasoning as other lightweight metadata already stored there.
+// and the text-size preference, which lives in users.metadata (jsonb).
 export async function getMySettings(): Promise<MySettings> {
     const user = await requireUser()
     const supabase = await createClient()
@@ -63,11 +67,7 @@ const updateProfileSchema = z.object({
 
 export type SettingsActionResult = { ok: true } | { ok: false; error: string }
 
-// Name and avatar only — email is intentionally not editable here.
-// Changing a login email is a Supabase Auth operation with its own
-// confirmation-link flow, out of scope for a simple profile form; the
-// page shows email as read-only rather than silently accepting edits
-// that would never actually take effect.
+// Name only — avatar moved to uploadAvatar below.
 export async function updateProfile(formData: FormData): Promise<SettingsActionResult> {
     const user = await requireUser()
 
@@ -78,19 +78,113 @@ export async function updateProfile(formData: FormData): Promise<SettingsActionR
         return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form and try again.' }
     }
 
-    const avatarUrl = formData.get('avatarUrl')
     const supabase = await createClient()
-
     const { error } = await supabase
         .from('users')
-        .update({
-            full_name: parsed.data.fullName,
-            avatar_url: typeof avatarUrl === 'string' && avatarUrl.trim() ? avatarUrl.trim() : null,
-        })
+        .update({ full_name: parsed.data.fullName })
         .eq('id', user.id)
 
     if (error) {
         return { ok: false, error: 'Could not save your profile. Please try again.' }
+    }
+
+    return { ok: true }
+}
+
+const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
+const ALLOWED_AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+
+export type UploadAvatarResult = { ok: true; avatarUrl: string } | { ok: false; error: string }
+
+// Uploads a new avatar photo, replacing any previous one. Stores and
+// returns the permanent public URL directly — public bucket, so no
+// signed-URL step needed.
+export async function uploadAvatar(formData: FormData): Promise<UploadAvatarResult> {
+    const user = await requireUser()
+
+    const fileEntry = formData.get('avatar')
+    const file = fileEntry instanceof File && fileEntry.size > 0 ? fileEntry : null
+    if (!file) {
+        return { ok: false, error: 'Please choose a photo.' }
+    }
+    if (!ALLOWED_AVATAR_MIME_TYPES.has(file.type)) {
+        return { ok: false, error: 'That file type is not allowed. Allowed: JPEG, PNG, WEBP.' }
+    }
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+        return { ok: false, error: 'Photo is too large. Max size is 5 MB.' }
+    }
+
+    const supabase = await createClient()
+
+    // Look up any existing avatar path first, so the old file can be
+    // cleaned up after a successful upload.
+    const { data: existing } = await supabase.from('users').select('avatar_url').eq('id', user.id).single()
+    const previousUrl = existing?.avatar_url as string | null
+
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const storagePath = `${user.id}/${crypto.randomUUID()}-${safeName}`
+
+    const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(storagePath, file, { contentType: file.type, upsert: false })
+
+    if (uploadError) {
+        return { ok: false, error: 'Upload failed. Please try again.' }
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(storagePath)
+    const avatarUrl = publicUrlData.publicUrl
+
+    const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', user.id)
+
+    if (updateError) {
+        // Best-effort cleanup of the just-uploaded file if the DB write
+        // failed, so it doesn't become an orphaned object.
+        await supabase.storage.from('avatars').remove([storagePath])
+        return { ok: false, error: 'Could not save your new photo. Please try again.' }
+    }
+
+    // Clean up the old file only after the new one is confirmed live.
+    // previousUrl is a full public URL, not a bare path — extract the
+    // path (everything after the bucket name in the URL) before
+    // calling remove(), which expects a path, not a URL.
+    if (previousUrl) {
+        const marker = '/avatars/'
+        const idx = previousUrl.indexOf(marker)
+        if (idx !== -1) {
+            const previousPath = previousUrl.slice(idx + marker.length)
+            await supabase.storage.from('avatars').remove([previousPath])
+        }
+    }
+
+    return { ok: true, avatarUrl }
+}
+
+export type RemoveAvatarResult = { ok: true } | { ok: false; error: string }
+
+// Lets a user go back to the initial-circle fallback.
+export async function removeAvatar(): Promise<RemoveAvatarResult> {
+    const user = await requireUser()
+    const supabase = await createClient()
+
+    const { data: existing } = await supabase.from('users').select('avatar_url').eq('id', user.id).single()
+    const previousUrl = existing?.avatar_url as string | null
+
+    const { error } = await supabase.from('users').update({ avatar_url: null }).eq('id', user.id)
+    if (error) {
+        return { ok: false, error: 'Could not remove your photo. Please try again.' }
+    }
+
+    if (previousUrl) {
+        const marker = '/avatars/'
+        const idx = previousUrl.indexOf(marker)
+        if (idx !== -1) {
+            const previousPath = previousUrl.slice(idx + marker.length)
+            await supabase.storage.from('avatars').remove([previousPath])
+        }
     }
 
     return { ok: true }
@@ -105,13 +199,6 @@ const passwordSchema = z
     .regex(/[A-Z]/, 'Password must include an uppercase letter.')
     .regex(/[0-9]/, 'Password must include a number.')
 
-// Changing your own password while already logged in. Unlike
-// reset-password.ts (which trusts a one-time recovery link as proof of
-// identity) and users.ts's admin resetUserPassword (which trusts admin
-// privilege), this path has neither — so it re-verifies the current
-// password first via a fresh sign-in check, same "don't trust a
-// session alone" reasoning as AUTH_NOTES.md's getUser rule, applied to
-// the current password itself.
 export async function changePassword(formData: FormData): Promise<SettingsActionResult> {
     const user = await requireUser()
 
@@ -138,11 +225,6 @@ export async function changePassword(formData: FormData): Promise<SettingsAction
 
     const supabase = await createClient()
 
-    // Re-verify the current password by attempting a fresh sign-in with
-    // it. This doesn't change the active session on success/failure —
-    // it's purely a check that the person typing this form actually
-    // knows the current password, not just that their browser still has
-    // a valid cookie.
     const { error: verifyError } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: currentPassword,
@@ -169,10 +251,6 @@ const notificationPrefsSchema = z.object({
     newLessonsEnabled: z.boolean(),
 })
 
-// Upserts, since a user may not have a notification_preferences row yet
-// (the table is new — existing users have no row until they first save
-// here, or until a backfill migration adds one; upsert covers both
-// "never had a row" and "editing an existing row" in one call).
 export async function updateNotificationPreferences(
     prefs: z.infer<typeof notificationPrefsSchema>
 ): Promise<SettingsActionResult> {
@@ -201,9 +279,6 @@ export async function updateNotificationPreferences(
 
 const textSizeSchema = z.enum(['normal', 'larger'])
 
-// Stored in users.metadata (jsonb) rather than a new column — a single
-// small per-user display flag, same shape as other lightweight settings
-// already kept there. Read back out by getMySettings() above.
 export async function updateTextSizePreference(textSize: 'normal' | 'larger'): Promise<SettingsActionResult> {
     const user = await requireUser()
 

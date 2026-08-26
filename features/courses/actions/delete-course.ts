@@ -41,5 +41,5 @@ export async function deleteCourse(courseId: string): Promise<DeleteCourseResult
         return { ok: false, error: `Could not delete the course: ${error.message}` }
     }
 
-    redirect('/teacher/courses')
+    redirect('/teacher/dashboard')
 }

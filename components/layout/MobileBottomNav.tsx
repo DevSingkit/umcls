@@ -31,7 +31,9 @@ export function MobileBottomNav({ role }: MobileBottomNavProps) {
               ? "grid-cols-4"
               : items.length === 3
                 ? "grid-cols-3"
-                : "grid-cols-5";
+                : items.length === 2
+                  ? "grid-cols-2"
+                  : "grid-cols-5";
 
     return (
         <nav
