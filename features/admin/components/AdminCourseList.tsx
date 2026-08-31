@@ -10,6 +10,13 @@
 // Deactivate button before that got its confirm dialog. Unarchive
 // stays a single click since it's reversible/low-risk, matching how
 // Reactivate is treated elsewhere.
+//
+// DESIGN-LMS 2.1 bugfix pass (2026-08-31): dead `red`/`red-soft`
+// tokens -> `error`/`error-soft` (6 instances). `font-heading` removed
+// from the modal title (Classroom Mode dialog, not Mission Mode).
+// border-[1.5px] border-hairline-strong -> border-2 border-hairline.
+// Touch-target floor applied: Unarchive/Archive row buttons h-11 ->
+// h-14/h-12 (primary/secondary), modal Cancel/Archive h-10 -> h-12/h-14.
 
 import { useState, useTransition } from 'react'
 import { AlertTriangle } from 'lucide-react'
@@ -91,7 +98,7 @@ export function AdminCourseList({ initialCourses }: { initialCourses: AdminCours
                                 <button
                                     onClick={() => handleUnarchive(course.id)}
                                     disabled={isPending}
-                                    className="h-11 px-6 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                                    className="h-14 px-6 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
                                 >
                                     Unarchive
                                 </button>
@@ -99,7 +106,7 @@ export function AdminCourseList({ initialCourses }: { initialCourses: AdminCours
                                 <button
                                     onClick={() => setArchiveConfirmCourse(course)}
                                     disabled={isPending}
-                                    className="h-11 px-6 rounded-md border-[1.5px] border-red bg-surface text-red font-medium hover:bg-red-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                                    className="h-12 px-6 rounded-md border-2 border-error bg-surface text-error font-medium hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
                                 >
                                     Archive
                                 </button>
@@ -127,11 +134,11 @@ export function AdminCourseList({ initialCourses }: { initialCourses: AdminCours
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-start gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-red-soft">
-                                <AlertTriangle className="h-5 w-5 text-red" strokeWidth={2} aria-hidden="true" />
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-error-soft">
+                                <AlertTriangle className="h-5 w-5 text-error" strokeWidth={2} aria-hidden="true" />
                             </div>
                             <div>
-                                <h2 id="archive-confirm-title" className="font-heading text-body-emphasis text-ink">
+                                <h2 id="archive-confirm-title" className="text-body-emphasis text-ink">
                                     Archive this class?
                                 </h2>
                                 <p className="mt-2 text-caption text-text-secondary">
@@ -145,14 +152,14 @@ export function AdminCourseList({ initialCourses }: { initialCourses: AdminCours
                         <div className="mt-6 flex justify-end gap-2">
                             <button
                                 onClick={() => setArchiveConfirmCourse(null)}
-                                className="h-10 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmArchive}
                                 disabled={isPending}
-                                className="h-10 px-4 rounded-md bg-red text-on-ink text-caption font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                                className="h-14 px-4 rounded-md bg-error text-on-ink text-caption font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
                             >
                                 {isPending ? 'Archiving…' : 'Archive'}
                             </button>

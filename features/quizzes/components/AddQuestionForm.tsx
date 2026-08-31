@@ -5,6 +5,7 @@
 // it below.
 
 import { useState, useRef } from 'react'
+import { X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { addQuestion, resetQuizAttempts } from '@/features/quizzes/actions/create-quiz'
 
@@ -179,12 +180,12 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
             className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6 border-l-4 border-l-brand"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-heading text-body-emphasis text-ink">Add a question</h2>
+                <h2 className="text-body-emphasis text-ink">Add a question</h2>
                 <select
                     aria-label="Question type"
                     value={questionType}
                     onChange={(e) => setQuestionType(e.target.value as QuestionType)}
-                    className="min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
+                    className="min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
                 >
                     <option value="multiple_choice_single">Multiple choice</option>
                     <option value="true_false">True or false</option>
@@ -199,7 +200,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                 required
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
-                className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                 placeholder="Type the question here"
             />
 
@@ -214,7 +215,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                 onClick={() => setCorrectIndex(index)}
                                 className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctIndex === index
                                         ? 'border-brand bg-brand text-on-ink'
-                                        : 'border-hairline-strong hover:border-brand'
+                                        : 'border-hairline hover:border-brand'
                                     }`}
                             >
                                 {correctIndex === index && (
@@ -232,7 +233,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${index + 1}`}
-                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                             />
                             {options.length > 2 && (
                                 <button
@@ -241,7 +242,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                     onClick={() => removeOptionRow(option.key)}
                                     className="text-text-secondary hover:text-error text-body-md px-2"
                                 >
-                                    ✕
+                                    <X size={14} aria-hidden="true" />
                                 </button>
                             )}
                         </div>
@@ -273,16 +274,16 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${index + 1}`}
-                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                             />
                             {options.length > 2 && (
                                 <button
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-md border-[1.5px] border-hairline-strong text-text-secondary hover:border-red hover:text-red shrink-0"
+                                    className="relative flex h-8 w-8 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error shrink-0 before:absolute before:-inset-1.5 before:content-['']"
                                 >
-                                    ✕
+                                    <X size={14} aria-hidden="true" />
                                 </button>
                             )}
                         </div>
@@ -308,7 +309,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                 onClick={() => setCorrectTf(label)}
                                 className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctTf === label
                                         ? 'border-brand bg-brand text-on-ink'
-                                        : 'border-hairline-strong hover:border-brand'
+                                        : 'border-hairline hover:border-brand'
                                     }`}
                             >
                                 {correctTf === label && (
@@ -339,7 +340,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                         value={referenceAnswer}
                         onChange={(e) => setReferenceAnswer(e.target.value)}
                         placeholder="e.g. Expected answer or grading notes"
-                        className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
             )}

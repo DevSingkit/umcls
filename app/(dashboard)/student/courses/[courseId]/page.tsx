@@ -46,7 +46,7 @@ export default async function StudentCourseDetailPage({
             <p className="text-label text-text-secondary">
                 {course.subject || 'Course'}
             </p>
-            <h1 className="font-heading text-h1 text-ink mt-2 mb-8">{course.title}</h1>
+            <h1 className="text-h1 text-ink mt-2 mb-8">{course.title}</h1>
             {course.description && (
                 <p className="text-body-md text-text-secondary mb-8">{course.description}</p>
             )}

@@ -52,7 +52,7 @@ export default async function TeacherCourseOverviewLayout({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <div className="flex items-center gap-3">
-                        <h1 className="font-heading text-h1 text-ink">{course.subject || course.title}</h1>
+                        <h1 className="text-h1 text-ink">{course.subject || course.title}</h1>
                         {!course.is_published && (
                             <span className="inline-flex items-center rounded-full bg-warning-soft px-2.5 py-1 text-caption font-semibold text-warning">
                                 Unpublished

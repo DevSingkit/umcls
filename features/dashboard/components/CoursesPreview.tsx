@@ -10,6 +10,10 @@
 // Low-count handling per DESIGN-LMS.md §8.6 (v1.1 correction): a single
 // course stays left-aligned, same as any other count — verified against
 // real Google Classroom behavior, which never centers a sparse grid.
+//
+// "Create class" buttons sized to DESIGN-LMS 2.1 §1.4's touch-target
+// floor (56px primary / 48px secondary), confirmed 2026-08-31 —
+// previously 44px/36px, both under the floor.
 import Link from 'next/link'
 import { CourseCard } from '@/features/courses/components/CourseCard'
 
@@ -44,7 +48,7 @@ export function CoursesPreview({
                 {createCourseHref && (
                     <Link
                         href={createCourseHref}
-                        className="inline-flex items-center justify-center h-11 px-6 rounded-md bg-brand text-on-ink text-body-md font-semibold hover:bg-brand-hover"
+                        className="inline-flex items-center justify-center h-14 px-6 rounded-md bg-brand text-on-ink text-body-md font-semibold hover:bg-brand-hover"
                     >
                         Create class
                     </Link>
@@ -56,11 +60,11 @@ export function CoursesPreview({
     return (
         <div>
             <div className="flex items-center justify-between mb-4">
-                <h2 className="font-heading text-h2 text-ink">Your classes</h2>
+                <h2 className="text-h2 text-ink">Your classes</h2>
                 {createCourseHref && (
                     <Link
                         href={createCourseHref}
-                        className="inline-flex items-center justify-center h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
+                        className="inline-flex items-center justify-center h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
                     >
                         Create class
                     </Link>

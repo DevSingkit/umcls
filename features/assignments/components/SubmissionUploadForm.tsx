@@ -221,8 +221,8 @@ export function SubmissionUploadForm({
                         rows={textareaRows}
                         defaultValue={existing?.response_text ?? ''}
                         placeholder="Add a note (optional)"
-                        className="w-full px-4 py-3 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink leading-relaxed
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="w-full px-4 py-3 rounded-md bg-surface border-2 border-hairline text-body-md text-ink leading-relaxed
+                                   placeholder:text-text-muted focus:border-brand focus:outline-none"
                     />
 
                     {pendingFiles.length > 0 && (
@@ -249,12 +249,15 @@ export function SubmissionUploadForm({
                             multiple
                             accept={ACCEPT}
                             onChange={(e) => handleFilesPicked(e.target.files)}
-                            className="text-caption text-text-secondary"
+                            className="text-caption text-text-secondary cursor-pointer
+                                       file:mr-3 file:h-9 file:px-4 file:rounded-md file:border-0
+                                       file:bg-surface-sunken file:text-caption file:font-semibold file:text-ink
+                                       file:cursor-pointer hover:file:bg-hairline"
                         />
                         <button
                             type="submit"
                             disabled={isPending}
-                            className={`h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 ${
+                            className={`h-12 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 ${
                                 compact ? 'w-full' : ''
                             }`}
                         >

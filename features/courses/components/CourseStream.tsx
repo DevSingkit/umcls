@@ -1,8 +1,18 @@
 import Link from 'next/link'
 import { FileText, ClipboardList, HelpCircle } from 'lucide-react'
 import type { StreamItem } from '@/features/courses/actions/get-course-stream'
+import { AnnouncementCard } from '@/features/courses/components/AnnouncementCard'
+import { getCurrentUser } from '@/lib/auth/get-current-user'
 
-const KIND_LABEL: Record<StreamItem['kind'], string> = {
+// PHASE 3.8: 'announcement' intentionally has no entry in KIND_LABEL/
+// KIND_ICON/KIND_ICON_BG below — those three maps only cover the
+// three kinds that render through the shared icon+title+badge Link
+// card. Announcement items never reach that rendering path at all
+// (see the early-return special case in the component below), so
+// omitting it here is deliberate, not an oversight — TypeScript would
+// flag a genuinely missing case if any of these maps were used
+// against an announcement item.
+const KIND_LABEL: Record<Exclude<StreamItem['kind'], 'announcement'>, string> = {
     lesson: 'Lesson',
     quiz: 'Quiz',
     assignment: 'Assignment',
@@ -10,16 +20,16 @@ const KIND_LABEL: Record<StreamItem['kind'], string> = {
 
 // Same fixed icon + color mapping as TeacherCourseStream.tsx — one mapping,
 // used everywhere a lesson/quiz/assignment type is shown (DESIGN-LMS.md §8.7a).
-const KIND_ICON: Record<StreamItem['kind'], typeof FileText> = {
+const KIND_ICON: Record<Exclude<StreamItem['kind'], 'announcement'>, typeof FileText> = {
     lesson: FileText,
     quiz: HelpCircle,
     assignment: ClipboardList,
 }
 
-const KIND_ICON_BG: Record<StreamItem['kind'], string> = {
+const KIND_ICON_BG: Record<Exclude<StreamItem['kind'], 'announcement'>, string> = {
     lesson: 'bg-brand-soft text-brand',
     quiz: 'bg-info-soft text-info',
-    assignment: 'bg-amber-soft text-amber',
+    assignment: 'bg-warning-soft text-warning',
 }
 
 function Badge({ tone, children }: { tone: 'success' | 'neutral' | 'info' | 'error'; children: React.ReactNode }) {
@@ -37,7 +47,7 @@ function Badge({ tone, children }: { tone: 'success' | 'neutral' | 'info' | 'err
     )
 }
 
-function StatusBadge({ item }: { item: StreamItem }) {
+function StatusBadge({ item }: { item: Exclude<StreamItem, { kind: 'announcement' }> }) {
     if (item.kind === 'lesson') {
         return item.completed ? (
             <Badge tone="success">Completed</Badge>
@@ -83,7 +93,7 @@ function StatusBadge({ item }: { item: StreamItem }) {
     return <Badge tone="neutral">No due date</Badge>
 }
 
-function hrefFor(courseId: string, item: StreamItem) {
+function hrefFor(courseId: string, item: Exclude<StreamItem, { kind: 'announcement' }>) {
     switch (item.kind) {
         case 'lesson':
             return `/student/courses/${courseId}/lessons/${item.id}`
@@ -94,7 +104,7 @@ function hrefFor(courseId: string, item: StreamItem) {
     }
 }
 
-export function CourseStream({ courseId, items }: { courseId: string; items: StreamItem[] }) {
+export async function CourseStream({ courseId, items }: { courseId: string; items: StreamItem[] }) {
     if (items.length === 0) {
         return (
             <div className="bg-surface rounded-md shadow-card p-8 text-center">
@@ -105,9 +115,34 @@ export function CourseStream({ courseId, items }: { courseId: string; items: Str
         )
     }
 
+    // PHASE 3.8: fetched here rather than added as a new required prop
+    // — this component's existing callers (the student course page)
+    // weren't available to update in this session, so changing the
+    // exported prop signature risked silently breaking that call site.
+    // Fetching internally keeps CourseStream's own public interface
+    // exactly as it was.
+    const user = await getCurrentUser()
+
     return (
         <div className="grid gap-3">
             {items.map((item) => {
+                // PHASE 3.8: announcements render as a completely
+                // different card (AnnouncementCard) — no icon+title+
+                // badge Link, no navigation, body text inline with a
+                // comment thread. Confirmed with user this needed a
+                // genuinely different shape, not a new icon/color
+                // added to the existing mapping.
+                if (item.kind === 'announcement') {
+                    return (
+                        <AnnouncementCard
+                            key={`announcement-${item.id}`}
+                            announcement={item}
+                            currentUserId={user?.id ?? ''}
+                            isTeacher={false}
+                        />
+                    )
+                }
+
                 const Icon = KIND_ICON[item.kind]
 
                 return (

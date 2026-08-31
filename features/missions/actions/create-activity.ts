@@ -143,6 +143,16 @@ const updateActivitySchema = z.object({
     options: z.string().optional(),
     correctAnswer: z.string().min(1, 'Enter the correct answer'),
     hintText: z.string().optional(),
+    // REMEDIATION FIX (2026-08-30, continued conversation): addActivity
+    // already accepted this field (see its own comment above — "a
+    // teacher can only meaningfully wire this up once there's more
+    // than one activity in the mission to point at"), but updateActivity
+    // never did, and no UI anywhere ever actually sent it — meaning
+    // this feature has been unreachable in practice since it was built.
+    // Empty string (the "None" option in the picker) means "clear the
+    // remediation link" — handled explicitly below, not left to
+    // Zod's .optional() alone, since an empty string isn't `undefined`.
+    remediatesActivityId: z.string().optional(),
 })
 
 export type UpdateActivityResult = { ok: true; missionPublished: boolean } | { ok: false; error: string }
@@ -170,6 +180,25 @@ export async function updateActivity(formData: FormData): Promise<UpdateActivity
     const hintText =
         parsed.data.hintText && parsed.data.hintText.trim() !== '' ? parsed.data.hintText.trim() : null
 
+    // Empty string ("None" in the picker) clears the link; anything
+    // else must be a real uuid pointing at a DIFFERENT activity — an
+    // activity can't remediate itself, that's a meaningless self-loop
+    // AddActivityForm's picker prevents by construction (it never
+    // lists the activity being edited as an option), but this is
+    // re-checked server-side rather than trusted from the client.
+    const rawRemediatesId = parsed.data.remediatesActivityId
+    let remediatesActivityId: string | null = null
+    if (rawRemediatesId && rawRemediatesId.trim() !== '') {
+        const parsedRemediatesId = z.string().uuid().safeParse(rawRemediatesId)
+        if (!parsedRemediatesId.success) {
+            return { ok: false, error: 'Invalid remediation activity.' }
+        }
+        if (parsedRemediatesId.data === activityId) {
+            return { ok: false, error: 'An activity cannot remediate itself.' }
+        }
+        remediatesActivityId = parsedRemediatesId.data
+    }
+
     const { data: activity } = await supabase
         .from('activities')
         .select('id, missions!inner(is_published, lessons!inner(courses!inner(teacher_id)))')
@@ -186,6 +215,7 @@ export async function updateActivity(formData: FormData): Promise<UpdateActivity
             prompt,
             activity_type: activityType,
             hint_text: hintText,
+            remediates_activity_id: remediatesActivityId,
         })
         .eq('id', activityId)
 

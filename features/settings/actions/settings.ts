@@ -304,29 +304,10 @@ export async function updateTextSizePreference(textSize: 'normal' | 'larger'): P
     return { ok: true }
 }
 
-const simplifyLanguageSchema = z.enum(['english', 'tagalog'])
-
-export async function updatePreferredSimplifyLanguage(
-    language: 'english' | 'tagalog'
-): Promise<SettingsActionResult> {
-    const user = await requireUser()
-
-    const parsed = simplifyLanguageSchema.safeParse(language)
-    if (!parsed.success) {
-        return { ok: false, error: 'Invalid language.' }
-    }
-
-    const supabase = await createClient()
-
-    const { data: updated, error } = await supabase
-        .from('users')
-        .update({ preferred_simplify_language: parsed.data })
-        .eq('id', user.id)
-        .select('id')
-
-    if (error || !updated || updated.length === 0) {
-        return { ok: false, error: 'Could not save your language preference.' }
-    }
-
-    return { ok: true }
-}
+// PHASE 8 REMOVAL (2026-08-28, new conversation continuing the same
+// project): updatePreferredSimplifyLanguage removed — AI Simplify is
+// being retired app-wide (full UI removal, confirmed with user). This
+// was its only caller (SimplifyTab.tsx's student view, also removed).
+// users.preferred_simplify_language column deliberately left in the
+// database untouched — UI/actions removal only this pass, not schema,
+// flagged to user as the safer default rather than assumed.

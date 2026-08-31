@@ -1,6 +1,7 @@
 'use client'
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { X } from 'lucide-react'
 import { createAssignment } from '@/features/assignments/actions/assignments'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 
@@ -89,7 +90,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     id="title"
                     name="title"
                     required
-                    className="mt-1 h-11 w-full px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="mt-1 h-11 w-full px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
             </div>
             <div>
@@ -98,7 +99,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     id="instructions"
                     name="instructions"
                     rows={4}
-                    className="mt-1 w-full px-4 py-3 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="mt-1 w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
             </div>
             <div className="pt-2 border-t border-hairline space-y-6">
@@ -120,7 +121,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 h-11 px-4 rounded-md border-[1.5px] border-dashed border-hairline-strong
+                        className="flex items-center gap-2 h-12 px-4 rounded-md border-2 border-dashed border-hairline
                                    text-body-md text-ink font-medium hover:border-brand hover:bg-surface-sunken
                                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
                     >
@@ -141,8 +142,8 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                 return (
                                     <li
                                         key={`${file.name}-${file.size}-${index}`}
-                                        className={`flex items-center gap-3 h-11 px-3 rounded-md border-[1.5px] bg-surface-sunken
-                                                    ${tooLarge ? 'border-error' : 'border-hairline-strong'}`}
+                                        className={`flex items-center gap-3 h-11 px-3 rounded-md border-2 bg-surface-sunken
+                                                    ${tooLarge ? 'border-error' : 'border-hairline'}`}
                                     >
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0 text-text-secondary">
                                             <path
@@ -207,7 +208,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                         placeholder="https://..."
                                         value={row.url}
                                         onChange={(e) => updateLinkRow(row.key, 'url', e.target.value)}
-                                        className="flex-1 h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                        className="flex-1 h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                                     />
                                     <input
                                         type="text"
@@ -215,15 +216,15 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                         placeholder="Label (optional)"
                                         value={row.label}
                                         onChange={(e) => updateLinkRow(row.key, 'label', e.target.value)}
-                                        className="w-40 h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                        className="w-40 h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                                     />
                                     <button
                                         type="button"
                                         aria-label="Remove link"
                                         onClick={() => removeLinkRow(row.key)}
-                                        className="text-text-secondary hover:text-error text-body-md px-2"
+                                        className="flex h-9 w-9 items-center justify-center text-text-secondary hover:text-error"
                                     >
-                                        ✕
+                                        <X size={16} aria-hidden="true" />
                                     </button>
                                 </div>
                             ))}
@@ -269,7 +270,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     min={1}
                     defaultValue={100}
                     required
-                    className="mt-1 h-11 w-full px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="mt-1 h-11 w-full px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
             </div>
 
@@ -278,7 +279,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     id="allowLate"
                     name="allowLate"
                     type="checkbox"
-                    className="h-5 w-5 rounded border-[1.5px] border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                    className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
                 />
                 <label htmlFor="allowLate" className="text-body-md text-ink">
                     Allow submissions after the due date
@@ -292,7 +293,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-md bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                className="w-full h-12 rounded-md bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover disabled:opacity-60 transition-colors"
             >
                 {isPending ? 'Creating…' : 'Create assignment'}
             </button>

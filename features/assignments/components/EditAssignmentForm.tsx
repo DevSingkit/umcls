@@ -128,7 +128,7 @@ export function EditAssignmentForm({
 
     return (
         <div className="max-w-2xl mx-auto pb-16">
-            <h1 className="font-heading text-h1 text-ink mb-8">Edit assignment</h1>
+            <h1 className="text-h1 text-ink mb-8">Edit assignment</h1>
 
             <form action={handleSave} className="bg-surface rounded-md shadow-card p-8 space-y-6 mb-8">
                 <input type="hidden" name="assignmentId" value={assignmentId} />
@@ -143,7 +143,7 @@ export function EditAssignmentForm({
                         type="text"
                         required
                         defaultValue={initialTitle}
-                        className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
+                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline text-body-md text-ink
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
@@ -157,7 +157,7 @@ export function EditAssignmentForm({
                         name="instructions"
                         rows={6}
                         defaultValue={initialInstructions}
-                        className="w-full px-4 py-3 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink leading-relaxed
+                        className="w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink leading-relaxed
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
@@ -191,7 +191,7 @@ export function EditAssignmentForm({
                         min={1}
                         required
                         defaultValue={initialMaxScore}
-                        className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink
+                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline text-body-md text-ink
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
@@ -202,7 +202,7 @@ export function EditAssignmentForm({
                         name="allowLate"
                         type="checkbox"
                         defaultChecked={initialAllowLate}
-                        className="h-5 w-5 rounded border-[1.5px] border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                        className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
                     />
                     <label htmlFor="allowLate" className="text-body-md text-ink">
                         Allow submissions after the due date
@@ -214,7 +214,7 @@ export function EditAssignmentForm({
                 </p>
 
                 {pendingRemovalIds.size > 0 && (
-                    <p className="text-caption text-amber">
+                    <p className="text-caption text-warning">
                         {pendingRemovalIds.size} attachment{pendingRemovalIds.size === 1 ? '' : 's'} will be
                         removed when you save.
                     </p>
@@ -229,14 +229,14 @@ export function EditAssignmentForm({
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-11 rounded-md bg-brand text-on-ink font-semibold text-body-md
+                    className="w-full h-12 rounded-md bg-brand text-on-ink font-semibold text-body-md
                                hover:bg-brand-hover disabled:opacity-60 transition-colors"
                 >
                     {isPending ? 'Saving…' : 'Save changes'}
                 </button>
             </form>
 
-            <h2 className="font-heading text-h3 text-ink mb-4">Attachments</h2>
+            <h2 className="text-h3 text-ink mb-4">Attachments</h2>
 
             <div className="bg-surface rounded-md shadow-card p-6 space-y-4 mb-4">
                 <form ref={fileFormRef} action={handleFileUpload} className="flex items-center gap-3 flex-wrap">
@@ -245,12 +245,15 @@ export function EditAssignmentForm({
                         name="file"
                         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.mp3,.mp4"
                         required
-                        className="text-caption text-text-secondary flex-1 min-w-[200px]"
+                        className="text-caption text-text-secondary flex-1 min-w-[200px] cursor-pointer
+                                   file:mr-3 file:h-9 file:px-4 file:rounded-md file:border-0
+                                   file:bg-surface-sunken file:text-caption file:font-semibold file:text-ink
+                                   file:cursor-pointer hover:file:bg-hairline"
                     />
                     <button
                         type="submit"
                         disabled={isUploading}
-                        className="h-11 px-6 rounded-md border-[1.5px] border-hairline-strong text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
+                        className="h-12 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
                     >
                         {isUploading ? 'Uploading…' : 'Upload file'}
                     </button>
@@ -261,7 +264,7 @@ export function EditAssignmentForm({
                         type="text"
                         name="label"
                         placeholder="Label (optional)"
-                        className="h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink flex-1 min-w-[140px]
+                        className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[140px]
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                     <input
@@ -269,13 +272,13 @@ export function EditAssignmentForm({
                         name="url"
                         placeholder="https://..."
                         required
-                        className="h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink flex-1 min-w-[200px]
+                        className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[200px]
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                     <button
                         type="submit"
                         disabled={isUploading}
-                        className="h-11 px-6 rounded-md border-[1.5px] border-hairline-strong text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
+                        className="h-12 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
                     >
                         {isUploading ? 'Adding…' : 'Add link'}
                     </button>
@@ -339,7 +342,7 @@ function MaterialListWithDelete({
                             <button
                                 type="button"
                                 onClick={() => onUndoRemoval(material.id)}
-                                className="h-9 px-4 rounded-md border-[1.5px] border-hairline-strong text-ink text-caption font-medium hover:bg-surface-sunken shrink-0"
+                                className="h-12 px-4 rounded-md border-2 border-hairline text-ink text-caption font-medium hover:bg-surface-sunken shrink-0"
                             >
                                 Undo
                             </button>
@@ -347,7 +350,7 @@ function MaterialListWithDelete({
                             <button
                                 type="button"
                                 onClick={() => onMarkForRemoval(material.id)}
-                                className="h-9 px-4 rounded-md border-[1.5px] border-red text-red text-caption font-medium hover:bg-red-soft shrink-0"
+                                className="h-12 px-4 rounded-md border-2 border-error text-error text-caption font-medium hover:bg-error-soft shrink-0"
                             >
                                 Remove
                             </button>

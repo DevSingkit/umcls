@@ -74,14 +74,14 @@ export function QuizPreviewForm({ quiz }: { quiz: Quiz }) {
 
     return (
         <div className="max-w-2xl">
-            <div className="sticky top-0 z-10 bg-amber-soft border border-amber rounded-md px-4 py-3 mb-6 text-center">
-                <p className="text-caption font-semibold text-amber">
+            <div className="sticky top-0 z-10 bg-warning-soft border border-warning rounded-md px-4 py-3 mb-6 text-center">
+                <p className="text-caption font-semibold text-warning">
                     Preview mode — not a real attempt. Nothing here is saved or submitted.
                 </p>
             </div>
 
             <div className="flex items-start justify-between gap-4 mb-2">
-                <h1 className="font-heading text-h1 text-ink">{quiz.title}</h1>
+                <h1 className="text-h1 text-ink">{quiz.title}</h1>
                 {formattedTime && (
                     <span className="text-body-emphasis text-ink whitespace-nowrap" role="timer" aria-live="polite">
                         {formattedTime}
@@ -101,7 +101,7 @@ export function QuizPreviewForm({ quiz }: { quiz: Quiz }) {
                                 value={answers[question.id]?.textResponse ?? ''}
                                 onChange={(e) => setTextAnswer(question.id, e.target.value)}
                                 placeholder="Type your answer here"
-                                className="w-full rounded-md border-[1.5px] border-hairline-strong px-4 py-3 text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                className="w-full rounded-md border-2 border-hairline px-4 py-3 text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                                 rows={3}
                             />
                         ) : question.question_type === 'checklist' ? (
@@ -109,7 +109,7 @@ export function QuizPreviewForm({ quiz }: { quiz: Quiz }) {
                                 {question.options.map((option) => (
                                     <label
                                         key={option.id}
-                                        className="flex items-center gap-3 rounded-md border-[1.5px] border-hairline-strong px-4 py-3 cursor-pointer has-[:checked]:border-brand has-[:checked]:bg-brand-soft"
+                                        className="flex items-center gap-3 rounded-md border-2 border-hairline px-4 py-3 cursor-pointer has-[:checked]:border-brand has-[:checked]:bg-brand-soft"
                                     >
                                         <input
                                             type="checkbox"
@@ -126,7 +126,7 @@ export function QuizPreviewForm({ quiz }: { quiz: Quiz }) {
                                 {question.options.map((option) => (
                                     <label
                                         key={option.id}
-                                        className="flex items-center gap-3 rounded-md border-[1.5px] border-hairline-strong px-4 py-3 cursor-pointer has-[:checked]:border-brand has-[:checked]:bg-brand-soft"
+                                        className="flex items-center gap-3 rounded-md border-2 border-hairline px-4 py-3 cursor-pointer has-[:checked]:border-brand has-[:checked]:bg-brand-soft"
                                     >
                                         <input
                                             type="radio"

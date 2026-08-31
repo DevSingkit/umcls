@@ -53,7 +53,7 @@ export function AttemptsList({
     if (attempts.length === 0) {
         return (
             <div className="bg-surface rounded-md border border-hairline p-8 text-center space-y-2">
-                <p className="text-h3 font-heading text-ink">No attempts yet</p>
+                <p className="text-h3 text-ink">No attempts yet</p>
                 <p className="text-body-md text-text-secondary">
                     Attempts will show up here once students start taking this quiz.
                 </p>
@@ -85,7 +85,7 @@ export function AttemptsList({
 
                             <div className="flex items-center gap-2 shrink-0">
                                 {latest.needsGrading && (
-                                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-amber-soft text-amber text-caption font-semibold px-3 py-1">
+                                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-warning-soft text-warning text-caption font-semibold px-3 py-1">
                                         Needs grading
                                     </span>
                                 )}
@@ -100,7 +100,7 @@ export function AttemptsList({
                                 <Link
                                     key={attempt.id}
                                     href={`/teacher/courses/${courseId}/quizzes/${quizId}/attempts/${attempt.id}`}
-                                    className="inline-flex items-center gap-1.5 rounded-pill text-caption font-semibold px-3 py-1 border border-transparent bg-surface-sunken text-text-secondary transition-colors hover:border-hairline-strong"
+                                    className="inline-flex items-center gap-1.5 rounded-pill text-caption font-semibold px-3 py-1 border border-transparent bg-surface-sunken text-text-secondary transition-colors hover:border-hairline"
                                 >
                                     <span className="opacity-60">#{attempt.attemptNumber}</span>
                                     {attempt.score === null ? 'Not yet scored' : attempt.score}

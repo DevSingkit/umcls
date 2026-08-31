@@ -10,10 +10,10 @@ export default async function TeacherCoursesPage() {
     return (
         <div>
             <div className="mb-8 flex items-center justify-between">
-                <h1 className="font-heading text-h1 text-ink">My classes</h1>
+                <h1 className="text-h1 text-ink">My classes</h1>
                 <Link
                     href="/teacher/courses/new"
-                    className="flex h-11 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
+                    className="flex h-12 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
                 >
                     + New class
                 </Link>
@@ -29,7 +29,7 @@ export default async function TeacherCoursesPage() {
                     </p>
                     <Link
                         href="/teacher/courses/new"
-                        className="flex h-11 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
+                        className="flex h-12 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
                     >
                         + Create your first class
                     </Link>

@@ -48,9 +48,11 @@ export const clientErrorRateLimit = new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(20, "1 h"),
 });
-// Simplify-lesson AI generation (formerly reteach): 10 requests / hour
-// / teacher, keyed by user.id in generateSimplifiedLessonForTeacher.
-export const aiRateLimit = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(10, "1 h"),
-});
+// PHASE 8 CLEANUP FIX (2026-08-30, continued conversation): aiRateLimit
+// removed — it existed for exactly one caller, AI Simplify's
+// generateSimplifiedLessonForTeacher (features/simplify/actions/
+// simplify.ts's aiRateLimit.limit(user.id) call), which was fully
+// retired earlier this session (Phase 8). Confirmed no other caller
+// before removing — everything else in this file (redis,
+// loginBurstRateLimit/loginSustainedRateLimit, resetRateLimit,
+// clientErrorRateLimit) is still live and untouched.

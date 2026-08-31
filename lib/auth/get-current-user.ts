@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { isSessionInactive } from '@/lib/security/guards'
 
 type Role = 'admin' | 'teacher' | 'student'
-type SimplifyLanguage = 'english' | 'tagalog'
 
 /**
  * Gets the current logged in user, or null if nobody is logged in.
@@ -16,6 +15,21 @@ type SimplifyLanguage = 'english' | 'tagalog'
  * inactive (timed-out) session on its own — that's requireUser's job.
  * This function is also used in places that just want to know "who's
  * logged in, if anyone" without forcing a redirect.
+ *
+ * PHASE 8 / DB CLEANUP FIX (2026-08-30, continued conversation): this
+ * file previously selected preferred_simplify_language and returned it
+ * as preferredSimplifyLanguage on the user object. That column was
+ * dropped by migration 089_drop_ai_simplify_schema.sql earlier this
+ * session as part of retiring AI Simplify — but THIS file was never
+ * checked or updated at the time, since it wasn't uploaded until now.
+ * Left as-is, the SELECT below would fail against the real (post-
+ * migration) schema on every single call — breaking getCurrentUser()
+ * for every user, which breaks nearly the entire app, since almost
+ * every page depends on requireUser/requireRole. Caught before real
+ * damage only because the user happened to share this file while
+ * investigating an unrelated stale-copy issue — worth remembering
+ * that a column-drop migration's blast radius includes every file
+ * that reads that table, not just the ones already reviewed.
  */
 export async function getCurrentUser() {
     const supabase = await createClient()
@@ -28,7 +42,7 @@ export async function getCurrentUser() {
     }
     const { data: profile } = await supabase
         .from('users')
-        .select('id, role, is_active, full_name, last_seen_at, preferred_simplify_language')
+        .select('id, role, is_active, full_name, last_seen_at')
         .eq('id', user.id)
         .single()
     if (!profile || !profile.is_active) {
@@ -40,7 +54,6 @@ export async function getCurrentUser() {
         role: profile.role as Role,
         fullName: profile.full_name,
         lastSeenAt: profile.last_seen_at as string | null,
-        preferredSimplifyLanguage: (profile.preferred_simplify_language as SimplifyLanguage | null) ?? 'english',
     }
 }
 

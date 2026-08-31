@@ -46,7 +46,7 @@ export function PostAssignmentButton({
                 <button
                     onClick={() => handleToggle(false)}
                     disabled={isPending}
-                    className="h-11 px-5 rounded-md border-[1.5px] border-hairline-strong text-body-md font-semibold text-ink hover:bg-surface-sunken disabled:opacity-60 shrink-0"
+                    className="h-12 px-5 rounded-md border-2 border-hairline text-body-md font-semibold text-ink hover:bg-surface-sunken disabled:opacity-60 shrink-0"
                 >
                     {isPending ? 'Working…' : 'Unpost'}
                 </button>
@@ -66,7 +66,7 @@ export function PostAssignmentButton({
                 <button
                     onClick={() => handleToggle(true)}
                     disabled={isPending}
-                    className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
+                    className="h-12 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
                 >
                     {isPending ? 'Posting…' : 'Post'}
                 </button>

@@ -10,6 +10,9 @@ import { NewQuizForm } from '@/features/quizzes/components/NewQuizForm'
 // the database (see that function's comment in create-quiz.ts for
 // why: the old flow inserted an empty draft the instant the button
 // was clicked, which showed up in the course stream with no content).
+//
+// DESIGN-LMS 2.1 PASS: removed font-heading from title (Classroom
+// Mode, Fredoka is Mission-Mode-only).
 export default async function NewQuizPage({
     params,
 }: {
@@ -20,7 +23,7 @@ export default async function NewQuizPage({
 
     return (
         <div className="max-w-2xl">
-            <h1 className="font-heading text-h1 text-ink mb-6">Create Quiz</h1>
+            <h1 className="text-h1 text-ink mb-6">Create Quiz</h1>
 
             <NewQuizForm courseId={courseId} />
         </div>

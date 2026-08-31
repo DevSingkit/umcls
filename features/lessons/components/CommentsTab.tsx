@@ -56,8 +56,8 @@ export function CommentsTab({
                     placeholder="Add a class comment..."
                     required
                     maxLength={2000}
-                    className="h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink flex-1
-                               focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="h-11 px-4 rounded-md bg-surface border-2 border-hairline text-body-md text-ink flex-1
+                               placeholder:text-text-muted focus:border-brand focus:outline-none"
                 />
                 <button
                     type="submit"

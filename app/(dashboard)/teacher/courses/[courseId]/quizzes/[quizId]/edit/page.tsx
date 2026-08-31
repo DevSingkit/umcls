@@ -34,6 +34,11 @@ export const fetchCache = 'force-no-store'
 // requires an existing quiz, created via
 // /teacher/courses/[courseId]/quizzes/new, so this page is reached
 // only once real content already exists.
+//
+// DESIGN-LMS 2.1 PASS: removed font-heading from title (Classroom
+// Mode, Fredoka is Mission-Mode-only); Preview/Attempts links'
+// border-[1.5px] border-hairline-strong -> border-2 border-hairline
+// (same recurring fix applied everywhere else this track).
 export default async function QuizEditPage({
     params,
 }: {
@@ -50,7 +55,7 @@ export default async function QuizEditPage({
 
     return (
         <div className="max-w-2xl">
-            <h1 className="font-heading text-h1 text-ink mb-6">Edit Quiz</h1>
+            <h1 className="text-h1 text-ink mb-6">Edit Quiz</h1>
 
             <div className="mb-2">
                 <QuizTitleField quizId={quiz.id} initialTitle={quiz.title} />
@@ -64,13 +69,13 @@ export default async function QuizEditPage({
                 <div className="flex flex-wrap items-center gap-3 mb-8 bg-surface rounded-md border border-hairline p-4">
                     <Link
                         href={`/teacher/courses/${courseId}/quizzes/${quiz.id}/preview`}
-                        className="h-11 px-5 flex items-center rounded-md border-[1.5px] border-hairline-strong text-body-md font-semibold text-ink hover:bg-surface-sunken transition-colors"
+                        className="h-11 px-5 flex items-center rounded-md border-2 border-hairline text-body-md font-semibold text-ink hover:bg-surface-sunken transition-colors"
                     >
                         Preview
                     </Link>
                     <Link
                         href={`/teacher/courses/${courseId}/quizzes/${quiz.id}/attempts`}
-                        className="h-11 px-5 flex items-center rounded-md border-[1.5px] border-hairline-strong text-body-md font-semibold text-ink hover:bg-surface-sunken transition-colors"
+                        className="h-11 px-5 flex items-center rounded-md border-2 border-hairline text-body-md font-semibold text-ink hover:bg-surface-sunken transition-colors"
                     >
                         Attempts
                     </Link>

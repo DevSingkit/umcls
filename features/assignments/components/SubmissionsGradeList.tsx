@@ -26,12 +26,14 @@ type Row = {
     } | null
 }
 
-function StatusBadge({ tone, children }: { tone: 'amber' | 'slate'; children: React.ReactNode }) {
+// DESIGN-LMS 2.1: bg-amber-soft/text-amber -> bg-warning-soft/
+// text-warning. `amber` is a dead token from the old v1.0 config.
+function StatusBadge({ tone, children }: { tone: 'warning' | 'slate'; children: React.ReactNode }) {
     return (
         <span
             className={cn(
                 'inline-flex items-center rounded-pill px-2 py-0.5 text-caption font-semibold',
-                tone === 'amber' && 'bg-amber-soft text-amber',
+                tone === 'warning' && 'bg-warning-soft text-warning',
                 tone === 'slate' && 'bg-hairline text-text-secondary'
             )}
         >
@@ -115,7 +117,7 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
                                     )}
                                     {row.submission.is_late && <StatusBadge tone="slate">Late</StatusBadge>}
                                     {row.submission.status === 'resubmitted' && (
-                                        <StatusBadge tone="amber">Resubmitted</StatusBadge>
+                                        <StatusBadge tone="warning">Resubmitted</StatusBadge>
                                     )}
                                 </div>
                             ) : (
@@ -137,13 +139,13 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
                                             max={maxScore}
                                             defaultValue={row.submission.score ?? ''}
                                             required
-                                            className="h-9 w-20 px-2 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink"
+                                            className="h-11 w-20 px-2 rounded-md border-2 border-hairline text-body-md text-ink"
                                         />
                                         <span className="text-caption text-text-secondary">/ {maxScore}</span>
                                         <button
                                             type="submit"
                                             disabled={isPending}
-                                            className="h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover disabled:opacity-60"
+                                            className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover disabled:opacity-60"
                                         >
                                             Save
                                         </button>
@@ -159,7 +161,7 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
                                         </span>
                                         <button
                                             onClick={() => setEditingId(row.submission!.id)}
-                                            className="h-9 px-4 rounded-md border-[1.5px] border-hairline-strong text-caption font-semibold text-ink hover:bg-surface-sunken"
+                                            className="h-12 px-4 rounded-md border-2 border-hairline text-caption font-semibold text-ink hover:bg-surface-sunken"
                                         >
                                             {row.submission.status === 'graded' || row.submission.status === 'returned'
                                                 ? 'Edit'
@@ -169,7 +171,7 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
                                             <button
                                                 onClick={() => handleReturn(row.submission!.id)}
                                                 disabled={isPending}
-                                                className="h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover disabled:opacity-60"
+                                                className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover disabled:opacity-60"
                                             >
                                                 Return to student
                                             </button>

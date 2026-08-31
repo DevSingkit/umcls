@@ -51,7 +51,7 @@ export function EnrollStudentForm({
                 type="button"
                 onClick={() => setIsOpen((v) => !v)}
                 aria-expanded={isOpen}
-                className="inline-flex h-11 items-center gap-2 px-5 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink font-medium text-body-md
+                className="inline-flex h-12 items-center gap-2 px-5 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink font-medium text-body-md
                            hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
             >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
@@ -111,7 +111,7 @@ export function EnrollStudentForm({
                         <button
                             type="submit"
                             disabled={isPending || students.length === 0}
-                            className="w-full h-11 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
+                            className="w-full h-12 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
                         >
                             {isPending ? 'Enrolling…' : 'Enroll student'}
                         </button>

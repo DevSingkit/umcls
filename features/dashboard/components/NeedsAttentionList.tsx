@@ -14,6 +14,26 @@
 // Renders its own heading + top spacing (mt-8) so this section always
 // stands apart from whatever sits above it on the page, rather than
 // relying on the parent page to add a gap.
+//
+// DESIGN-LMS 2.1 REDESIGN (2026-08-31): pure visual pass, no logic
+// touched — ITEM_KIND_LABEL, ITEM_CTA_LABEL, timeAgo, and the full
+// items.map render logic are unchanged. Three fixes:
+//   1. Removed `font-heading` from the section heading, same
+//      Classroom-Mode-is-Roboto fix applied everywhere else.
+//   2. `bg-amber-soft text-amber` for assignment_submission was the
+//      recurring dead-token bug (no `amber` token exists in
+//      tailwind.config.ts, only `warning`/`warning-soft`) — this
+//      silently rendered as no background/text color at all. Fixed to
+//      `bg-warning-soft text-warning`. User confirmed this keeps all
+//      three item kinds visually distinct exactly as the original
+//      comment intended: assignment_submission = warning,
+//      quiz_short_answer = info (already valid, untouched),
+//      mission_stuck = error (already valid and intentional per the
+//      file's own comment, untouched).
+//   3. The Grade/Review CTA buttons were h-9 (36px), under §1.4's 48px
+//      secondary touch-target floor — bumped to h-12 per the standing
+//      rule established in the components-round-1 log entry, applied
+//      on sight without re-asking.
 import Link from 'next/link'
 import { ClipboardList, HelpCircle, AlertTriangle } from 'lucide-react'
 import type { AttentionItem } from '@/features/dashboard/actions/teacher-dashboard'
@@ -25,7 +45,7 @@ const ITEM_ICON: Record<AttentionItem['kind'], typeof ClipboardList> = {
 }
 
 const ITEM_ICON_BG: Record<AttentionItem['kind'], string> = {
-    assignment_submission: 'bg-amber-soft text-amber',
+    assignment_submission: 'bg-warning-soft text-warning',
     quiz_short_answer: 'bg-info-soft text-info',
     // Distinct from the other two on purpose — this isn't a routine
     // grading task, it's a "this student needs help" signal, so it
@@ -62,7 +82,7 @@ function timeAgo(iso: string) {
 export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
     return (
         <div className="mt-8">
-            <h2 className="font-heading text-h2 text-ink mb-4">Needs your attention</h2>
+            <h2 className="text-h2 text-ink mb-4">Needs your attention</h2>
 
             {items.length === 0 ? (
                 <div className="border border-dashed border-hairline-strong rounded-md p-6 text-center">
@@ -104,7 +124,7 @@ export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
 
                                 <Link
                                     href={item.href}
-                                    className="shrink-0 h-9 px-4 inline-flex items-center rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
+                                    className="shrink-0 h-12 px-4 inline-flex items-center rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
                                 >
                                     {ITEM_CTA_LABEL[item.kind]}
                                 </Link>

@@ -128,6 +128,15 @@ export type ActivityPreviewForStudent = {
     activityType: string
     orderIndex: number
     options: { id: string; optionText: string }[]
+    // PHASE 3 ADDITIONS (ADAPTIVE-ENGINE-PLAN.md) — read from
+    // activity_mastery (Phase 1/2), used by ActivityRunner.tsx to seed
+    // its in-session queue: isMastered drives the initial "unmastered
+    // first" sort below, initialCorrectStreak seeds the runner's local
+    // per-activity streak so it doesn't start every activity back at 0
+    // if the student already had progress toward this specific
+    // activity's own 3-in-a-row from an earlier session.
+    initialCorrectStreak: number
+    isMastered: boolean
 }
 
 export type MissionPreviewForStudent = {
@@ -150,7 +159,7 @@ export type MissionPreviewForStudent = {
  * that leaves is_correct out entirely.
  */
 export async function getMissionPreviewForStudent(missionId: string): Promise<MissionPreviewForStudent> {
-    await requireRole(['student'])
+    const user = await requireRole(['student'])
     const supabase = await createClient()
 
     const { data: mission, error: missionError } = await supabase
@@ -186,15 +195,56 @@ export async function getMissionPreviewForStudent(missionId: string): Promise<Mi
         throw new Error('Could not load answer options')
     }
 
-    const activitiesWithOptions = (activities ?? []).map((activity) => ({
-        id: activity.id,
-        prompt: activity.prompt,
-        activityType: activity.activity_type,
-        orderIndex: activity.order_index,
-        options: (options ?? [])
-            .filter((o) => o.activity_id === activity.id)
-            .map((o) => ({ id: o.id, optionText: o.option_text })),
-    }))
+    // PHASE 3 ADDITION: this student's mastery state for every activity
+    // in this mission, used only to decide INITIAL ordering below (see
+    // ADAPTIVE-ENGINE-PLAN.md Phase 3 — "activities not yet mastered
+    // come before/mixed with mastered ones"). The live in-session
+    // requeue behavior itself (what happens after a wrong answer, or a
+    // correct answer that doesn't yet complete an activity's own
+    // 3-in-a-row) is NOT computed here — that's ActivityRunner.tsx's
+    // job, reacting to each attempt's result as it comes in (confirmed
+    // with user: split responsibility, this file does the one-time
+    // initial sort, the component owns live queue state). A missing
+    // row (student has never attempted this activity) is treated as
+    // unmastered/streak 0, same "no row = not yet mastered" reasoning
+    // used for mission_progress's own bootstrapping default above.
+    const { data: masteryRows, error: masteryError } = await supabase
+        .from('activity_mastery')
+        .select('activity_id, correct_streak, state')
+        .eq('student_id', user.id)
+        .in('activity_id', activityIds)
+
+    if (masteryError) {
+        throw new Error('Could not load activity mastery')
+    }
+
+    const masteryByActivityId = new Map((masteryRows ?? []).map((m) => [m.activity_id, m]))
+
+    // Stable partition: unmastered first, mastered last. The query
+    // above already returned `activities` ordered by order_index, and
+    // Array.prototype.sort is a stable sort in every JS engine this
+    // app runs on, so activities within each group keep their original
+    // order_index order — no secondary sort key needed.
+    const sortedActivities = [...(activities ?? [])].sort((a, b) => {
+        const aMastered = masteryByActivityId.get(a.id)?.state === 'mastered' ? 1 : 0
+        const bMastered = masteryByActivityId.get(b.id)?.state === 'mastered' ? 1 : 0
+        return aMastered - bMastered
+    })
+
+    const activitiesWithOptions = sortedActivities.map((activity) => {
+        const mastery = masteryByActivityId.get(activity.id)
+        return {
+            id: activity.id,
+            prompt: activity.prompt,
+            activityType: activity.activity_type,
+            orderIndex: activity.order_index,
+            options: (options ?? [])
+                .filter((o) => o.activity_id === activity.id)
+                .map((o) => ({ id: o.id, optionText: o.option_text })),
+            initialCorrectStreak: mastery?.correct_streak ?? 0,
+            isMastered: mastery?.state === 'mastered',
+        }
+    })
 
     return {
         id: mission.id,

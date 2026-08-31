@@ -7,6 +7,15 @@ import { ROLE_DASHBOARD } from "@/lib/navigation/nav-items";
 // user's role doesn't match the page they tried to open (AUTH_NOTES.md).
 // Uses getCurrentUser(), not requireUser(), so a broken session can't loop
 // back into this page.
+//
+// DESIGN-LMS 2.1 bugfix pass (2026-08-31): three fixes, no logic
+// touched. (1) The button was h-11 (44px) but it's this page's sole
+// primary action — bumped to h-14 (56px), the standing primary-CTA
+// touch-target floor. (2) It used bg-ink/focus-visible:ring-ink instead
+// of the brand-green bg-brand every other primary button in the app
+// uses. (3) Its own focus-visible ring duplicated the global brand-
+// green ring already defined once in globals.css — removed the
+// per-component override so it inherits that instead of reinventing it.
 export default async function UnauthorizedPage() {
     const user = await getCurrentUser();
     const backHref = user ? ROLE_DASHBOARD[user.role] : "/";
@@ -22,7 +31,7 @@ export default async function UnauthorizedPage() {
             </p>
             <Link
                 href={backHref}
-                className="mt-2 inline-flex h-11 items-center rounded-md bg-ink px-6 text-body-emphasis text-on-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+                className="mt-2 inline-flex h-14 items-center rounded-md bg-brand px-6 text-body-emphasis text-on-ink hover:bg-brand-hover transition-colors"
             >
                 {backLabel}
             </Link>

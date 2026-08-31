@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import { getStudentDashboardData } from '@/features/dashboard/actions/student-dashboard'
+import { getMasteredMissionsForStudent } from '@/features/dashboard/actions/get-mastered-missions'
 import { getMyTodoItems } from '@/features/todo/queries/todo-items'
 import { TodoList } from '@/features/todo/components/TodoList'
 import { ContinueLearning } from '@/features/dashboard/components/ContinueLearning'
+import { MasteredMissions } from '@/features/dashboard/components/MasteredMissions'
 import { CoursesPreview } from '@/features/dashboard/components/CoursesPreview'
 
 // Student home page. Order follows §8.6: orient before act. Courses
@@ -17,9 +19,20 @@ import { CoursesPreview } from '@/features/dashboard/components/CoursesPreview'
 // the full /student/todo page (Assigned/Missing/Done tabs), per
 // REBUILD-PLAN.md's Phase 1 checklist — previously rendered the full
 // unfiltered list here.
+//
+// PHASE 3.6 ADDITION (ADAPTIVE-ENGINE-PLAN.md, 2026-08-28): a third
+// section, "Mastered — replay for fun", added BELOW the Continue
+// learning / To-Do grid rather than inside it — deliberately full-
+// width and visually separate, since it's optional/for-fun content,
+// not something that should compete for attention with the "still
+// need to do this" sections above it. Heading is only rendered when
+// there's at least one group, matching MasteredMissions.tsx's own
+// "render nothing, not an empty state" choice for a brand-new student
+// who hasn't mastered anything yet.
 export default async function StudentDashboardPage() {
-    const [{ continueLearning, coursesPreview, courseNameById }, todoItems] = await Promise.all([
+    const [{ continueLearning, coursesPreview, courseNameById }, masteredGroups, todoItems] = await Promise.all([
         getStudentDashboardData(),
+        getMasteredMissionsForStudent(),
         getMyTodoItems(),
     ])
 
@@ -27,7 +40,7 @@ export default async function StudentDashboardPage() {
 
     return (
         <div>
-            <h1 className="font-heading text-h1 text-ink mb-8">Dashboard</h1>
+            <h1 className="text-h1 text-ink mb-8">Dashboard</h1>
 
             <div className="mb-10">
                 <CoursesPreview
@@ -39,13 +52,13 @@ export default async function StudentDashboardPage() {
 
             <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
                 <div className="order-2 lg:order-1">
-                    <h2 className="font-heading text-h2 text-ink mb-4">Continue learning</h2>
+                    <h2 className="text-h2 text-ink mb-4">Continue learning</h2>
                     <ContinueLearning items={continueLearning} />
                 </div>
 
                 <div className="order-1 lg:order-2">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-heading text-h2 text-ink">To-Do</h2>
+                        <h2 className="text-h2 text-ink">To-Do</h2>
                         {todoItems.length > 0 && (
                             <Link href="/student/todo" className="text-caption font-semibold text-brand hover:underline">
                                 View all
@@ -55,6 +68,13 @@ export default async function StudentDashboardPage() {
                     <TodoList items={todoPreview} courseNameById={courseNameById} />
                 </div>
             </div>
+
+            {masteredGroups.length > 0 && (
+                <div className="mt-10">
+                    <h2 className="text-h2 text-ink mb-4">Mastered — replay for fun</h2>
+                    <MasteredMissions groups={masteredGroups} />
+                </div>
+            )}
         </div>
     )
 }

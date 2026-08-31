@@ -365,3 +365,31 @@ export async function updateMissionSettings(formData: FormData): Promise<UpdateM
 
     return { ok: true }
 }
+
+// GAP #2 FIX (2026-08-30, continued conversation): wipes every
+// student's progress on this mission (mission_progress, attempt_events
+// on its activities, activity_mastery on its activities) via the
+// reset_mission_progress RPC (migration 093), mirroring
+// resetQuizAttempts's exact shape for the equivalent quiz gap. See
+// that migration's own header for why THREE tables need clearing here
+// instead of quizzes' two.
+//
+// Ownership is enforced by the RPC itself (SECURITY DEFINER, explicit
+// teacher_id check in SQL) — this action just calls it and translates
+// the result, same pattern as deleteStreamItem for the RPC family.
+export type ResetMissionProgressResult =
+    | { ok: true; affectedStudents: number }
+    | { ok: false; error: string }
+
+export async function resetMissionProgress(missionId: string): Promise<ResetMissionProgressResult> {
+    await requireRole(['teacher'])
+    const supabase = await createClient()
+
+    const { data, error } = await supabase.rpc('reset_mission_progress', { p_mission_id: missionId })
+
+    if (error) {
+        return { ok: false, error: `Could not reset progress: ${error.message}` }
+    }
+
+    return { ok: true, affectedStudents: (data as number) ?? 0 }
+}

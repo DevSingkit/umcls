@@ -62,8 +62,8 @@ export function QuizTitleField({ quizId, initialTitle }: { quizId: string; initi
                 placeholder="e.g. Chapter 3 Quiz"
                 aria-label="Quiz name"
                 aria-required="true"
-                className={`w-full h-11 px-4 text-body-emphasis text-ink bg-surface rounded-md border-[1.5px] focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors ${
-                    error ? 'border-error' : 'border-hairline-strong focus:border-brand'
+                className={`w-full h-11 px-4 text-body-emphasis text-ink bg-surface rounded-md border-2 focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors ${
+                    error ? 'border-error' : 'border-hairline focus:border-brand'
                 }`}
             />
             {isPending && <p className="text-caption text-text-secondary mt-2">Saving…</p>}

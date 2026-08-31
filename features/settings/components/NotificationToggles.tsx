@@ -83,7 +83,7 @@ export function NotificationToggles({ initial }: NotificationTogglesProps) {
 
     return (
         <section className="bg-surface rounded-md shadow-card p-6">
-            <h2 className="font-heading text-h3 text-ink mb-2">Notifications</h2>
+            <h2 className="text-h3 text-ink mb-2">Notifications</h2>
             <p className="text-caption text-text-secondary mb-2">
                 Choose what you want to be notified about.
             </p>

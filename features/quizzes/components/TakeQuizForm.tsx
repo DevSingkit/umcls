@@ -357,7 +357,7 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
     return (
         <div className="max-w-2xl">
             <div className="flex items-start justify-between gap-4 mb-2">
-                <h1 className="font-heading text-h1 text-ink">{quiz.title}</h1>
+                <h1 className="text-h1 text-ink">{quiz.title}</h1>
                 {formattedTime && (
                     <span
                         className={`text-body-emphasis whitespace-nowrap ${isTimeLow ? 'text-error' : 'text-ink'}`}
@@ -453,7 +453,7 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
             <button
                 onClick={() => handleSubmit()}
                 disabled={isSubmitting}
-                className="w-full h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+                className="w-full h-14 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
             >
                 {isSubmitting ? 'Submitting…' : 'Submit quiz'}
             </button>

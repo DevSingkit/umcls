@@ -15,7 +15,7 @@ const ITEM_ICON: Record<TodoItem['itemType'], typeof ClipboardList> = {
 }
 
 const ITEM_ICON_BG: Record<TodoItem['itemType'], string> = {
-    assignment: 'bg-amber-soft text-amber',
+    assignment: 'bg-warning-soft text-warning',
     quiz: 'bg-info-soft text-info',
 }
 

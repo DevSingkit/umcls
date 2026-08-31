@@ -32,7 +32,7 @@ function StatusGlyph({
 }) {
     if (status === 'mastered') {
         return (
-            <span className="relative flex items-center justify-center w-16 h-16 rounded-pill bg-amber text-on-ink shrink-0 shadow-card-hover">
+            <span className="relative flex items-center justify-center w-16 h-16 rounded-pill bg-warning text-on-ink shrink-0 shadow-card-hover">
                 <Star size={28} fill="currentColor" aria-hidden="true" />
             </span>
         )
@@ -72,7 +72,7 @@ export function MissionPath({
     lessonId: string
 }) {
     if (missions.length === 0) {
-        return <p className="text-body-md text-text-secondary">No missions yet for this lesson.</p>
+        return <p className="font-sans text-body-md text-text-secondary">No missions yet for this lesson.</p>
     }
 
     // The first "unlocked" mission in order is the one the student
@@ -117,7 +117,7 @@ export function MissionPath({
                                     : isCurrent
                                       ? 'bg-brand-soft border-[1.5px] border-brand shadow-card-hover'
                                       : isMastered
-                                        ? 'bg-amber-soft border-hairline shadow-card'
+                                        ? 'bg-warning-soft border-hairline shadow-card'
                                         : 'bg-surface border-hairline shadow-card hover:border-brand'
                             }`}
                         >
@@ -125,33 +125,33 @@ export function MissionPath({
                                 <p
                                     className={
                                         isCurrent
-                                            ? 'font-heading text-h3 text-ink'
-                                            : `text-body-emphasis ${isLocked ? 'text-text-muted' : 'text-ink'}`
+                                            ? 'font-heading text-[1.25rem] md:text-[1.5rem] font-semibold text-ink'
+                                            : `font-sans text-body-emphasis ${isLocked ? 'text-text-muted' : 'text-ink'}`
                                     }
                                 >
                                     {mission.title}
                                 </p>
                                 {isMastered && (
-                                    <span className="shrink-0 text-caption font-semibold text-amber bg-surface rounded-pill px-3 py-1 shadow-card">
+                                    <span className="shrink-0 font-sans text-caption font-semibold text-warning bg-surface rounded-pill px-3 py-1 shadow-card">
                                         Mastered
                                     </span>
                                 )}
                                 {isCurrent && (
-                                    <span className="motion-safe:animate-pulse shrink-0 text-caption font-semibold text-on-ink bg-brand rounded-pill px-3 py-1">
+                                    <span className="motion-safe:animate-pulse shrink-0 font-sans text-caption font-semibold text-on-ink bg-brand rounded-pill px-3 py-1">
                                         Start here
                                     </span>
                                 )}
                             </div>
                             {mission.description && !isLocked && (
-                                <p className="text-caption text-text-secondary mt-1">{mission.description}</p>
+                                <p className="font-sans text-caption text-text-secondary mt-1">{mission.description}</p>
                             )}
                             {mission.status === 'unlocked' && mission.correctStreak > 0 && (
-                                <p className="text-caption text-text-secondary mt-1">
+                                <p className="font-sans text-caption text-text-secondary mt-1">
                                     {mission.correctStreak} / {mission.masteryThreshold} correct in a row
                                 </p>
                             )}
                             {isLocked && (
-                                <p className="text-caption text-text-muted mt-1">Complete the mission above to unlock</p>
+                                <p className="font-sans text-caption text-text-muted mt-1">Complete the mission above to unlock</p>
                             )}
                         </div>
                     </div>

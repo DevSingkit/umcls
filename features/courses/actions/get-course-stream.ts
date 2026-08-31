@@ -11,9 +11,20 @@
 // lesson_completions) — the difference is everything comes back
 // pre-merged and pre-sorted, so the page component stays a thin
 // renderer instead of doing this assembly itself.
+//
+// PHASE 3.8 ADDITION (2026-08-28): announcements merged in as a fourth
+// kind, via listAnnouncementsForCourse (shared with
+// get-teacher-course-stream.ts, so the two queries can't independently
+// re-derive this and disagree). Unlike the other three kinds,
+// 'announcement' carries no `title` — the body text itself IS the
+// content, matching how Classroom shows announcement posts inline
+// rather than as a link to something else. CourseStream.tsx special-
+// cases this kind with a genuinely different card shape for that
+// reason (confirmed with user before building, not assumed).
 
 import { requireRole, getCurrentUser } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
+import { listAnnouncementsForCourse, type Announcement } from '@/features/courses/actions/announcements'
 
 export type StreamItem =
     | {
@@ -44,6 +55,9 @@ export type StreamItem =
         // states used everywhere else in the assignment flow.
         submissionStatus: 'submitted' | 'graded' | 'returned' | 'resubmitted' | null
     }
+    | ({
+        kind: 'announcement'
+    } & Announcement)
 
 export async function getCourseStream(courseId: string): Promise<StreamItem[]> {
     const user = await requireRole(['student'])
@@ -64,7 +78,7 @@ export async function getCourseStream(courseId: string): Promise<StreamItem[]> {
         return []
     }
 
-    const [{ data: lessons }, { data: quizzes }, { data: assignments }] = await Promise.all([
+    const [{ data: lessons }, { data: quizzes }, { data: assignments }, announcements] = await Promise.all([
         supabase
             .from('lessons')
             .select('id, title, created_at')
@@ -83,6 +97,7 @@ export async function getCourseStream(courseId: string): Promise<StreamItem[]> {
             .eq('course_id', courseId)
             .eq('is_published', true)
             .is('deleted_at', null),
+        listAnnouncementsForCourse(courseId),
     ])
 
     const assignmentIds = (assignments ?? []).map((a) => a.id)
@@ -160,6 +175,7 @@ export async function getCourseStream(courseId: string): Promise<StreamItem[]> {
                     | 'resubmitted'
                     | undefined) ?? null,
         })),
+        ...announcements.map((a): StreamItem => ({ kind: 'announcement', ...a })),
     ]
 
     // Newest first — matches Classroom's actual stream ordering (post

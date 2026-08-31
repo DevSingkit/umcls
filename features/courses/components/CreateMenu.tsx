@@ -36,7 +36,7 @@ export function CreateMenu({ courseId }: { courseId: string }) {
                 onClick={() => setIsOpen((prev) => !prev)}
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
-                className="flex h-11 items-center gap-1.5 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="flex h-12 items-center gap-1.5 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
                 + Create
                 <ChevronDown size={16} aria-hidden="true" />
@@ -51,7 +51,7 @@ export function CreateMenu({ courseId }: { courseId: string }) {
                         href={`/teacher/courses/${courseId}/lessons/new`}
                         role="menuitem"
                         onClick={() => setIsOpen(false)}
-                        className="flex h-11 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
+                        className="flex h-12 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
                     >
                         <FileText size={20} aria-hidden="true" className="text-text-secondary" />
                         Lesson
@@ -60,7 +60,7 @@ export function CreateMenu({ courseId }: { courseId: string }) {
                         href={`/teacher/courses/${courseId}/quizzes/new`}
                         role="menuitem"
                         onClick={() => setIsOpen(false)}
-                        className="flex h-11 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
+                        className="flex h-12 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
                     >
                         <HelpCircle size={20} aria-hidden="true" className="text-text-secondary" />
                         Quiz
@@ -69,7 +69,7 @@ export function CreateMenu({ courseId }: { courseId: string }) {
                         href={`/teacher/courses/${courseId}/assignments/new`}
                         role="menuitem"
                         onClick={() => setIsOpen(false)}
-                        className="flex h-11 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
+                        className="flex h-12 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
                     >
                         <ClipboardList size={20} aria-hidden="true" className="text-text-secondary" />
                         Assignment

@@ -12,7 +12,7 @@ export default async function SettingsPage() {
 
     return (
         <div>
-            <h1 className="font-heading text-h1 text-ink mb-8">Settings</h1>
+            <h1 className="text-h1 text-ink mb-8">Settings</h1>
 
             <div className="grid gap-6 max-w-2xl">
                 <ProfileSection

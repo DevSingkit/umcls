@@ -21,6 +21,17 @@
 //     those redirects used to land on a dedicated /login page that no
 //     longer exists — without this, the person would just see a blank
 //     sign-in form with no explanation for why they were signed out.
+//
+// DESIGN-LMS 2.1 (2026-08-31): removed font-heading (Fredoka) and cut
+// the redundant heading stack this card used to render on top of the
+// page's own heading — app/login/page.tsx already shows an eyebrow
+// ("LMS Gateway"), h1 ("Sign in to your account"), and "Welcome!"
+// directly above this component. This card previously repeated all of
+// that a second time (its own "• Sign in" eyebrow, two h2 lines
+// spelling out the school name already shown in SiteNav's logo, and
+// "Sign in to your account" again) — a real duplicate-heading stack,
+// not just visual noise. The page's heading is now the sole title;
+// this component starts directly at the form.
 
 import { useActionState, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -72,23 +83,6 @@ export function LoginForm() {
 
     return (
         <div className="w-full rounded-md bg-surface p-8 shadow-modal sm:p-10">
-            <p className="mb-3 flex items-center gap-1.5 text-label text-text-secondary">
-                <span aria-hidden="true" className="text-amber">
-                    •
-                </span>
-                Sign in
-            </p>
-
-            <h2 className="font-heading text-h3 text-ink">
-                United Methodist
-            </h2>
-            <h2 className="mb-3 font-heading text-h3 text-ink">
-                Cooperative Learning System, Inc.
-            </h2>
-            <p className="mb-8 text-body-md text-text-secondary">
-                Sign in to your account
-            </p>
-
             {reasonMessage && !state.error && (
                 <div
                     role="status"

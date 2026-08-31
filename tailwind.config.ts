@@ -1,112 +1,133 @@
 import type { Config } from "tailwindcss";
-// Tokens pulled directly from DESIGN-LMS.md v1.0 (the "UMCLSI Classroom
-// Design System"), sections 2-4. This replaces the old Mastercard-style
-// palette entirely. Do not hand-tune these — if a token is wrong, fix it
-// in DESIGN-LMS.md first, then mirror the change here.
+
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./features/**/*.{ts,tsx}"],
+  // Enforce mobile-first scanning across all app directories
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./features/**/*.{ts,tsx}",
+  ],
   theme: {
     extend: {
-      colors: {
-        // Canvas & surfaces
-        canvas: "#F7F5F0",
-        surface: "#FFFFFF",
-        "surface-sunken": "#EFEBE3",
-        hairline: "#E2DED4",
-        "hairline-strong": "#C9C3B5",
-
-        // Ink (text — used everywhere for headings/body, NOT the sidebar)
-        ink: "#1F2A24",
-        "ink-soft": "#3F4A43",
-        "text-secondary": "#6B7268",
-        "text-muted": "#9A9F94",
-        "on-ink": "#F7F5F0",
-
-        // Sidebar/chrome — separate from `ink`. `ink` stays the text
-        // color everywhere; this is ONLY for structural chrome
-        // (Sidebar.tsx's bg-ink usage becomes bg-sidebar).
-        sidebar: "#8F1349",
-        "sidebar-hover": "#7A1040",
-        "sidebar-active": "#C21A5D",
-
-        // Brand — institution green (was schoolhouse green #2E7D46)
-        brand: "#128630",
-        "brand-hover": "#0F6D27",
-        "brand-soft": "#E1F0E5",
-
-        // Warm accent (attention, not alarm)
-        amber: "#E8963C",
-        "amber-soft": "#FBEBD6",
-
-        // Destructive / consequential
-        red: "#C4453A",
-        "red-soft": "#F7E2E0",
-
-        // Semantic (mirror brand/amber/red — never repurposed elsewhere)
-        success: "#128630",
-        "success-soft": "#E1F0E5",
-        warning: "#E8963C",
-        "warning-soft": "#FBEBD6",
-        error: "#C4453A",
-        "error-soft": "#F7E2E0",
-        info: "#3B7EC4",
-        "info-soft": "#E1EDF8",
-
-        // Role accents (badges/avatars only, never buttons)
-        "role-admin": "#5B6472",
-        "role-teacher": "#128630",
-        "role-student": "#3B7EC4",
-      },
-      fontFamily: {
-        // Both headings and body now use Roboto — matches Google
-        // Classroom's actual font choice, replacing the earlier
-        // Nunito/Inter pairing. Two separate next/font declarations
-        // (see app/layout.tsx) so heading weights (500/700) and body
-        // weights (400/500) each load only what they need.
-        heading: ["var(--font-roboto-heading)", "Roboto", "system-ui", "sans-serif"],
-        sans: ["var(--font-roboto-body)", "Roboto", "system-ui", "sans-serif"],
+      spacing: {
+        13: "3.25rem", // 52px — DESIGN-LMS 2.1 §5.1 form input height (h-13); not in Tailwind's default scale, added 2026-08-31
       },
       fontSize: {
-        // Headings (Roboto — only ships 400/500/700/900, no 600/800, so
-        // h1 maps to 700 instead of the old Nunito 800)
-        h1: ["2rem", { lineHeight: "1.2", fontWeight: "700" }], // 32px
-        h2: ["1.5rem", { lineHeight: "1.25", fontWeight: "700" }], // 24px
-        h3: ["1.1875rem", { lineHeight: "1.3", fontWeight: "500" }], // 19px
-
-        // Body (Roboto — body-emphasis/label map to 500, the closest
-        // real cut to the old Inter 600)
-        "body-lg": ["1.125rem", { lineHeight: "1.55" }], // 18px — lesson/re-teach reading content
-        "body-md": ["1rem", { lineHeight: "1.5" }], // 16px — standard, minimum size anywhere
+        h1: ["2rem", { lineHeight: "1.2", fontWeight: "700" }],       // 32px
+        h2: ["1.5rem", { lineHeight: "1.25", fontWeight: "700" }],    // 24px
+        h3: ["1.1875rem", { lineHeight: "1.3", fontWeight: "500" }],  // 19px
+        "body-lg": ["1.125rem", { lineHeight: "1.55" }],              // 18px
+        "body-md": ["1rem", { lineHeight: "1.5" }],                   // 16px
         "body-emphasis": ["1rem", { lineHeight: "1.5", fontWeight: "500" }],
         caption: ["0.875rem", { lineHeight: "1.4", fontWeight: "500" }],
         label: ["0.875rem", { lineHeight: "1.3", fontWeight: "500" }],
-
-        // Data
-        "data-lg": ["1.75rem", { lineHeight: "1.1", fontWeight: "700" }], // dashboard stat numbers
-        "data-md": ["1.25rem", { lineHeight: "1.1", fontWeight: "700" }], // grade numbers
+        "data-lg": ["1.75rem", { lineHeight: "1.1", fontWeight: "700" }],
+        "data-md": ["1.25rem", { lineHeight: "1.1", fontWeight: "700" }],
+        // Mission Mode primary heading / active question prompt only
+        // (DESIGN-LMS 2.1 §3 typography table: 22px mobile / 28px desktop,
+        // Fredoka, 600/700). Reserved for the ONE headline per Mission
+        // Mode screen (mission title, question prompt) — not for section
+        // labels within a mission-mode page. No token existed for this
+        // before 2026-08-31; added here rather than reusing h1/h2, since
+        // those are Classroom Mode's Roboto scale at different sizes.
+        mission: ["1.375rem", { lineHeight: "1.2", fontWeight: "600" }],
       },
-      spacing: {
-        xxs: "4px",
-        xs: "8px",
-        sm: "16px",
-        md: "24px",
-        lg: "32px",
-        xl: "48px",
-        xxl: "64px",
+      colors: {
+        // ── Canvas & Core Surfaces ──────────────────────────────
+        canvas: "#F7F7F5",   // was "#F4F2EC" — lighter, less beige, cards still read as distinct via border+shadow
+        surface: "#FFFFFF",         // Cards, modals, inputs, bottom sheets
+        "surface-sunken": "#EAE6DC", // Embedded quiz boxes, track rails
+        hairline: "#DCD6C8",        // Default 1px structural borders
+        "hairline-strong": "#B8B0A0",// Table header dividers, active input borders
+
+        // ── Typography & Ink ────────────────────────────────────
+        ink: "#1A241E",             // Headings & primary body text
+        "ink-soft": "#3A463E",        // Secondary text, field descriptions
+        "text-secondary": "#5C665E", // Metadata, timestamps, captions
+        "text-muted": "#8C948D",    // Placeholders, disabled states
+        "on-ink": "#F4F2EC",        // Text over dark backgrounds or buttons
+
+        // ── Chrome / Navigation (Classroom Mode) ────────────────
+        sidebar: "#8F1349",         // Deep raspberry-pink header/sidebar
+        "sidebar-hover": "#7A1040",   // Sidebar hover state
+        "sidebar-active": "#C21A5D",  // Active pill highlight in sidebar
+
+        // ── Action & Brand Colors (Classroom Mode) ──────────────
+        brand: {
+          DEFAULT: "#128630",       // Classroom primary button / main CTA
+          hover: "#0F6D27",         // Button active/hover
+          border: "#0A4D20",        // Dark edge for 3D buttons
+          soft: "#E1F0E5",          // Success & badge backgrounds
+        },
+
+        // ── Mission Mode Palette (Duolingo / Quizizz Style) ─────
+        gamified: {
+          green: "#58CC02",         // Mission Primary CTA (Check Answer)
+          "green-dark": "#46A302",   // 3D bottom border for green button
+          purple: "#8854C0",        // Bonus mission / streak highlight
+          "purple-dark": "#6C3FB8",  // 3D bottom border for purple button
+          blue: "#1CB0F6",          // Active selection outline / info
+          "blue-dark": "#0092D6",    // 3D bottom border for blue button
+          yellow: "#FFC800",        // XP, stars, streak badges
+          "yellow-dark": "#E5B200",  // 3D bottom border for yellow badge
+        },
+
+        // ── Feedback & System Alerts ─────────────────────────────
+        success: {
+          DEFAULT: "#128630",
+          soft: "#D7FFB8",          // Quiz correct bottom drawer background
+        },
+        error: {
+          DEFAULT: "#EA2B2B",
+          soft: "#FFDFE0",          // Form errors, Quiz incorrect drawer background
+          // 3D-button dark edge for incorrect-state CTAs (DESIGN-LMS 2.1
+          // §4B.2's "GOT IT" button spec calls for a bg-error button with
+          // a border-red-800-style dark border; no such token existed
+          // before 2026-08-31). Added, not guessed at — picked to sit
+          // the same ~30% darker relationship to `error` that
+          // brand-border/gamified-*-dark already keep to their base colors.
+          border: "#B91C1C",
+        },
+        warning: {
+          DEFAULT: "#E8963C",
+          soft: "#FBEBD6",
+        },
+        info: {
+          DEFAULT: "#3B7EC4",
+          soft: "#E1EDF8",
+        },
+      },
+      fontFamily: {
+        heading: ["var(--font-fredoka)", "Fredoka", "Roboto", "sans-serif"],
+        sans: ["var(--font-nunito)", "Nunito", "Roboto", "sans-serif"],
+        document: ["var(--font-roboto)", "Roboto", "sans-serif"],
       },
       borderRadius: {
-        // Only two radii, per DESIGN-LMS.md §4 — everything is either a
-        // soft rectangle (md) or a full pill. No in-between values.
-        md: "12px",
-        pill: "999px",
+        md: "12px",                 // Default for cards, forms, and dialogs
+        "2xl": "16px",                // Tactile gamified option cards & 3D buttons
+        pill: "999px",              // Badges, avatars, floating pills
       },
       boxShadow: {
-        card: "0 2px 8px rgba(31, 42, 36, 0.06)",
-        "card-hover": "0 4px 16px rgba(31, 42, 36, 0.10)",
-        modal: "0 24px 48px rgba(31, 42, 36, 0.18)",
+        card: "0 2px 8px rgba(26, 36, 30, 0.05)",
+        "card-hover": "0 4px 16px rgba(26, 36, 30, 0.10)",
+        modal: "0 24px 48px rgba(26, 36, 30, 0.18)",
+      },
+      minHeight: {
+        "touch-primary": "56px",    // Primary touch target floor (h-14)
+        "touch-secondary": "48px",  // Secondary list row target floor (h-12)
+      },
+      keyframes: {
+        "slide-up": {
+          "0%": { transform: "translateY(100%)" },
+          "100%": { transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "drawer-up": "slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },
   plugins: [],
 };
+
 export default config;

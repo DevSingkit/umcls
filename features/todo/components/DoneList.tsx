@@ -19,7 +19,7 @@ const ITEM_ICON: Record<DoneItem['itemType'], typeof ClipboardList> = {
 }
 
 const ITEM_ICON_BG: Record<DoneItem['itemType'], string> = {
-    assignment: 'bg-amber-soft text-amber',
+    assignment: 'bg-warning-soft text-warning',
     quiz: 'bg-info-soft text-info',
 }
 

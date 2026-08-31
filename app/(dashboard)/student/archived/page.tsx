@@ -12,7 +12,7 @@ export default async function StudentArchivedCoursesPage() {
 
     return (
         <div>
-            <h1 className="mb-2 font-heading text-h1 text-ink">Archived Courses</h1>
+            <h1 className="mb-2 text-h1 text-ink">Archived Courses</h1>
             <p className="mb-8 text-body-md text-text-secondary">
                 These courses have been archived and no longer show on your dashboard.
                 Everything in them is still here.

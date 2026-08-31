@@ -141,7 +141,7 @@ export function DateTimePicker({
                 aria-haspopup="dialog"
                 aria-expanded={isOpen}
                 className={cn(
-                    'flex h-11 items-center gap-2 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-body-md',
+                    'flex h-13 items-center gap-2 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-body-md',
                     'focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30',
                     selectedDate ? 'text-ink' : 'text-text-muted'
                 )}
@@ -292,7 +292,7 @@ export function DateTimePicker({
                         <button
                             type="button"
                             onClick={() => setIsOpen(false)}
-                            className="h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
+                            className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
                         >
                             Done
                         </button>

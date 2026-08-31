@@ -18,7 +18,7 @@ export default async function AdminCoursesPage() {
 
     return (
         <div>
-            <h1 className="font-heading text-h1 text-ink mb-2">Archive classes</h1>
+            <h1 className="text-h1 text-ink mb-2">Archive classes</h1>
             <p className="text-body-md text-text-secondary mb-8">
                 Archive a class to remove it from its teacher and students&apos; dashboards.
             </p>

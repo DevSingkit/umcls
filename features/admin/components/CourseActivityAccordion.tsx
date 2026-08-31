@@ -28,7 +28,7 @@ const TYPE_ICON: Record<AdminActivityItem['type'], typeof FileText> = {
 const TYPE_ICON_BG: Record<AdminActivityItem['type'], string> = {
     lesson: 'bg-brand-soft text-brand',
     quiz: 'bg-info-soft text-info',
-    assignment: 'bg-amber-soft text-amber',
+    assignment: 'bg-warning-soft text-warning',
 }
 
 export function CourseActivityAccordion({ courses }: { courses: AdminCourseActivityGroup[] }) {
@@ -117,7 +117,7 @@ export function CourseActivityAccordion({ courses }: { courses: AdminCourseActiv
                                                         </p>
                                                     </div>
                                                     {!item.isPublished && (
-                                                        <span className="shrink-0 inline-flex items-center rounded-pill bg-amber-soft text-amber text-caption font-semibold px-3 py-1 whitespace-nowrap">
+                                                        <span className="shrink-0 inline-flex items-center rounded-pill bg-warning-soft text-warning text-caption font-semibold px-3 py-1 whitespace-nowrap">
                                                             Not posted
                                                         </span>
                                                     )}

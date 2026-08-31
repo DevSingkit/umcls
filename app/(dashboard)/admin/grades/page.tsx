@@ -29,7 +29,7 @@ export default async function AdminGradesPage({
 
     return (
         <div className="min-w-0">
-            <h1 className="font-heading text-h1 text-ink mb-2">Grades</h1>
+            <h1 className="text-h1 text-ink mb-2">Grades</h1>
             <p className="text-body-md text-text-secondary mb-8">
                 View any class&apos;s gradebook — activities and student scores.
             </p>
@@ -85,7 +85,7 @@ export default async function AdminGradesPage({
 
             {courseId && gridData !== null && (
                 <>
-                    <h2 className="mb-3 font-heading text-h3 text-ink">{selectedCourse?.title}</h2>
+                    <h2 className="mb-3 text-h3 text-ink">{selectedCourse?.title}</h2>
                     {selectedCourse && (
                         <p className="text-caption text-text-secondary mb-3">
                             {selectedCourse.subject ? `${selectedCourse.subject} · ` : ''}

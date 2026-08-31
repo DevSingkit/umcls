@@ -2,32 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Font (Roboto, for both headings and body) is loaded via next/font/google
-   in app/layout.tsx, not here — that avoids a render-blocking @import and
-   gives Next.js automatic font optimization + the CSS variables this file
-   and tailwind.config.ts both rely on. */
+@layer base {
+  /* 
+    Fonts loaded via next/font in app/layout.tsx:
+    --font-fredoka  (Fredoka: Mission Mode headings & 3D button text ONLY)
+    --font-nunito   (Nunito: Classroom Mode default — body AND headings,
+                     app-wide)
+    --font-roboto   (Roboto: dense structured document bodies ONLY —
+                     lesson-authoring rich text, printable content —
+                     applied explicitly via .font-document, never a
+                     default)
+  */
 
-body {
-  /* Warm paper canvas, everywhere — never plain white behind the whole
-     page. Only cards/modals/inputs are surface white. See DESIGN-LMS.md §2. */
-  @apply bg-canvas text-ink font-sans text-body-md;
+  html {
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /*
+    DESIGN-LMS 2.1 bugfix pass (2026-08-31): body previously set
+    font-document (Roboto) here at the CSS layer while layout.tsx's
+    JSX separately put font-sans directly on <body> — utility-layer
+    ordering meant font-sans always won at runtime, so nothing was
+    visually broken, but the two files disagreed with each other for
+    no reason. Removed the dead font-document reference here so this
+    file matches what layout.tsx actually renders.
+  */
+  body {
+    @apply bg-canvas text-ink font-sans text-body-md antialiased min-h-screen selection:bg-brand-soft selection:text-brand;
+    overflow-x: hidden;
+  }
+
+  /* 
+    DESIGN-LMS 2.1 bugfix pass (2026-08-31): headings now default to
+    font-sans (Nunito bold), not font-document (Roboto). Nunito is the
+    app's standard UI font per this pass's font decision — Classroom
+    Mode body AND headings both use it app-wide. Roboto stays reserved
+    strictly for document/paper/report-style layouts via the explicit
+    .font-document utility (e.g. lesson-authoring rich text), never as
+    a tag-level default. Fredoka (font-heading) remains Mission-Mode-
+    only and must still be applied explicitly per-component in that
+    context — it was never the global default and still isn't.
+  */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans font-bold tracking-tight text-ink;
+  }
+  h1 { @apply text-h1; }
+  h2 { @apply text-h2; }
+  h3 { @apply text-h3; }
 }
 
-h1, h2, h3 {
-  @apply font-heading;
+@layer utilities {
+  /* Accessible Focus Ring (§9) */
+  :focus-visible {
+    outline: 2px solid #128630;
+    outline-offset: 2px;
+  }
+
+  /* Tactile 3D Active State Depression Utility for Touch Devices (Mission Mode) */
+  .active-press {
+    @apply transition-transform active:translate-y-1 active:border-b-0;
+  }
+
+  /* Custom utility for document text if needed in JSX classNames */
+  .font-document {
+    font-family: var(--font-roboto), Roboto, sans-serif;
+  }
+
+  /* Hide scrollbars for clean horizontal tab rails while preserving swipe capability */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
-/* Visible focus ring on every focusable element, never removed.
-   DESIGN-LMS.md §9 — non-negotiable for this audience. Color matches the
-   `brand` token (#128630), the institution's actual green — not the
-   earlier #2E7D46 placeholder. */
-:focus-visible {
-  outline: 2px solid #128630;
-  outline-offset: 2px;
-}
-
+/* Reduced Motion Override for Accessibility */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *, ::before, ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

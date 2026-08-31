@@ -13,6 +13,19 @@
 // submitActivityAttempt independently re-checks the same thing before
 // grading anything, so a locked mission can't be played by URL even if
 // this page's own guard were somehow bypassed.
+//
+// DESIGN-LMS 2.1 PASS (2026-08-31): this page is Mission Mode per the
+// locked mode split (lesson reading / mission gameplay / mission
+// results only). Two real bugs fixed, no logic touched:
+// (1) mission title used `text-heading-lg`, which isn't a token in
+//     tailwind.config.ts, and had no font-heading at all — rendering
+//     in the default Roboto/document font instead of Fredoka. Fixed
+//     using the new `mission` fontSize token (22px mobile / 28px
+//     desktop per DESIGN-LMS 2.1 §3's typography table) + font-heading.
+// (2) Mission Mode body text (mission description, locked-state
+//     copy) wasn't using Nunito — added font-sans, which resolves to
+//     Nunito in this app's font stack, per the locked font decision
+//     (Nunito = Mission Mode body/UI text app-wide).
 
 import { notFound } from 'next/navigation'
 import { getMissionsForStudent, getMissionPreviewForStudent } from '@/features/missions/actions/get-mission-for-student'
@@ -36,8 +49,8 @@ export default async function TakeMissionPage({
         return (
             <div className="max-w-2xl mx-auto py-8 px-4">
                 <div className="bg-surface-sunken rounded-md border border-hairline p-6 text-center space-y-2">
-                    <p className="text-body-emphasis text-ink">This mission is locked</p>
-                    <p className="text-body-md text-text-secondary">
+                    <p className="font-heading text-mission text-ink">This mission is locked</p>
+                    <p className="font-sans text-body-md text-text-secondary">
                         Complete the mission before it in the path to unlock this one.
                     </p>
                 </div>
@@ -55,8 +68,10 @@ export default async function TakeMissionPage({
     return (
         <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
             <div>
-                <h1 className="text-heading-lg text-ink">{mission.title}</h1>
-                {mission.description && <p className="text-body-md text-text-secondary mt-1">{mission.description}</p>}
+                <h1 className="font-heading text-mission md:text-[1.75rem] text-ink">{mission.title}</h1>
+                {mission.description && (
+                    <p className="font-sans text-body-md text-text-secondary mt-1">{mission.description}</p>
+                )}
             </div>
 
             <ActivityRunner

@@ -79,12 +79,12 @@ export function AuditLogViewer({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by actor or action"
-                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption placeholder:text-text-muted focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-56"
+                    className="h-11 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption placeholder:text-text-muted focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-56"
                 />
                 <select
                     value={actorId}
                     onChange={(e) => updateFilter(setActorId, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
+                    className="h-11 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
                 >
                     <option value="">All actors</option>
                     {actors.map((actor) => (
@@ -96,7 +96,7 @@ export function AuditLogViewer({
                 <select
                     value={actionType}
                     onChange={(e) => updateFilter(setActionType, e.target.value)}
-                    className="h-11 px-3 rounded-md border border-hairline-strong bg-surface outline-none text-caption focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
+                    className="h-11 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
                 >
                     <option value="">All actions</option>
                     {actionTypes.map((type) => (
@@ -108,7 +108,7 @@ export function AuditLogViewer({
 
                 {/* Single combined date-range control. Each date input has its own
                     min-width so "mm/dd/yyyy" never gets clipped. */}
-                <div className="h-11 flex items-center gap-2 rounded-md border border-hairline-strong bg-surface px-3 focus-within:border-[1.5px] focus-within:border-brand w-full sm:w-auto">
+                <div className="h-11 flex items-center gap-2 rounded-md border-2 border-hairline bg-surface px-3 focus-within:border-brand w-full sm:w-auto">
                     <input
                         type="date"
                         value={dateFrom}
@@ -176,14 +176,14 @@ export function AuditLogViewer({
                     <button
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={isPending || data.page <= 1}
-                        className="h-9 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
+                        className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
                     >
                         Previous
                     </button>
                     <button
                         onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                         disabled={isPending || data.page >= data.totalPages}
-                        className="h-9 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
+                        className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
                     >
                         Next
                     </button>

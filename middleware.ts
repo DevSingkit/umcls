@@ -24,10 +24,19 @@ function buildCsp(nonce: string) {
             ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
             : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: https:",
+        // blob: added for the lesson-creation file preview modal
+        // (NewLessonForm.tsx) — attached images/PDFs are previewed
+        // client-side via URL.createObjectURL() before anything is
+        // uploaded, which browsers serve as a blob: URL. Without this,
+        // every attached-file thumbnail and preview silently fails
+        // with a CSP violation (img-src blocks the thumbnail, and
+        // frame-src/media-src would block PDF/video/audio preview the
+        // same way) instead of throwing a visible error.
+        "img-src 'self' data: https: blob:",
+        "media-src 'self' blob:",
         "font-src 'self'",
         "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
-        "frame-src https://www.youtube.com https://youtube.com",
+        "frame-src https://www.youtube.com https://youtube.com https://www.google.com blob:",
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",

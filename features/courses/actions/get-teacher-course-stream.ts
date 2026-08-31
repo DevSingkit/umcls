@@ -2,18 +2,36 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/get-current-user'
+import { listAnnouncementsForCourse, type Announcement } from '@/features/courses/actions/announcements'
 
+// UNCHANGED — delete-stream-item.ts's RPC_BY_TYPE/PARAM_BY_TYPE
+// records are keyed exactly by this type, for the 3 types that go
+// through the generic delete_lesson/delete_quiz/delete_assignment RPC
+// dispatcher. Announcements delete through a completely different
+// mechanism (deleteAnnouncement, a plain soft-delete, no RPC needed —
+// see migration 088's header note), so 'announcement' deliberately
+// does NOT get added here — widening this would force
+// RPC_BY_TYPE/PARAM_BY_TYPE to need a 4th key that doesn't fit that
+// pattern at all.
 export type TeacherStreamItemType = 'lesson' | 'quiz' | 'assignment'
 
-export interface TeacherStreamItem {
-    id: string
+export interface TeacherStreamContentItem {
     type: TeacherStreamItemType
+    id: string
     title: string
     isPublished: boolean
     createdAt: string
     dueAt?: string | null // assignments only
     ungradedCount?: number // assignments and quizzes now — count of students still needing grading.
 }
+
+// PHASE 3.8 ADDITION: announcements merged into the same stream,
+// discriminated by `type` — but with a genuinely different shape
+// (Announcement's body/comments, no title/isPublished/dueAt, since
+// none of those concepts apply to a post). TeacherCourseStream.tsx
+// special-cases this variant with its own card, same as
+// CourseStream.tsx does on the student side.
+export type TeacherStreamItem = TeacherStreamContentItem | ({ type: 'announcement' } & Announcement)
 
 /**
  * Fetches all lessons, quizzes, and assignments for a course the calling
@@ -40,7 +58,7 @@ export async function getTeacherCourseStream(
         return { error: 'Course not found or you do not have access to it.' }
     }
 
-    const [lessonsRes, quizzesRes, assignmentsRes] = await Promise.all([
+    const [lessonsRes, quizzesRes, assignmentsRes, announcements] = await Promise.all([
         supabase
             .from('lessons')
             .select('id, title, is_published, created_at')
@@ -56,6 +74,7 @@ export async function getTeacherCourseStream(
             .select('id, title, is_published, due_at, created_at')
             .eq('course_id', courseId)
             .is('deleted_at', null),
+        listAnnouncementsForCourse(courseId),
     ])
 
     if (lessonsRes.error || quizzesRes.error || assignmentsRes.error) {
@@ -140,6 +159,7 @@ export async function getTeacherCourseStream(
             dueAt: a.due_at,
             ungradedCount: ungradedByAssignment.get(a.id) ?? 0,
         })),
+        ...announcements.map((a): TeacherStreamItem => ({ type: 'announcement', ...a })),
     ]
 
     items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

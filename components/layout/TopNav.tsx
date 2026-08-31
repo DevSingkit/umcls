@@ -31,7 +31,7 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
        <header className="sticky top-0 z-30 flex items-center justify-between gap-2 bg-sidebar px-4 py-3 lg:hidden">
     <div className="flex min-w-0 items-center gap-3">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-pill bg-surface">
-            <Image src="/logo.png" alt="" width={112} height={112} className="h-11 w-11 object-contain" />
+            <Image src="/logo.webp" alt="" width={112} height={112} className="h-11 w-11 object-contain" />
         </span>
         <div className="min-w-0 truncate">
             <span className="font-heading text-body-md font-semibold text-on-ink">UMCLSI</span>

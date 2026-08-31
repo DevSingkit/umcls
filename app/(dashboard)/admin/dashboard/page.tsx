@@ -57,7 +57,7 @@ export default async function AdminDashboardPage() {
         {
             href: '/admin/course-activity',
             icon: ClipboardList,
-            iconBg: 'bg-amber-soft text-amber',
+            iconBg: 'bg-warning-soft text-warning',
             title: 'Class activity',
             description: 'Every lesson, quiz, and assignment.',
         },
@@ -67,7 +67,7 @@ export default async function AdminDashboardPage() {
         <div>
             <DashboardAutoRefresh />
 
-            <h1 className="mb-8 font-heading text-h1 text-ink">Dashboard</h1>
+            <h1 className="mb-8 text-h1 text-ink">Dashboard</h1>
 
             {/* Stat cards — 3 max per §8.2, each its own small surface card. */}
             <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
@@ -90,7 +90,7 @@ export default async function AdminDashboardPage() {
                 density as an 8.7a Stream row) instead of 3 separately
                 shadowed cards. Description text stays visible at every size —
                 §1 "big, obvious, few" means fewer items, not hidden meaning. */}
-            <h2 className="mb-3 font-heading text-h3 text-ink">Shortcuts</h2>
+            <h2 className="mb-3 text-h3 text-ink">Shortcuts</h2>
             <div className="bg-surface rounded-md shadow-card mb-8 overflow-hidden">
                 {shortcuts.map((shortcut, index) => {
                     const Icon = shortcut.icon

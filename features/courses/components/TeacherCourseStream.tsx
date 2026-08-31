@@ -1,8 +1,11 @@
 import Link from 'next/link'
 import { FileText, ClipboardList, HelpCircle, Plus } from 'lucide-react'
-import type { TeacherStreamItem } from '@/features/courses/actions/get-teacher-course-stream'
+import type { TeacherStreamItem, TeacherStreamContentItem } from '@/features/courses/actions/get-teacher-course-stream'
 import { StreamItemMenu } from '@/features/courses/components/StreamItemMenu'
-const TYPE_LABEL: Record<TeacherStreamItem['type'], string> = {
+import { AnnouncementCard } from '@/features/courses/components/AnnouncementCard'
+import { getCurrentUser } from '@/lib/auth/get-current-user'
+
+const TYPE_LABEL: Record<TeacherStreamContentItem['type'], string> = {
     lesson: 'Lesson',
     quiz: 'Quiz',
     assignment: 'Assignment',
@@ -10,19 +13,24 @@ const TYPE_LABEL: Record<TeacherStreamItem['type'], string> = {
 
 // One consistent icon + color mapping per content type, applied everywhere
 // this list of types appears (DESIGN-LMS.md §7.4).
-const TYPE_ICON: Record<TeacherStreamItem['type'], typeof FileText> = {
+const TYPE_ICON: Record<TeacherStreamContentItem['type'], typeof FileText> = {
     lesson: FileText,
     quiz: HelpCircle,
     assignment: ClipboardList,
 }
 
-const TYPE_ICON_BG: Record<TeacherStreamItem['type'], string> = {
+// DESIGN-LMS 2.1: bg-amber-soft/text-amber -> bg-warning-soft/
+// text-warning. `amber` is a dead token from the OLD v1.0
+// tailwind.config.ts — the current config only has `warning`/
+// `warning-soft` for this same color, so this class was silently not
+// applying (no icon background/color rendering at all).
+const TYPE_ICON_BG: Record<TeacherStreamContentItem['type'], string> = {
     lesson: 'bg-brand-soft text-brand',
     quiz: 'bg-info-soft text-info',
-    assignment: 'bg-amber-soft text-amber',
+    assignment: 'bg-warning-soft text-warning',
 }
 
-function itemHref(courseId: string, item: TeacherStreamItem) {
+function itemHref(courseId: string, item: TeacherStreamContentItem) {
     switch (item.type) {
         case 'lesson':
             return `/teacher/courses/${courseId}/lessons/${item.id}`
@@ -36,7 +44,7 @@ function itemHref(courseId: string, item: TeacherStreamItem) {
 // Separate from itemHref (which the title links to — a view/detail
 // page for lessons and assignments). This is what the ⋮ menu's Edit
 // item links to — a dedicated edit form, distinct from the view page.
-function editHref(courseId: string, item: TeacherStreamItem) {
+function editHref(courseId: string, item: TeacherStreamContentItem) {
     switch (item.type) {
         case 'lesson':
             return `/teacher/courses/${courseId}/lessons/${item.id}/edit`
@@ -47,7 +55,7 @@ function editHref(courseId: string, item: TeacherStreamItem) {
     }
 }
 
-export function TeacherCourseStream({
+export async function TeacherCourseStream({
     courseId,
     items,
 }: {
@@ -65,7 +73,7 @@ export function TeacherCourseStream({
                 </p>
                 <Link
                     href={`/teacher/courses/${courseId}/lessons/new`}
-                    className="flex h-11 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
+                    className="flex h-12 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
                 >
                     + Create Lesson
                 </Link>
@@ -73,10 +81,37 @@ export function TeacherCourseStream({
         )
     }
 
+    // PHASE 3.8: same reasoning as CourseStream.tsx's identical
+    // addition — fetched internally rather than as a new required prop,
+    // since this component's own props stay exactly as they were.
+    const user = await getCurrentUser()
+
     return (
         <div className="flex flex-col gap-3">
             <ul className="flex flex-col gap-3">
                 {items.map((item) => {
+                    // PHASE 3.8: announcements get the same different
+                    // card as the student side — no icon+title+badge
+                    // row, no StreamItemMenu (that menu's Edit/Delete
+                    // actions are built around the lesson/quiz/
+                    // assignment RPC-dispatch mechanism in
+                    // delete-stream-item.ts, which deliberately does
+                    // NOT cover announcements — see get-teacher-course-
+                    // stream.ts's TeacherStreamItemType note). Deletion
+                    // for an announcement is AnnouncementCard's own
+                    // inline "Delete" button instead.
+                    if (item.type === 'announcement') {
+                        return (
+                            <li key={`announcement-${item.id}`}>
+                                <AnnouncementCard
+                                    announcement={item}
+                                    currentUserId={user?.id ?? ''}
+                                    isTeacher={true}
+                                />
+                            </li>
+                        )
+                    }
+
                     const Icon = TYPE_ICON[item.type]
 
                     return (
@@ -115,7 +150,7 @@ export function TeacherCourseStream({
                                     </span>
                                 )}
                                 {item.type !== 'lesson' && !item.isPublished && (
-                                    <span className="inline-flex items-center rounded-pill bg-amber-soft text-amber text-caption font-semibold px-3 py-1 whitespace-nowrap">
+                                    <span className="inline-flex items-center rounded-pill bg-warning-soft text-warning text-caption font-semibold px-3 py-1 whitespace-nowrap">
                                         Not posted
                                     </span>
                                 )}

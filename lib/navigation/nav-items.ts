@@ -32,12 +32,11 @@ export interface NavItem {
 //     this exact reason (see teacher-dashboard.ts) — it's now the one
 //     and only place a teacher's classes are listed, not a "preview."
 //     Teacher: Dashboard, Archived — 2 items.
-//   - Student keeps My Courses AND To-do — Dashboard/Home, My Courses,
-//     To-do, Archived — 4 items. Student's dashboard course grid is
-//     still a genuine preview (kept sliced) since My Courses still
-//     exists as its own full list on the student side — this
-//     asymmetry is deliberate, not an oversight, unless/until the
-//     same simplification is requested for students too.
+//   - Student's "My Courses" REMOVED for the same reason and the same
+//     way — the student dashboard's course grid is now the sole,
+//     uncapped course-listing surface too (see student-dashboard.ts).
+//     No asymmetry between roles anymore. Student: Home, To-do,
+//     Archived — 3 items.
 //   - Settings is NOT a primary nav item for ANY role — reachable only
 //     via the account-menu dropdown, same place as Sign Out.
 //   - People/Grades are course-scoped only (§6.1b) — never global nav.
@@ -82,12 +81,6 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     ],
     student: [
         { label: "Home", href: "/student/dashboard", icon: Home, isV1: true },
-        {
-            label: "My Courses",
-            href: "/student/courses",
-            icon: BookOpen,
-            isV1: true,
-        },
         {
             label: "To-do",
             href: "/student/todo",

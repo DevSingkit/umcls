@@ -85,7 +85,7 @@ export function ShortAnswerGradeList({
                                             },
                                         }))
                                     }
-                                    className="w-20 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                    className="w-20 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                                 />
                                 <span className="text-caption text-text-secondary">/ {response.maxPoints}</span>
                             </div>
@@ -107,7 +107,7 @@ export function ShortAnswerGradeList({
                                         },
                                     }))
                                 }
-                                className="w-full min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                className="w-full min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                                 placeholder="Optional note for the student"
                             />
                         </div>

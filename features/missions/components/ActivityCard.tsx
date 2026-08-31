@@ -21,8 +21,22 @@
 //   incorrect option display below is a small inline reimplementation,
 //   not a shared component — swap in a real ActivityOptionBullet if
 //   one gets built to match OptionBullet's actual styling.
+//
+// REMEDIATION FIX (2026-08-30, continued conversation): this card
+// previously had no way to set remediates_activity_id at all, even
+// though the write path (updateActivity, just fixed alongside this)
+// and the READ path (submit-activity-attempt.ts already looks this
+// column up to decide whether to redirect a struggling student) both
+// assumed it would eventually be settable somewhere. This was a real,
+// confirmed gap — flagged explicitly rather than found by guessing.
+// New `allActivities` prop carries every activity in this mission (not
+// just this one) so the picker can offer sibling activities to point
+// at — remediation only makes sense once other activities exist,
+// which is exactly the reasoning addActivity's own comment already
+// gave for why this belongs at edit time, not creation time.
 
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { updateActivity, deleteActivity } from '@/features/missions/actions/create-activity'
 
@@ -44,6 +58,7 @@ type Activity = {
     prompt: string
     activity_type: string
     hint_text: string | null
+    remediates_activity_id: string | null
     activity_options: ActivityOption[]
 }
 
@@ -65,7 +80,7 @@ function OptionRow({ text, isCorrect }: { text: string; isCorrect: boolean }) {
         <div className="flex items-center gap-2">
             <span
                 className={`flex items-center justify-center w-4 h-4 rounded-pill shrink-0 ${
-                    isCorrect ? 'bg-brand text-on-ink' : 'border-[1.5px] border-hairline-strong'
+                    isCorrect ? 'bg-brand text-on-ink' : 'border-2 border-hairline'
                 }`}
             >
                 {isCorrect && (
@@ -87,10 +102,16 @@ export function ActivityCard({
     activity,
     index,
     missionId,
+    allActivities,
 }: {
     activity: Activity
     index: number
     missionId: string
+    // Every activity in this mission, including this one — used to
+    // build the remediation picker's sibling list (self excluded) and
+    // to resolve activity.remediates_activity_id into a readable
+    // prompt for the view-mode display below.
+    allActivities: Activity[]
 }) {
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
@@ -104,6 +125,12 @@ export function ActivityCard({
     const [correctIndex, setCorrectIndex] = useState<number | null>(() => buildInitialCorrectIndex(activity))
     const [correctTf, setCorrectTf] = useState<'True' | 'False'>(() => buildInitialCorrectTf(activity))
     const [hintText, setHintText] = useState(activity.hint_text ?? '')
+    const [remediatesActivityId, setRemediatesActivityId] = useState(activity.remediates_activity_id ?? '')
+
+    const siblingActivities = allActivities.filter((a) => a.id !== activity.id)
+    const remediationTarget = activity.remediates_activity_id
+        ? allActivities.find((a) => a.id === activity.remediates_activity_id)
+        : null
 
     function buildInitialOptions(a: Activity) {
         if (a.activity_type === 'true_false') {
@@ -134,6 +161,7 @@ export function ActivityCard({
         setCorrectIndex(buildInitialCorrectIndex(activity))
         setCorrectTf(buildInitialCorrectTf(activity))
         setHintText(activity.hint_text ?? '')
+        setRemediatesActivityId(activity.remediates_activity_id ?? '')
         setError('')
     }
 
@@ -188,6 +216,7 @@ export function ActivityCard({
         formData.set('prompt', prompt)
         formData.set('activityType', activityType)
         if (hintText.trim()) formData.set('hintText', hintText.trim())
+        formData.set('remediatesActivityId', remediatesActivityId)
 
         if (activityType === 'true_false') {
             formData.set('correctAnswer', correctTf)
@@ -265,6 +294,16 @@ export function ActivityCard({
                 {activity.hint_text && (
                     <p className="text-caption text-text-secondary italic mt-4">Hint: {activity.hint_text}</p>
                 )}
+
+                {remediationTarget && (
+                    <p className="text-caption text-info mt-2">
+                        After repeated wrong answers, remediates to: &ldquo;
+                        {remediationTarget.prompt.length > 60
+                            ? `${remediationTarget.prompt.slice(0, 60)}…`
+                            : remediationTarget.prompt}
+                        &rdquo;
+                    </p>
+                )}
             </div>
         )
     }
@@ -275,12 +314,12 @@ export function ActivityCard({
             className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6 border-l-4 border-l-brand"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-heading text-body-emphasis text-ink">Editing activity {index + 1}</h2>
+                <h2 className="text-body-emphasis text-ink">Editing activity {index + 1}</h2>
                 <select
                     aria-label="Activity type"
                     value={activityType}
                     onChange={(e) => setActivityType(e.target.value as ActivityType)}
-                    className="min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
+                    className="min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
                 >
                     <option value="multiple_choice_single">Multiple choice</option>
                     <option value="true_false">True or false</option>
@@ -293,7 +332,7 @@ export function ActivityCard({
                 required
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                 placeholder="Type the activity prompt here"
             />
 
@@ -309,7 +348,7 @@ export function ActivityCard({
                                 className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
                                     correctIndex === optIndex
                                         ? 'border-brand bg-brand text-on-ink'
-                                        : 'border-hairline-strong hover:border-brand'
+                                        : 'border-hairline hover:border-brand'
                                 }`}
                             >
                                 {correctIndex === optIndex && (
@@ -327,7 +366,7 @@ export function ActivityCard({
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${optIndex + 1}`}
-                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                             />
                             {options.length > 2 && (
                                 <button
@@ -336,7 +375,7 @@ export function ActivityCard({
                                     onClick={() => removeOptionRow(option.key)}
                                     className="text-text-secondary hover:text-error text-body-md px-2"
                                 >
-                                    ✕
+                                    <X size={14} aria-hidden="true" />
                                 </button>
                             )}
                         </div>
@@ -363,7 +402,7 @@ export function ActivityCard({
                                 className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
                                     correctTf === label
                                         ? 'border-brand bg-brand text-on-ink'
-                                        : 'border-hairline-strong hover:border-brand'
+                                        : 'border-hairline hover:border-brand'
                                 }`}
                             >
                                 {correctTf === label && (
@@ -391,8 +430,33 @@ export function ActivityCard({
                     rows={2}
                     value={hintText}
                     onChange={(e) => setHintText(e.target.value)}
-                    className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                    className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                 />
+            </div>
+
+            <div>
+                <label htmlFor={`editActivityRemediation-${activity.id}`} className="text-label text-ink-soft block mb-2">
+                    Remediation (optional — shown after repeated wrong answers)
+                </label>
+                {siblingActivities.length === 0 ? (
+                    <p className="text-caption text-text-secondary">
+                        Add another activity to this mission before setting one up as a remediation.
+                    </p>
+                ) : (
+                    <select
+                        id={`editActivityRemediation-${activity.id}`}
+                        value={remediatesActivityId}
+                        onChange={(e) => setRemediatesActivityId(e.target.value)}
+                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                    >
+                        <option value="">None</option>
+                        {siblingActivities.map((sibling) => (
+                            <option key={sibling.id} value={sibling.id}>
+                                {sibling.prompt.length > 70 ? `${sibling.prompt.slice(0, 70)}…` : sibling.prompt}
+                            </option>
+                        ))}
+                    </select>
+                )}
             </div>
 
             {error && (
@@ -413,7 +477,7 @@ export function ActivityCard({
                     type="button"
                     onClick={cancelEdit}
                     disabled={isSaving}
-                    className="h-11 px-6 rounded-md border-[1.5px] border-hairline-strong text-ink font-semibold text-body-md hover:bg-surface-sunken transition-colors disabled:opacity-60"
+                    className="h-11 px-6 rounded-md border-2 border-hairline text-ink font-semibold text-body-md hover:bg-surface-sunken transition-colors disabled:opacity-60"
                 >
                     Cancel
                 </button>

@@ -79,7 +79,7 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
 
     return (
         <section className="bg-surface rounded-md shadow-card p-6">
-            <h2 className="font-heading text-h3 text-ink mb-4">Your profile</h2>
+            <h2 className="text-h3 text-ink mb-4">Your profile</h2>
 
             <div className="flex items-center gap-4 mb-6">
                 <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-pill bg-brand-soft text-h3 text-brand overflow-hidden">
@@ -104,7 +104,7 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
                     <div className="flex items-center gap-3">
                         <label
                             htmlFor="avatarFile"
-                            className="inline-flex h-9 items-center rounded-md border-[1.5px] border-hairline-strong px-4 text-caption font-semibold text-ink cursor-pointer hover:bg-surface-sunken"
+                            className="inline-flex h-12 items-center rounded-md border-2 border-hairline px-4 text-caption font-semibold text-ink cursor-pointer hover:bg-surface-sunken"
                         >
                             {avatarStatus === 'uploading' ? 'Uploading…' : avatarUrl ? 'Change photo' : 'Upload photo'}
                         </label>
@@ -134,7 +134,7 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline-strong bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="w-full min-h-11 rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     />
                 </div>
 
@@ -148,7 +148,7 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
                         value={initialEmail ?? ''}
                         readOnly
                         disabled
-                        className="w-full min-h-11 rounded-md border-[1.5px] border-hairline bg-surface-sunken px-4 text-body-md text-text-secondary"
+                        className="w-full min-h-11 rounded-md border-2 border-hairline bg-surface-sunken px-4 text-body-md text-text-secondary"
                     />
                     <p className="text-caption text-text-secondary mt-1">
                         Your email cannot be changed here. Ask your school admin if it needs to be updated.
@@ -161,7 +161,7 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
                     <button
                         type="submit"
                         disabled={nameStatus === 'saving'}
-                        className="h-11 px-6 rounded-md bg-brand text-on-ink text-body-md font-semibold hover:bg-brand-hover disabled:opacity-60"
+                        className="h-14 px-6 rounded-md bg-brand text-on-ink text-body-md font-semibold hover:bg-brand-hover disabled:opacity-60"
                     >
                         {nameStatus === 'saving' ? 'Saving...' : 'Save changes'}
                     </button>

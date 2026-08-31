@@ -6,6 +6,7 @@
 // question's current data, so editing feels identical to creating one.
 
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { OptionBullet } from '@/features/quizzes/components/OptionBullet'
 import { updateQuestion, deleteQuestion, resetQuizAttempts } from '@/features/quizzes/actions/create-quiz'
@@ -320,12 +321,12 @@ export function QuestionCard({
             className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6 border-l-4 border-l-brand"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-heading text-body-emphasis text-ink">Editing question {index + 1}</h2>
+                <h2 className="text-body-emphasis text-ink">Editing question {index + 1}</h2>
                 <select
                     aria-label="Question type"
                     value={questionType}
                     onChange={(e) => setQuestionType(e.target.value as QuestionType)}
-                    className="min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
+                    className="min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
                 >
                     <option value="multiple_choice_single">Multiple choice</option>
                     <option value="true_false">True or false</option>
@@ -340,7 +341,7 @@ export function QuestionCard({
                 required
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
-                className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                 placeholder="Type the question here"
             />
 
@@ -355,7 +356,7 @@ export function QuestionCard({
                                 onClick={() => setCorrectIndex(optIndex)}
                                 className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctIndex === optIndex
                                         ? 'border-brand bg-brand text-on-ink'
-                                        : 'border-hairline-strong hover:border-brand'
+                                        : 'border-hairline hover:border-brand'
                                     }`}
                             >
                                 {correctIndex === optIndex && (
@@ -373,7 +374,7 @@ export function QuestionCard({
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${optIndex + 1}`}
-                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                             />
                             {options.length > 2 && (
                                 <button
@@ -382,7 +383,7 @@ export function QuestionCard({
                                     onClick={() => removeOptionRow(option.key)}
                                     className="text-text-secondary hover:text-error text-body-md px-2"
                                 >
-                                    ✕
+                                    <X size={14} aria-hidden="true" />
                                 </button>
                             )}
                         </div>
@@ -414,7 +415,7 @@ export function QuestionCard({
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${optIndex + 1}`}
-                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                             />
                             {options.length > 2 && (
                                 <button
@@ -423,7 +424,7 @@ export function QuestionCard({
                                     onClick={() => removeOptionRow(option.key)}
                                     className="text-text-secondary hover:text-error text-body-md px-2"
                                 >
-                                    ✕
+                                    <X size={14} aria-hidden="true" />
                                 </button>
                             )}
                         </div>
@@ -449,7 +450,7 @@ export function QuestionCard({
                                 onClick={() => setCorrectTf(label)}
                                 className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctTf === label
                                         ? 'border-brand bg-brand text-on-ink'
-                                        : 'border-hairline-strong hover:border-brand'
+                                        : 'border-hairline hover:border-brand'
                                     }`}
                             >
                                 {correctTf === label && (
@@ -480,7 +481,7 @@ export function QuestionCard({
                         value={referenceAnswer}
                         onChange={(e) => setReferenceAnswer(e.target.value)}
                         placeholder="e.g. Expected answer or grading notes"
-                        className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
             )}
@@ -503,7 +504,7 @@ export function QuestionCard({
                     type="button"
                     onClick={cancelEdit}
                     disabled={isSaving}
-                    className="h-11 px-6 rounded-md border-[1.5px] border-hairline-strong text-ink font-semibold text-body-md hover:bg-surface-sunken transition-colors disabled:opacity-60"
+                    className="h-11 px-6 rounded-md border-2 border-hairline text-ink font-semibold text-body-md hover:bg-surface-sunken transition-colors disabled:opacity-60"
                 >
                     Cancel
                 </button>

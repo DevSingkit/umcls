@@ -63,7 +63,7 @@ export function Sidebar({ role, fullName, avatarUrl }: SidebarProps) {
             )}
         >
             <div className="flex items-center gap-2 px-5 py-6">
-                <Image src="/logo.png" alt="" width={32} height={32} className="shrink-0 rounded-md" />
+                <Image src="/logo.webp" alt="" width={32} height={32} className="shrink-0 rounded-md" />
                 {isExpanded && (
                     <span className="font-heading text-h3 text-on-ink whitespace-nowrap">UMCLSI</span>
                 )}

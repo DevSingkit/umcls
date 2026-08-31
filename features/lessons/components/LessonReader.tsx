@@ -11,12 +11,38 @@
 //   - A real "Lesson complete!" confirmation banner once
 //     markLessonComplete succeeds, instead of a bare router.refresh()
 //     with no on-screen acknowledgment at all.
+//
+// PHASE 3.7 ADDITION (ADAPTIVE-ENGINE-PLAN.md, "Problem B", 2026-08-28):
+// `body` is now split into paragraph chunks (on blank lines) and each
+// one renders as its own card with visible spacing between them,
+// instead of one single <p> holding the entire lesson as one unbroken
+// block. Scoped deliberately narrow — chosen over illustrations/audio
+// narration after discussing trade-offs with user: this is a pure
+// rendering change (works retroactively on every existing lesson, no
+// teacher re-authoring, no new content pipeline), not a content
+// change. Completion/scroll-depth logic below is completely
+// untouched — it still measures scroll against
+// document.documentElement.scrollHeight the same way regardless of
+// how many cards that content is broken into.
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
 import { markLessonComplete } from '@/features/lessons/actions/completions'
 import { extractYoutubeVideoId, toYoutubeEmbedUrl } from '@/lib/utils/youtube'
+
+// PHASE 3.7: splits on one-or-more blank lines, same convention the
+// old whitespace-pre-wrap rendering was already implicitly relying on
+// (paragraph breaks in the stored body are blank-line separated).
+// Trims each chunk and drops empty ones. A body with no blank lines at
+// all (single unbroken blob) naturally falls back to one chunk — same
+// visual result as before for that edge case, nothing breaks.
+function splitIntoParagraphs(body: string): string[] {
+    return body
+        .split(/\n\s*\n/)
+        .map((chunk) => chunk.trim())
+        .filter(Boolean)
+}
 
 export function LessonReader({
     lessonId,
@@ -72,10 +98,10 @@ export function LessonReader({
                 />
             </div>
 
-            <p className="text-label text-text-secondary">
+            <p className="font-sans text-label text-text-secondary">
                 {courseTitle}
             </p>
-            <h1 className="font-heading text-h1 text-ink mt-1 mb-8">{title}</h1>
+            <h1 className="font-document font-bold text-lg md:text-2xl text-ink mt-1 mb-8">{title}</h1>
 
             {videoId && (
                 <div className="mb-6 rounded-md overflow-hidden shadow-card aspect-video">
@@ -90,8 +116,12 @@ export function LessonReader({
                 </div>
             )}
 
-            <div className="bg-surface rounded-md shadow-card p-8">
-                <p className="text-body-lg text-ink-soft whitespace-pre-wrap">{body}</p>
+            <div className="space-y-4">
+                {splitIntoParagraphs(body).map((paragraph, index) => (
+                    <div key={index} className="bg-surface rounded-md shadow-card p-8">
+                        <p className="text-body-lg text-ink-soft whitespace-pre-wrap">{paragraph}</p>
+                    </div>
+                ))}
             </div>
 
             {/* Completion confirmation — replaces the old silent
@@ -100,8 +130,8 @@ export function LessonReader({
                 <div className="mt-6 flex items-center gap-3 bg-brand-soft border-2 border-brand rounded-md p-5">
                     <CheckCircle2 size={28} className="text-brand shrink-0" aria-hidden="true" />
                     <div>
-                        <p className="font-heading text-h3 text-brand">Lesson complete!</p>
-                        <p className="text-caption text-text-secondary">Nice work — this lesson is marked as done.</p>
+                        <p className="font-sans font-bold text-base md:text-lg text-brand">Lesson complete!</p>
+                        <p className="font-sans text-caption text-text-secondary">Nice work — this lesson is marked as done.</p>
                     </div>
                 </div>
             )}

@@ -1,0 +1,29 @@
+-- 20260828000005_091_drop_unused_question_difficulty.sql
+-- Third migration in this session's cleanup pass for thesis database
+-- documentation.
+--
+-- questions.difficulty confirmed dead across the FULL question
+-- lifecycle, not just the creation form:
+--   - AddQuestionForm.tsx (creation UI): no field, no state, no
+--     formData.set() call referencing it at all.
+--   - create-quiz.ts (the actual insert/update/select logic backing
+--     that UI): zero references anywhere in the file.
+--   - QuestionCard.tsx (display/edit UI for existing questions): zero
+--     references.
+--   - The student-facing quiz results page (read earlier this
+--     session): never displays it.
+--
+-- questions.explanation was ALSO suspected dead going into this
+-- check, but is CONFIRMED ACTIVELY USED and deliberately NOT touched
+-- here — it's repurposed as the teacher's reference-answer/grading-
+-- notes field for short_answer questions (explanation: questionType
+-- === 'short_answer' ? correctAnswer : null, written at 3 separate
+-- insert/update sites in create-quiz.ts; explicitly selected in
+-- getQuizForTeacher's query; displayed and editable in
+-- QuestionCard.tsx). The column name is misleading relative to its
+-- actual current purpose, but the functionality is real and live —
+-- this is exactly the kind of column a naming-based guess would have
+-- wrongly dropped, which is why this was verified against real files
+-- rather than assumed from the schema dump alone.
+
+alter table public.questions drop column if exists difficulty;

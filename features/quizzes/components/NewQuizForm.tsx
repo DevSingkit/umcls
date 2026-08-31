@@ -18,6 +18,7 @@
 // it and a different submit target.
 
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createQuizWithFirstQuestion } from '@/features/quizzes/actions/create-quiz'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
@@ -208,7 +209,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                     }}
                     placeholder="e.g. Chapter 3 Quiz"
                     aria-required="true"
-                    className="w-full h-11 px-4 text-body-emphasis text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
+                    className="w-full h-11 px-4 text-body-emphasis text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
                 />
             </div>
 
@@ -220,7 +221,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                     id="newQuizQuestionType"
                     value={questionType}
                     onChange={(e) => setQuestionType(e.target.value as QuestionType)}
-                    className="w-full h-11 px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                    className="w-full h-11 px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                 >
                     <option value="multiple_choice_single">Multiple choice</option>
                     <option value="true_false">True / False</option>
@@ -235,7 +236,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                 required
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
-                className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                 placeholder="Type the question here"
             />
 
@@ -251,7 +252,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                 className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
                                     correctIndex === index
                                         ? 'border-brand bg-brand text-on-ink'
-                                        : 'border-hairline-strong hover:border-brand'
+                                        : 'border-hairline hover:border-brand'
                                 }`}
                             >
                                 {correctIndex === index && (
@@ -269,16 +270,16 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${index + 1}`}
-                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                             />
                             {options.length > 2 && (
                                 <button
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-md border-[1.5px] border-hairline-strong text-text-secondary hover:border-red hover:text-red shrink-0"
+                                    className="relative flex h-8 w-8 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error shrink-0 before:absolute before:-inset-1.5 before:content-['']"
                                 >
-                                    ✕
+                                    <X size={14} aria-hidden="true" />
                                 </button>
                             )}
                         </div>
@@ -310,16 +311,16 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${index + 1}`}
-                                className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                             />
                             {options.length > 2 && (
                                 <button
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-md border-[1.5px] border-hairline-strong text-text-secondary hover:border-red hover:text-red shrink-0"
+                                    className="relative flex h-8 w-8 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error shrink-0 before:absolute before:-inset-1.5 before:content-['']"
                                 >
-                                    ✕
+                                    <X size={14} aria-hidden="true" />
                                 </button>
                             )}
                         </div>
@@ -346,7 +347,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                 className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
                                     correctTf === label
                                         ? 'border-brand bg-brand text-on-ink'
-                                        : 'border-hairline-strong hover:border-brand'
+                                        : 'border-hairline hover:border-brand'
                                 }`}
                             >
                                 {correctTf === label && (
@@ -377,7 +378,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                         value={referenceAnswer}
                         onChange={(e) => setReferenceAnswer(e.target.value)}
                         placeholder="e.g. Expected answer or grading notes"
-                        className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
             )}
@@ -402,7 +403,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                     value={timeLimitMinutes}
                                     onChange={(e) => setTimeLimitMinutes(e.target.value)}
                                     placeholder="Minutes"
-                                    className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                    className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                                 />
                                 <span className="text-caption text-text-secondary">minutes</span>
                             </div>
@@ -420,7 +421,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                         min={1}
                         value={maxAttempts}
                         onChange={(e) => setMaxAttemptsValue(Number(e.target.value))}
-                        className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
 
@@ -445,7 +446,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                             type="checkbox"
                             checked={allowLate}
                             onChange={(e) => setAllowLate(e.target.checked)}
-                            className="h-5 w-5 rounded border-[1.5px] border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                            className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
                         />
                         <label htmlFor="newQuizAllowLate" className="text-body-md text-ink">
                             Allow late starts and submissions
@@ -461,7 +462,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                         id="newQuizVisibility"
                         value={visibility}
                         onChange={(e) => setVisibility(e.target.value as 'submission' | 'grading' | 'never')}
-                        className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
+                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
                     >
                         <option value="submission">Right after submitting</option>
                         <option value="grading">Only after grading is complete</option>

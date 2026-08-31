@@ -8,6 +8,12 @@
 // quiz "new" page does something different (e.g. a shared layout,
 // breadcrumb component, or loading state) so this can be brought in
 // line.
+//
+// DESIGN-LMS 2.1 PASS: text-heading-lg replaced with text-h1 — that
+// token doesn't exist in tailwind.config.ts (same invalid-token bug
+// fixed on the mission gameplay page earlier this track). This is a
+// Classroom Mode authoring page, so no Fredoka — matches the
+// text-h1 page-title pattern already used on EditAssignmentForm.tsx.
 
 import { notFound } from 'next/navigation'
 import { requireRole } from '@/lib/auth/get-current-user'
@@ -39,7 +45,7 @@ export default async function NewMissionPage({
         <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
             <BackButton />
             <div>
-                <h1 className="text-heading-lg text-ink">New mission</h1>
+                <h1 className="text-h1 text-ink">New mission</h1>
                 <p className="text-body-md text-text-secondary">
                     {(lesson as any).courses.title} — {lesson.title}
                 </p>

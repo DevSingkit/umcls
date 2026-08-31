@@ -15,7 +15,18 @@ import { Avatar } from '@/components/ui/Avatar'
 // Color is derived deterministically from the course id so the same
 // course always gets the same color across renders/sessions, without
 // needing to store a color on the row.
-const BAND_COLORS = ['bg-brand', 'bg-info', 'bg-amber', 'bg-role-student', 'bg-role-admin'] as const
+//
+// Rotation confirmed 2026-08-31 (replaces 3 invalid tokens —
+// bg-amber, bg-role-student, bg-role-admin — that were silent no-ops,
+// meaning 3/5 of course cards previously rendered with no band
+// background at all).
+const BAND_COLORS = [
+    'bg-sidebar',          // Deep Raspberry Pink (#8F1349)
+    'bg-sidebar-active',   // Bright Raspberry Pink (#C21A5D)
+    'bg-brand',            // Institution Green (#128630)
+    'bg-gamified-purple',  // Gamified Accent Purple (#8854C0)
+    'bg-gamified-blue',    // Gamified Accent Blue (#1CB0F6)
+] as const
 
 function bandColorFor(id: string) {
     let hash = 0
@@ -65,7 +76,7 @@ export function CourseCard({
                     )}
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                            <p className="font-heading text-h3 text-on-ink leading-tight line-clamp-2">
+                            <p className="text-h3 text-on-ink leading-tight line-clamp-2">
                                 {subject || title}
                             </p>
                             {!isPublished && (

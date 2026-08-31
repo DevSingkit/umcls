@@ -13,7 +13,7 @@ export default async function AdminCourseActivityPage() {
 
     return (
         <div>
-            <h1 className="mb-2 font-heading text-h1 text-ink">Class Activities</h1>
+            <h1 className="mb-2 text-h1 text-ink">Class Activities</h1>
             <p className="mb-8 text-body-md text-text-secondary">
                 Every lesson, quiz, and assignment, by class. Click a class to expand it.
             </p>

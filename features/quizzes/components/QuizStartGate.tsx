@@ -61,7 +61,7 @@ export function QuizStartGate({
     return (
         <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6 lg:items-start">
             <div>
-                <h1 className="font-heading text-h1 text-ink mb-2">{quiz.title}</h1>
+                <h1 className="text-h1 text-ink mb-2">{quiz.title}</h1>
                 {quiz.description && (
                     <p className="text-body-md text-text-secondary mb-6">{quiz.description}</p>
                 )}
@@ -80,7 +80,7 @@ export function QuizStartGate({
                     <button
                         type="button"
                         onClick={() => setStarted(true)}
-                        className="w-full h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors"
+                        className="w-full h-14 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors"
                     >
                         {isResume ? 'Resume quiz' : 'Start quiz'}
                     </button>

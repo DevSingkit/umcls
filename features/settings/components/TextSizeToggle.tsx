@@ -28,7 +28,7 @@ export function TextSizeToggle({ initial }: TextSizeToggleProps) {
 
     return (
         <section className="bg-surface rounded-md shadow-card p-6">
-            <h2 className="font-heading text-h3 text-ink mb-2">Text size</h2>
+            <h2 className="text-h3 text-ink mb-2">Text size</h2>
             <p className="text-caption text-text-secondary mb-4">
                 Make the words on the screen easier to read.
             </p>
@@ -38,10 +38,10 @@ export function TextSizeToggle({ initial }: TextSizeToggleProps) {
                     onClick={() => choose('normal')}
                     disabled={saving}
                     aria-pressed={textSize === 'normal'}
-                    className={`flex-1 h-14 rounded-md border-[1.5px] text-body-md font-semibold ${
+                    className={`flex-1 h-14 rounded-md border-2 text-body-md font-semibold ${
                         textSize === 'normal'
                             ? 'border-brand bg-brand-soft text-brand'
-                            : 'border-hairline-strong bg-surface text-ink hover:bg-surface-sunken'
+                            : 'border-hairline bg-surface text-ink hover:bg-surface-sunken'
                     }`}
                 >
                     Normal
@@ -51,10 +51,10 @@ export function TextSizeToggle({ initial }: TextSizeToggleProps) {
                     onClick={() => choose('larger')}
                     disabled={saving}
                     aria-pressed={textSize === 'larger'}
-                    className={`flex-1 h-14 rounded-md border-[1.5px] text-body-lg font-semibold ${
+                    className={`flex-1 h-14 rounded-md border-2 text-body-lg font-semibold ${
                         textSize === 'larger'
                             ? 'border-brand bg-brand-soft text-brand'
-                            : 'border-hairline-strong bg-surface text-ink hover:bg-surface-sunken'
+                            : 'border-hairline bg-surface text-ink hover:bg-surface-sunken'
                     }`}
                 >
                     Larger

@@ -19,7 +19,7 @@ export default async function StudentTodoPage() {
 
     return (
         <div>
-            <h1 className="font-heading text-h1 text-ink mb-8">To-do</h1>
+            <h1 className="text-h1 text-ink mb-8">To-do</h1>
             <TodoTabs todoItems={todoItems} doneItems={doneItems} courseNameById={courseNameById} />
         </div>
     )

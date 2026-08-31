@@ -1,6 +1,12 @@
 'use client'
-// Edits an existing course's title/description/subject/grade level.
-// Mirrors the create-course form fields but calls updateCourse instead.
+// Edits an existing course's title/description/subject. Mirrors the
+// create-course form fields but calls updateCourse instead.
+//
+// GRADE_LEVEL FIELD REMOVED (2026-08-30, continued conversation,
+// migration 092): confirmed fully unused beyond its original,
+// now-retired purpose (AI Simplify targeting) — checked CourseCard.tsx
+// and AdminCourseList.tsx, neither references it. User confirmed
+// removing the column AND this field, not just backend cleanup.
 import { useState, useTransition } from 'react'
 import { updateCourse } from '@/features/courses/actions/courses'
 import { ClassmatesVisibilityToggle } from '@/features/courses/components/ClassmatesVisibilityToggle'
@@ -11,14 +17,12 @@ export function EditCourseForm({
     initialDescription,
     initialSubject,
     initialShowClassmates,
-    initialGradeLevel,
 }: {
     courseId: string
     initialTitle: string
     initialDescription: string | null
     initialSubject: string | null
     initialShowClassmates: boolean
-    initialGradeLevel: number | null
 }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
@@ -44,7 +48,7 @@ export function EditCourseForm({
                     id="title"
                     name="title"
                     defaultValue={initialTitle}
-                    className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand"
+                    className="h-11 w-full rounded-md border-2 border-hairline px-4 text-body-md outline-none focus:border-brand"
                     required
                 />
             </div>
@@ -54,29 +58,8 @@ export function EditCourseForm({
                     id="subject"
                     name="subject"
                     defaultValue={initialSubject ?? ''}
-                    className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand"
+                    className="h-11 w-full rounded-md border-2 border-hairline px-4 text-body-md outline-none focus:border-brand"
                 />
-            </div>
-            <div>
-                <label htmlFor="gradeLevel" className="mb-2 block text-label text-ink-soft">Grade level</label>
-                <select
-                    id="gradeLevel"
-                    name="gradeLevel"
-                    defaultValue={initialGradeLevel ?? ''}
-                    className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand bg-surface"
-                >
-                    <option value="">Not set</option>
-                    <option value="1">Grade 1</option>
-                    <option value="2">Grade 2</option>
-                    <option value="3">Grade 3</option>
-                    <option value="4">Grade 4</option>
-                    <option value="5">Grade 5</option>
-                    <option value="6">Grade 6</option>
-                </select>
-                <p className="mt-1.5 text-caption text-text-secondary">
-                    Used so Simplify explanations match your students&apos; reading level. Set this once —
-                    you won&apos;t need to pick it again when generating a Simplify version.
-                </p>
             </div>
             <div>
                 <label htmlFor="description" className="mb-2 block text-label text-ink-soft">Description</label>
@@ -85,7 +68,7 @@ export function EditCourseForm({
                     name="description"
                     defaultValue={initialDescription ?? ''}
                     rows={4}
-                    className="w-full rounded-md border-[1.5px] border-hairline-strong px-4 py-3 text-body-md outline-none focus:border-brand"
+                    className="w-full rounded-md border-2 border-hairline px-4 py-3 text-body-md outline-none focus:border-brand"
                 />
             </div>
             <ClassmatesVisibilityToggle courseId={courseId} initialShowClassmates={initialShowClassmates} />

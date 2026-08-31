@@ -6,7 +6,7 @@ export default async function BulkImportPage() {
 
     return (
         <div>
-            <h1 className="mb-8 font-heading text-h1 text-ink">Bulk Import Accounts</h1>
+            <h1 className="mb-8 text-h1 text-ink">Bulk Import Accounts</h1>
             <BulkImportForm />
         </div>
     )

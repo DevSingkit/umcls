@@ -19,6 +19,21 @@ import { SubmissionUploadForm } from '@/features/assignments/components/Submissi
 // is the button's home now, not a stacked section"). On mobile the
 // panel simply stacks below the main content in normal document flow
 // (no sticky behavior), same as §8.10 requires.
+//
+// DESIGN-LMS 2.1 PASS (2026-08-31): confirmed as the real/only
+// assignment-detail page (no assignments/page.tsx list route exists
+// in this app at all — nothing to touch there). Three fixes, no
+// layout/logic change:
+// (1) `bg-amber-soft`/`text-amber` aren't real tokens (config only
+//     has `warning`/`warning-soft`) — same recurring bug fixed
+//     elsewhere all session, badge now uses warning.
+// (2) Removed `font-heading` from the assignment title — this page is
+//     Classroom Mode, and Fredoka is locked to Mission Mode only
+//     (lesson reading / mission gameplay / mission results). h1
+//     already falls back to font-document (Roboto) via the global
+//     h1-h6 rule in globals.css once the override is gone.
+// (3) Badge icon was 16px; DESIGN-LMS 2.1 §1.3 specifies 20px for
+//     mobile body UI icons (24px is nav-only). Bumped to 20.
 export default async function StudentAssignmentDetailPage({
     params,
 }: {
@@ -57,15 +72,15 @@ export default async function StudentAssignmentDetailPage({
     return (
         <div>
             <div className="flex items-center gap-2 mb-4">
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-soft text-amber shrink-0">
-                    <ClipboardList size={16} aria-hidden="true" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-warning-soft text-warning shrink-0">
+                    <ClipboardList size={20} aria-hidden="true" />
                 </span>
                 <span className="text-caption font-semibold text-text-secondary">Assignment</span>
             </div>
 
             <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6 lg:items-start">
                 <div>
-                    <h1 className="font-heading text-h1 text-ink mb-2">{assignment.title}</h1>
+                    <h1 className="text-h1 text-ink mb-2">{assignment.title}</h1>
                     <p className="text-caption text-text-secondary mb-6">
                         {assignment.due_at
                             ? `Due ${new Date(assignment.due_at).toLocaleString()}`

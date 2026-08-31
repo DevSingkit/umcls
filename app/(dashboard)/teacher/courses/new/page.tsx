@@ -2,6 +2,12 @@
 // Simple form to create a new course. Same pattern as the admin create
 // user page: useActionState calls the server action, shows an error if
 // something goes wrong.
+//
+// GRADE_LEVEL FIELD REMOVED (2026-08-30, continued conversation,
+// migration 092): confirmed fully unused beyond its original,
+// now-retired purpose (AI Simplify targeting) — checked CourseCard.tsx
+// and AdminCourseList.tsx, neither references it. User confirmed
+// removing the column AND this field, not just backend cleanup.
 
 import { useActionState } from 'react'
 import { createCourse, type CreateCourseResult } from '@/features/courses/actions/courses'
@@ -17,7 +23,7 @@ export default function NewCoursePage() {
 
     return (
         <div className="max-w-xl">
-            <h1 className="mb-8 font-heading text-h1 text-ink">Create a new class</h1>
+            <h1 className="mb-8 text-h1 text-ink">Create a new class</h1>
 
             <form action={formAction} className="space-y-6 rounded-md bg-surface p-8 shadow-card">
                 <div>
@@ -48,29 +54,6 @@ export default function NewCoursePage() {
                 </div>
 
                 <div>
-                    <label htmlFor="gradeLevel" className="mb-2 block text-label text-ink-soft">
-                        Grade level
-                    </label>
-                    <select
-                        id="gradeLevel"
-                        name="gradeLevel"
-                        defaultValue=""
-                        className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand bg-surface"
-                    >
-                        <option value="">Not set</option>
-                        <option value="1">Grade 1</option>
-                        <option value="2">Grade 2</option>
-                        <option value="3">Grade 3</option>
-                        <option value="4">Grade 4</option>
-                        <option value="5">Grade 5</option>
-                        <option value="6">Grade 6</option>
-                    </select>
-                    <p className="mt-1.5 text-caption text-text-secondary">
-                        Used for simplify explanations to match your students&apos; reading level. 
-                    </p>
-                </div>
-
-                <div>
                     <label htmlFor="description" className="mb-2 block text-label text-ink-soft">
                         Description or Schedule
                     </label>
@@ -92,7 +75,7 @@ export default function NewCoursePage() {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="h-11 w-full rounded-md bg-brand text-body-md font-semibold text-on-ink hover:bg-brand-hover disabled:opacity-60"
+                    className="h-12 w-full rounded-md bg-brand text-body-md font-semibold text-on-ink hover:bg-brand-hover disabled:opacity-60"
                 >
                     {isPending ? 'Creating class…' : 'Create class'}
                 </button>

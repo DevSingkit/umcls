@@ -45,6 +45,49 @@ export type TeacherCoursePreview = {
     teacherAvatarUrl: string | null
 }
 
+// PHASE 4 ADDITION (ADAPTIVE-ENGINE-PLAN.md, 2026-08-28): real
+// learning-state aggregates, matching the thesis doc's own example
+// ("24 learning well, 8 need more practice, 3 need support"). Built
+// from activity_mastery (Phase 1/2), NOT from the stuckItems logic
+// above — that heuristic is mission_progress/attempt_events-based and
+// predates activity_mastery entirely; this is a genuinely different,
+// more precise signal, not a restyle of stuckItems.
+//
+// Classification per student (a judgment call, not independently
+// specified anywhere — flagged in the log): checked in this priority
+// order, first match wins —
+//   1. 'needs_support' — has at least one activity_mastery row with
+//      wrong_count >= STUCK_WRONG_ATTEMPTS_THRESHOLD (reusing the
+//      SAME constant already established above for stuck-mission
+//      detection, for consistency rather than inventing a second
+//      threshold).
+//   2. 'learning_well' — at least 70% of their attempted activities
+//      (activity_mastery rows) are in state 'mastered'.
+//   3. 'needs_practice' — everyone else with at least one
+//      activity_mastery row (some engagement, not yet struggling, not
+//      yet mostly mastered).
+// A student with ZERO activity_mastery rows anywhere in this teacher's
+// courses is excluded from all three buckets — "never touched mission
+// content" is not the same as "needs support," same bootstrapping-
+// default care already established elsewhere in this codebase.
+export type LearningInsights = {
+    learningWellCount: number
+    needsPracticeCount: number
+    needsSupportCount: number
+    // The single activity with the most wrong attempts in the last 7
+    // days across this teacher's courses — "common difficulty"
+    // callout, per the plan's exact spec. Null if there's no wrong-
+    // attempt activity in that window at all.
+    commonDifficulty: {
+        activityId: string
+        prompt: string
+        missionTitle: string
+        courseName: string
+        wrongCountThisWeek: number
+        href: string
+    } | null
+}
+
 // One combined fetch so the dashboard page makes a single call and all
 // three sections (stats, needs-attention, courses preview) stay in sync
 // with each other, rather than racing separate requests.
@@ -69,6 +112,12 @@ export async function getTeacherDashboardData() {
             stats: { coursesCount: 0, studentsCount: 0, needsGradingCount: 0, stuckStudentsCount: 0 } as TeacherDashboardStats,
             attentionItems: [] as AttentionItem[],
             coursesPreview: [] as TeacherCoursePreview[],
+            learningInsights: {
+                learningWellCount: 0,
+                needsPracticeCount: 0,
+                needsSupportCount: 0,
+                commonDifficulty: null,
+            } as LearningInsights,
         }
     }
 
@@ -255,7 +304,7 @@ export async function getTeacherDashboardData() {
                   .eq('status', 'unlocked'),
         missionIds.length === 0
             ? Promise.resolve({ data: [] as any[], error: null })
-            : supabase.from('activities').select('id, mission_id').in('mission_id', missionIds),
+            : supabase.from('activities').select('id, mission_id, prompt').in('mission_id', missionIds),
     ])
 
     if (missionProgressResult.error) {
@@ -266,6 +315,7 @@ export async function getTeacherDashboardData() {
     }
 
     const activityMissionId = new Map((activitiesResult.data ?? []).map((a) => [a.id, a.mission_id]))
+    const activityPromptById = new Map((activitiesResult.data ?? []).map((a) => [a.id, a.prompt as string]))
     const activityIds = [...activityMissionId.keys()]
 
     const { data: wrongEvents, error: wrongEventsError } =
@@ -273,7 +323,7 @@ export async function getTeacherDashboardData() {
             ? { data: [] as any[], error: null }
             : await supabase
                   .from('attempt_events')
-                  .select('activity_id, student_id')
+                  .select('activity_id, student_id, responded_at')
                   .in('activity_id', activityIds)
                   .eq('is_correct', false)
 
@@ -321,6 +371,83 @@ export async function getTeacherDashboardData() {
         (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
     )
 
+    // PHASE 4: learning-state aggregates, computed from activity_mastery
+    // — reuses activityIds already derived above for the stuckItems
+    // computation, one more query rather than re-deriving missions/
+    // lessons/activities from scratch.
+    const { data: masteryRows, error: masteryRowsError } =
+        activityIds.length === 0
+            ? { data: [] as any[], error: null }
+            : await supabase
+                  .from('activity_mastery')
+                  .select('student_id, activity_id, state, wrong_count')
+                  .in('activity_id', activityIds)
+
+    if (masteryRowsError) {
+        console.error('teacher-dashboard masteryRowsError:', masteryRowsError.message, masteryRowsError.code, masteryRowsError.details)
+    }
+
+    const masteryRowsByStudent = new Map<string, { state: string; wrong_count: number }[]>()
+    for (const row of masteryRows ?? []) {
+        const list = masteryRowsByStudent.get(row.student_id) ?? []
+        list.push({ state: row.state, wrong_count: row.wrong_count })
+        masteryRowsByStudent.set(row.student_id, list)
+    }
+
+    let learningWellCount = 0
+    let needsPracticeCount = 0
+    let needsSupportCount = 0
+
+    for (const rows of masteryRowsByStudent.values()) {
+        const hasStruggle = rows.some((r) => r.wrong_count >= STUCK_WRONG_ATTEMPTS_THRESHOLD)
+        const masteredFraction = rows.filter((r) => r.state === 'mastered').length / rows.length
+
+        if (hasStruggle) {
+            needsSupportCount += 1
+        } else if (masteredFraction >= 0.7) {
+            learningWellCount += 1
+        } else {
+            needsPracticeCount += 1
+        }
+    }
+
+    // Common-difficulty callout: highest wrong-attempt count on a
+    // single activity in the last 7 days. Derived from the SAME
+    // wrongEvents already fetched above for stuckItems (now also
+    // carrying responded_at), not a second query — that query is a
+    // lifetime/no-time-window count for stuck detection; this filters
+    // it down to a 7-day window for a different purpose.
+    const weeklyStartMs = Date.now() - 7 * 24 * 60 * 60 * 1000
+    const weeklyWrongCountByActivity = new Map<string, number>()
+    for (const event of wrongEvents ?? []) {
+        if (new Date(event.responded_at).getTime() < weeklyStartMs) continue
+        weeklyWrongCountByActivity.set(event.activity_id, (weeklyWrongCountByActivity.get(event.activity_id) ?? 0) + 1)
+    }
+
+    let commonDifficulty: LearningInsights['commonDifficulty'] = null
+    for (const [activityId, count] of weeklyWrongCountByActivity.entries()) {
+        if (!commonDifficulty || count > commonDifficulty.wrongCountThisWeek) {
+            const missionId = activityMissionId.get(activityId)
+            const missionInfo = missionId ? missionInfoById.get(missionId) : undefined
+            if (!missionInfo || !missionInfo.courseId) continue
+            commonDifficulty = {
+                activityId,
+                prompt: activityPromptById.get(activityId) ?? 'Activity',
+                missionTitle: missionInfo.title,
+                courseName: courseNameById.get(missionInfo.courseId) ?? 'Course',
+                wrongCountThisWeek: count,
+                href: `/teacher/courses/${missionInfo.courseId}/lessons/${missionInfo.lessonId}/missions/${missionId}/edit`,
+            }
+        }
+    }
+
+    const learningInsights: LearningInsights = {
+        learningWellCount,
+        needsPracticeCount,
+        needsSupportCount,
+        commonDifficulty,
+    }
+
     const stats: TeacherDashboardStats = {
         coursesCount: courseList.length,
         studentsCount: distinctStudentIds.size,
@@ -359,5 +486,5 @@ export async function getTeacherDashboardData() {
         }))
     })()
 
-    return { stats, attentionItems, coursesPreview }
+    return { stats, attentionItems, coursesPreview, learningInsights }
 }

@@ -186,7 +186,7 @@ export function QuizSettingsForm({
                                 value={timeLimitMinutes}
                                 onChange={(e) => setTimeLimitMinutes(e.target.value)}
                                 placeholder="Minutes"
-                                className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                             />
                             <span className="text-caption text-text-secondary">minutes</span>
                         </div>
@@ -205,7 +205,7 @@ export function QuizSettingsForm({
                         min={1}
                         value={maxAttempts}
                         onChange={(e) => setMaxAttemptsValue(Number(e.target.value))}
-                        className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                     <span className="text-body-md text-text-secondary">
                         {maxAttempts === 1
@@ -239,7 +239,7 @@ export function QuizSettingsForm({
                         type="checkbox"
                         checked={allowLate}
                         onChange={(e) => setAllowLate(e.target.checked)}
-                        className="h-5 w-5 rounded border-[1.5px] border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                        className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
                     />
                     <label htmlFor={`allowLate-${quizId}`} className="text-body-md text-ink">
                         Allow late starts and submissions
@@ -255,7 +255,7 @@ export function QuizSettingsForm({
                     id="resultsVisibilitySetting"
                     value={visibility}
                     onChange={(e) => setVisibility(e.target.value as ResultsVisibility)}
-                    className="w-full min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink"
+                    className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
                 >
                     {VISIBILITY_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>

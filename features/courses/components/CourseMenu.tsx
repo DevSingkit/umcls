@@ -78,7 +78,7 @@ export function CourseMenu({
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
                 aria-label="Course options"
-                className="flex h-11 w-11 items-center justify-center rounded-md text-text-secondary hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="flex h-12 w-12 items-center justify-center rounded-md text-text-secondary hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
                 <MoreVertical size={20} aria-hidden="true" />
             </button>
@@ -92,7 +92,7 @@ export function CourseMenu({
                         role="menuitem"
                         onClick={handlePublishClick}
                         disabled={isPending}
-                        className="flex h-11 w-full items-center gap-3 px-4 text-left text-body-md text-ink hover:bg-surface-sunken disabled:opacity-60"
+                        className="flex h-12 w-full items-center gap-3 px-4 text-left text-body-md text-ink hover:bg-surface-sunken disabled:opacity-60"
                     >
                         <span className={`h-2 w-2 rounded-pill ${published ? 'bg-brand' : 'bg-text-secondary'}`} aria-hidden="true" />
                         {published ? 'Unpublish' : 'Publish'}
@@ -101,7 +101,7 @@ export function CourseMenu({
                         href={`/teacher/courses/${courseId}/edit`}
                         role="menuitem"
                         onClick={() => setIsOpen(false)}
-                        className="flex h-11 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
+                        className="flex h-12 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
                     >
                         <Pencil size={18} aria-hidden="true" className="text-text-secondary" />
                         Edit course
@@ -109,7 +109,7 @@ export function CourseMenu({
                     <button
                         role="menuitem"
                         onClick={() => setConfirmingDelete(true)}
-                        className="flex h-11 w-full items-center gap-3 px-4 text-left text-body-md text-red hover:bg-red-soft"
+                        className="flex h-12 w-full items-center gap-3 px-4 text-left text-body-md text-red hover:bg-red-soft"
                     >
                         <Trash2 size={18} aria-hidden="true" />
                         Delete course
@@ -127,14 +127,14 @@ export function CourseMenu({
                     <div className="mt-3 flex justify-end gap-2">
                         <button
                             onClick={() => setConfirmingUnpublish(false)}
-                            className="h-11 rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md text-ink hover:bg-surface-sunken"
+                            className="h-12 rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md text-ink hover:bg-surface-sunken"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={runToggle}
                             disabled={isPending}
-                            className="h-11 rounded-md border-[1.5px] border-red px-4 text-body-md font-semibold text-red hover:bg-red-soft disabled:opacity-60"
+                            className="h-12 rounded-md border-[1.5px] border-red px-4 text-body-md font-semibold text-red hover:bg-red-soft disabled:opacity-60"
                         >
                             Unpublish
                         </button>
@@ -154,14 +154,14 @@ export function CourseMenu({
                         <button
                             onClick={() => setConfirmingDelete(false)}
                             disabled={isPending}
-                            className="h-11 rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md text-ink hover:bg-surface-sunken disabled:opacity-60"
+                            className="h-12 rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md text-ink hover:bg-surface-sunken disabled:opacity-60"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleDelete}
                             disabled={isPending}
-                            className="h-11 rounded-md bg-red px-4 text-body-md font-semibold text-on-ink hover:opacity-90 disabled:opacity-60"
+                            className="h-12 rounded-md bg-red px-4 text-body-md font-semibold text-on-ink hover:opacity-90 disabled:opacity-60"
                         >
                             {isPending ? 'Deleting…' : 'Delete'}
                         </button>
