@@ -393,3 +393,200 @@ export async function resetMissionProgress(missionId: string): Promise<ResetMiss
 
     return { ok: true, affectedStudents: (data as number) ?? 0 }
 }
+
+// GAP #3 FIX (2026-08-30, continued conversation): a teacher-facing
+// manual override for mission_progress, explicitly deferred when this
+// table was first built — migration 082's own comment: "Teacher-facing
+// manual override deferred (per request — settings to be added
+// later)." No UI to mirror existed for this, so shaped after
+// gradebook.ts/GradebookGrid.tsx's per-student-row pattern instead —
+// closest existing "teacher looks at every enrolled student's state
+// for one thing" precedent in this app, even though gradebook itself
+// is read-only and this genuinely needs write actions per row.
+//
+// mission_progress has NO direct write policy for `authenticated`
+// (confirmed in migration 082's own RLS section — by design, so a
+// student can never write their own mastery) — so, same as
+// submit-activity-attempt.ts's writes, this MUST go through the
+// admin/service-role client, not the normal RLS-scoped one. Reads use
+// the normal client (mission_progress DOES have a select policy for
+// the owning teacher).
+
+export type MissionProgressStatus = 'locked' | 'unlocked' | 'mastered'
+
+export type MissionProgressOverrideRow = {
+    studentId: string
+    studentName: string
+    status: MissionProgressStatus
+    correctStreak: number
+    masteredAt: string | null
+    // Whether this row reflects an ACTUAL mission_progress row, or the
+    // computed bootstrapping default (no row yet) — same "no row =
+    // default, computed at read time, nothing written" reasoning
+    // get-mission-for-student.ts already established, reused here so
+    // this teacher view can't silently disagree with what the student
+    // actually sees. A teacher overriding a "default" row causes the
+    // row to be created for the first time via the upsert below.
+    hasRealRow: boolean
+}
+
+// One row per enrolled student, teacher-facing, for a single mission —
+// current status/streak, with the same locked/unlocked bootstrapping
+// default reasoning as getMissionsForStudent (get-mission-for-student.ts):
+// a student with no mission_progress row defaults to 'unlocked' if this
+// is the first published mission in its lesson, 'locked' otherwise.
+// Reimplemented here rather than calling that function directly, since
+// it's scoped to ONE student (requireRole(['student'])) and this needs
+// EVERY enrolled student from a teacher's own session.
+export async function getMissionProgressForTeacher(
+    missionId: string
+): Promise<{ rows: MissionProgressOverrideRow[]; masteryThreshold: number } | null> {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+
+    const { data: mission } = await supabase
+        .from('missions')
+        .select('id, lesson_id, order_index, mastery_threshold, lessons!inner(course_id, courses!inner(teacher_id))')
+        .eq('id', missionId)
+        .single()
+
+    if (!mission || (mission as any).lessons.courses.teacher_id !== user.id) {
+        return null
+    }
+
+    const courseId = (mission as any).lessons.course_id
+
+    // Is this the earliest published mission in its lesson? Needed for
+    // the same bootstrapping-default reasoning get-mission-for-student.ts
+    // uses — only the first mission in a lesson defaults to 'unlocked'
+    // with no row.
+    const { data: earlierPublished } = await supabase
+        .from('missions')
+        .select('id')
+        .eq('lesson_id', mission.lesson_id)
+        .eq('is_published', true)
+        .lt('order_index', mission.order_index)
+        .limit(1)
+        .maybeSingle()
+
+    const defaultStatus: MissionProgressStatus = earlierPublished ? 'locked' : 'unlocked'
+
+    const { data: enrollments } = await supabase
+        .from('enrollments')
+        .select('student_id, users!enrollments_student_id_fkey(full_name)')
+        .eq('course_id', courseId)
+        .eq('status', 'active')
+
+    const students = (enrollments ?? [])
+        .map((e: any) => ({ studentId: e.student_id as string, studentName: (e.users?.full_name as string) ?? 'Unknown' }))
+        .sort((a, b) => a.studentName.localeCompare(b.studentName))
+
+    const { data: progressRows } = await supabase
+        .from('mission_progress')
+        .select('student_id, status, correct_streak, mastered_at')
+        .eq('mission_id', missionId)
+
+    const progressByStudent = new Map((progressRows ?? []).map((p) => [p.student_id, p]))
+
+    const rows: MissionProgressOverrideRow[] = students.map((s) => {
+        const existing = progressByStudent.get(s.studentId)
+        if (existing) {
+            return {
+                studentId: s.studentId,
+                studentName: s.studentName,
+                status: existing.status as MissionProgressStatus,
+                correctStreak: existing.correct_streak,
+                masteredAt: existing.mastered_at,
+                hasRealRow: true,
+            }
+        }
+        return {
+            studentId: s.studentId,
+            studentName: s.studentName,
+            status: defaultStatus,
+            correctStreak: 0,
+            masteredAt: null,
+            hasRealRow: false,
+        }
+    })
+
+    return { rows, masteryThreshold: mission.mastery_threshold }
+}
+
+export type OverrideMissionProgressAction = 'unlock' | 'lock' | 'mark_mastered' | 'reset_streak'
+
+export type OverrideMissionProgressResult = { ok: true } | { ok: false; error: string }
+
+// Applies one manual override to one student's mission_progress row —
+// creating it for the first time if only the computed default existed
+// before (hasRealRow: false above). Uses the ADMIN client for the
+// actual write, per this function's own header note.
+export async function overrideMissionProgress(
+    missionId: string,
+    studentId: string,
+    action: OverrideMissionProgressAction
+): Promise<OverrideMissionProgressResult> {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+    const supabaseAdmin = createAdminClient()
+
+    const { data: mission } = await supabase
+        .from('missions')
+        .select('id, lessons!inner(course_id, courses!inner(teacher_id))')
+        .eq('id', missionId)
+        .single()
+
+    if (!mission || (mission as any).lessons.courses.teacher_id !== user.id) {
+        return { ok: false, error: 'You do not have access to this mission.' }
+    }
+
+    const courseId = (mission as any).lessons.course_id
+
+    // Confirm the student is actually enrolled in this mission's course
+    // — a teacher shouldn't be able to write a mission_progress row for
+    // an arbitrary student id that was never enrolled here.
+    const { data: enrollment } = await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('student_id', studentId)
+        .eq('course_id', courseId)
+        .eq('status', 'active')
+        .maybeSingle()
+
+    if (!enrollment) {
+        return { ok: false, error: 'This student is not enrolled in this course.' }
+    }
+
+    let updates: Record<string, unknown>
+
+    switch (action) {
+        case 'unlock':
+            updates = { status: 'unlocked' }
+            break
+        case 'lock':
+            updates = { status: 'locked', correct_streak: 0, mastered_at: null }
+            break
+        case 'mark_mastered':
+            updates = { status: 'mastered', mastered_at: new Date().toISOString() }
+            break
+        case 'reset_streak':
+            updates = { correct_streak: 0, mastered_at: null }
+            break
+    }
+
+    const { error } = await supabaseAdmin.from('mission_progress').upsert(
+        {
+            mission_id: missionId,
+            student_id: studentId,
+            updated_at: new Date().toISOString(),
+            ...updates,
+        },
+        { onConflict: 'mission_id,student_id' }
+    )
+
+    if (error) {
+        return { ok: false, error: 'Could not update this student\u2019s progress.' }
+    }
+
+    return { ok: true }
+}
