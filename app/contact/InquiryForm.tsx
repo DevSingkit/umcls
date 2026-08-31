@@ -42,7 +42,7 @@ export function InquiryForm() {
   if (submitted) {
     return (
       <div className="mt-8 rounded-md bg-surface p-6 text-body-md text-ink-soft shadow-card">
-        This form isn't connected to anything yet, so your message wasn't
+        This form isn&apos;t connected to anything yet, so your message wasn&apos;t
         actually sent. Please call or email us directly for now using the
         details on this page.
       </div>

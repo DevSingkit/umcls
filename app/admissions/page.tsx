@@ -63,8 +63,8 @@ export default function AdmissionsPage() {
             Admissions and enrollment
           </h1>
           <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
-            Here's what you'll need, and what the process looks
-            like from application to your child's first day.
+            Here&apos;s what you&apos;ll need, and what the process looks
+            like from application to your child&apos;s first day.
           </p>
           <Link
             href="/contact"
@@ -119,7 +119,7 @@ export default function AdmissionsPage() {
           <p className="mt-4 max-w-xl text-body-md text-text-secondary">
             Installment plans are available, and payment can be made through
             GCash, bank transfer, or directly at the registrar. Reach out to
-            the registrar for a full fee breakdown for your child's
+            the registrar for a full fee breakdown for your child&apos;s
             grade level.
           </p>
           <Link

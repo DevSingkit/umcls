@@ -71,7 +71,7 @@ export default function AcademicsPage() {
           <p className="mt-4 max-w-xl text-body-md text-text-secondary">
             Early Childhood covers Nursery and Kindergarten, with a play-based
             foundation in literacy and character. Elementary covers Grades 1
-            to 6, aligned with DepEd's K-12 program, with a strong focus
+            to 6, aligned with DepEd&apos;s K-12 program, with a strong focus
             on English and Math alongside Christian education.
           </p>
         </div>

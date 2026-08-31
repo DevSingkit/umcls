@@ -40,7 +40,7 @@ export default function ContactPage() {
           </h1>
           <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
             Questions about enrollment, or want to visit the campus? Reach out
-            below and we'll get back to you.
+            below and we&apos;ll get back to you.
           </p>
         </div>
       </section>

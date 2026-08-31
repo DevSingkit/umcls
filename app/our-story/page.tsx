@@ -77,7 +77,7 @@ export default function OurStoryPage() {
       {/* ── Cooperative identity ─────────────────────────────────────── */}
       <section className="px-4 py-16 sm:px-6 md:py-20">
         <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">Why "cooperative"</p>
+          <p className="text-label text-text-secondary">Why &quot;cooperative&quot;</p>
           <h2 className="mt-3 max-w-xl text-h2 text-ink">
             Learning together, not against each other
           </h2>
@@ -100,7 +100,7 @@ export default function OurStoryPage() {
           <p className="mt-4 max-w-xl text-body-md text-text-secondary">
             Students, teachers, and church leadership take part in outreach
             programs, spiritual retreats, and community service throughout
-            the year, carrying the school's values outside its walls.
+            the year, carrying the school&apos;s values outside its walls.
           </p>
         </div>
       </section>
