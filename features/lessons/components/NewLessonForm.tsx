@@ -1,5 +1,6 @@
 'use client'
 import { useActionState, useEffect, useRef, useState } from 'react'
+import { Plus, FileText, X, Play, Link2 } from 'lucide-react'
 import { createLesson, type CreateLessonResult } from '@/features/lessons/actions/lessons'
 import { extractYoutubeVideoId, toYoutubeEmbedUrl } from '@/lib/utils/youtube'
 
@@ -18,13 +19,6 @@ async function createLessonAction(_prevState: CreateLessonResult, formData: Form
 
 export function NewLessonForm({ courseId }: { courseId: string }) {
     const [state, formAction, isPending] = useActionState(createLessonAction, initialState)
-    // Links are now controlled (url tracked in state, not just an
-    // uncontrolled DOM input) so a live thumbnail/icon preview can be
-    // computed from whatever's typed. Label is no longer a field the
-    // teacher fills in by hand — it's derived from the URL (YouTube →
-    // "YouTube video", anything else → the hostname) and still
-    // submitted via a hidden input under the same `linkLabel` field
-    // name, so createLesson's expected form-data shape is unchanged.
     type LinkRow = { id: number; url: string }
     const [links, setLinks] = useState<LinkRow[]>([{ id: 0, url: '' }])
 
@@ -49,28 +43,11 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
         }
     }
 
-    // Separate from viewingFile (the local attached-file modal) since
-    // this previews an external YouTube URL, not a blob: object URL.
     const [viewingYoutubeId, setViewingYoutubeId] = useState<string | null>(null)
 
-    // Files live in the hidden input's FileList (the actual source of
-    // truth submitted with the form). We mirror them into state just to
-    // render the "chip list" UI, and rebuild the input's FileList via
-    // DataTransfer whenever a file is removed.
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [selectedFiles, setSelectedFiles] = useState<File[]>([])
-
-    // Object URLs for image files only — instant local previews with no
-    // backend/upload involved, since these are still just File objects
-    // sitting in browser memory before the form submits. Keyed the same
-    // way selectedFiles dedupes (name+size), so it stays in sync as
-    // files are added/removed.
     const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({})
-
-    // The file currently shown in the in-page preview modal. `isTemp`
-    // tracks whether this URL was minted just for the modal (non-image
-    // files, no cached preview) so it gets revoked on close rather than
-    // living until unmount like the cached image previews do.
     const [viewingFile, setViewingFile] = useState<{ url: string; type: string; name: string; isTemp: boolean } | null>(
         null
     )
@@ -93,7 +70,6 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
         })
     }
 
-    // Close on Escape while the modal is open.
     useEffect(() => {
         if (!viewingFile) return
         function handleKeyDown(e: KeyboardEvent) {
@@ -108,9 +84,6 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
         return `${file.name}-${file.size}`
     }
 
-    // Revoke every remaining object URL when the form unmounts, so a
-    // teacher who attaches several images and then navigates away
-    // doesn't leak that memory for the rest of the session.
     useEffect(() => {
         return () => {
             Object.values(previewUrls).forEach((url) => URL.revokeObjectURL(url))
@@ -120,15 +93,6 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
 
     function handleFilesChosen(e: React.ChangeEvent<HTMLInputElement>) {
         const chosen = Array.from(e.target.files ?? [])
-        // Avoid duplicate name+size entries when picking files across
-        // multiple browse actions. Read selectedFiles directly (not via
-        // a functional update) specifically so the object-URL creation
-        // below stays a plain side effect in the event handler, not
-        // inside a state updater — React 18 Strict Mode double-invokes
-        // updater functions in development to catch exactly this kind
-        // of impurity, which was silently minting two throwaway blob
-        // URLs per image and could leave the visible one already
-        // revoked/stale.
         const existingKeys = new Set(selectedFiles.map((f) => fileKey(f)))
         const newFiles = chosen.filter((f) => !existingKeys.has(fileKey(f)))
         if (newFiles.length === 0) return
@@ -165,8 +129,6 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
         }
     }
 
-    // Keeps the actual <input type="file"> in sync with our chip list so
-    // the right files still get submitted with the form.
     function syncInputFiles(files: File[]) {
         const dataTransfer = new DataTransfer()
         files.forEach((f) => dataTransfer.items.add(f))
@@ -175,24 +137,12 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
         }
     }
 
-
-
     return (
-        // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
-        // No mx-auto — every other form in the app (NewQuizForm,
-        // CreateUserForm, EnrollForm, CourseReassignment) sits left-
-        // aligned within the page container, not centered.
         <div className="max-w-2xl pb-16">
             <h1 className="text-h1 text-ink mb-6">
                 Create a new lesson
             </h1>
             <form action={formAction} className="bg-surface rounded-md shadow-card px-8 pb-8 pt-5">
-                {/* Moved out of the space-y-8 flow below on purpose —
-                    a hidden input still counts as a sibling for
-                    space-y's margin calculation even though it renders
-                    with zero height, which was silently adding an
-                    extra 32px gap above "Lesson title" on top of the
-                    card's own top padding. */}
                 <input type="hidden" name="courseId" value={courseId} />
 
                 <div className="space-y-8">
@@ -231,8 +181,6 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                         Files (optional)
                     </label>
 
-                    {/* Hidden input holds the real FileList submitted with the form;
-                        the button below just opens the OS file picker. */}
                     <input
                         ref={fileInputRef}
                         id="files"
@@ -244,21 +192,16 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                         className="hidden"
                     />
 
+                    {/* DESIGN-LMS 2.1: h-11 -> h-12 (48px secondary touch
+                        target floor); custom plus SVG -> lucide Plus. */}
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 h-11 px-4 rounded-md border-2 border-dashed border-hairline
+                        className="flex items-center gap-2 h-12 px-4 rounded-md border-2 border-dashed border-hairline
                                    text-body-md text-ink font-medium hover:border-brand hover:bg-surface-sunken
                                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                            <path
-                                d="M12 4v16m-8-8h16"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                            />
-                        </svg>
+                        <Plus size={18} className="shrink-0" aria-hidden="true" />
                         Attach files
                     </button>
 
@@ -278,13 +221,6 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                         className={`flex items-center gap-3 h-11 px-3 rounded-md border-2 bg-surface-sunken
                                                     ${tooLarge ? 'border-error' : 'border-hairline'}`}
                                     >
-                                        {/* Clicking opens the file in a new tab via its local
-                                            object URL — works before upload since nothing has
-                                            been sent to the server yet, it's just reading the
-                                            File object already in browser memory. A plain
-                                            <button> wrapping icon+name (not the whole <li>) so
-                                            the separate Remove button below doesn't end up
-                                            nested inside another interactive element. */}
                                         <button
                                             type="button"
                                             onClick={() => openPreview(file)}
@@ -292,26 +228,14 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                             title={`View ${file.name}`}
                                         >
                                             {previewUrl ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element -- local blob: object URL for an in-memory File not yet uploaded, next/image can't optimize that */
                                                 <img
                                                     src={previewUrl}
                                                     alt=""
                                                     className="shrink-0 h-8 w-8 rounded-sm object-cover"
                                                 />
                                             ) : (
-                                                <svg
-                                                    width="16"
-                                                    height="16"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    className="shrink-0 text-text-secondary"
-                                                >
-                                                    <path
-                                                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                                                        stroke="currentColor"
-                                                        strokeWidth="1.5"
-                                                    />
-                                                    <path d="M14 2v6h6" stroke="currentColor" strokeWidth="1.5" />
-                                                </svg>
+                                                <FileText size={16} className="shrink-0 text-text-secondary" aria-hidden="true" />
                                             )}
 
                                             <span className="text-caption text-ink truncate flex-1 hover:underline" title={file.name}>
@@ -327,20 +251,17 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                             {tooLarge ? `Too large (${formatFileSize(file.size)})` : formatFileSize(file.size)}
                                         </span>
 
+                                        {/* DESIGN-LMS 2.1: hitbox extended from ~32px
+                                            (-inset-2) to the established 44px minimum
+                                            (-inset-3.5, 14px/side around a 16px icon =
+                                            44px total). Custom X SVG -> lucide X. */}
                                         <button
                                             type="button"
                                             onClick={() => removeFile(index)}
                                             aria-label={`Remove ${file.name}`}
-                                            className="relative text-text-secondary hover:text-error shrink-0 before:absolute before:-inset-2 before:content-['']"
+                                            className="relative text-text-secondary hover:text-error shrink-0 before:absolute before:-inset-3.5 before:content-['']"
                                         >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                                <path
-                                                    d="M6 6l12 12M18 6L6 18"
-                                                    stroke="currentColor"
-                                                    strokeWidth="1.75"
-                                                    strokeLinecap="round"
-                                                />
-                                            </svg>
+                                            <X size={16} aria-hidden="true" />
                                         </button>
                                     </li>
                                 )
@@ -372,18 +293,19 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                             className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[200px]
                                                        focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                                         />
-                                        {/* Label is no longer typed by hand — derived from the
-                                            URL and submitted through this hidden field so the
-                                            createLesson action's expected form shape (paired
-                                            linkLabel/linkUrl entries) doesn't need to change. */}
                                         <input type="hidden" name="linkLabel" value={label} />
                                         <input type="hidden" name="linkUrl" value={link.url} />
+                                        {/* DESIGN-LMS 2.1: was a bare text link with no
+                                            defined touch target. Converted to an icon
+                                            button with the same 44px hitbox-extension
+                                            technique as the file remove button above. */}
                                         <button
                                             type="button"
                                             onClick={() => removeLinkRow(link.id)}
-                                            className="text-caption text-error font-medium hover:underline"
+                                            aria-label="Remove link"
+                                            className="relative text-text-secondary hover:text-error shrink-0 before:absolute before:-inset-3.5 before:content-['']"
                                         >
-                                            Remove
+                                            <X size={16} aria-hidden="true" />
                                         </button>
                                     </div>
 
@@ -395,16 +317,14 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                                 className="flex items-center gap-3 h-11 px-3 rounded-md border-2 border-hairline bg-surface-sunken w-full text-left hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
                                             >
                                                 <span className="relative shrink-0 h-8 w-11 rounded-sm overflow-hidden bg-surface">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element -- external YouTube thumbnail URL, plain <img> is simplest */}
+                                                    {/* eslint-disable-next-line @next/next/no-img-element -- external YouTube thumbnail URL, plain <img> is simplest, no next/image domain config needed */}
                                                     <img
                                                         src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
                                                         alt=""
                                                         className="h-full w-full object-cover"
                                                     />
                                                     <span className="absolute inset-0 flex items-center justify-center bg-ink/30">
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-on-ink">
-                                                            <path d="M8 5v14l11-7z" />
-                                                        </svg>
+                                                        <Play size={12} fill="currentColor" className="text-on-ink" aria-hidden="true" />
                                                     </span>
                                                 </span>
                                                 <span className="text-caption text-ink truncate flex-1 hover:underline">
@@ -419,14 +339,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                                 className="flex items-center gap-3 h-11 px-3 rounded-md border-2 border-hairline bg-surface-sunken hover:border-brand transition-colors"
                                             >
                                                 <span className="shrink-0 flex h-8 w-8 items-center justify-center rounded-sm bg-surface text-text-secondary">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                                        <path
-                                                            d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"
-                                                            stroke="currentColor"
-                                                            strokeWidth="1.5"
-                                                            strokeLinecap="round"
-                                                        />
-                                                    </svg>
+                                                    <Link2 size={16} aria-hidden="true" />
                                                 </span>
                                                 <span className="text-caption text-ink truncate flex-1 hover:underline">
                                                     {label || link.url}
@@ -438,12 +351,17 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                             )
                         })}
                     </div>
+                    {/* DESIGN-LMS 2.1: was a bare text link with no defined
+                        touch target. Converted to a real secondary button
+                        (h-12/48px) with lucide Plus, matching "Attach
+                        files" above. */}
                     <button
                         type="button"
                         onClick={addLinkRow}
-                        className="mt-3 text-caption text-brand font-semibold hover:underline"
+                        className="mt-3 flex items-center gap-2 h-12 px-4 rounded-md text-caption text-brand font-semibold hover:bg-surface-sunken transition-colors"
                     >
-                        + Add another link
+                        <Plus size={16} aria-hidden="true" />
+                        Add another link
                     </button>
                 </div>
 
@@ -453,10 +371,11 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                     </p>
                 )}
 
+                {/* DESIGN-LMS 2.1: h-11 -> h-14 (56px primary CTA floor). */}
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-11 rounded-md bg-brand text-on-ink font-semibold text-body-md
+                    className="w-full h-14 rounded-md bg-brand text-on-ink font-semibold text-body-md
                                hover:bg-brand-hover disabled:opacity-60 transition-colors"
                 >
                     {isPending ? 'Creating lesson…' : 'Create lesson'}
@@ -478,15 +397,18 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                     >
                         <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-3">
                             <p className="text-body-emphasis text-ink">YouTube video</p>
+                            {/* Already at the established 44px hitbox
+                                (h-9 w-9 = 36px + before:-inset-1 = 4px/side
+                                -> 44px total) — matches DESIGN-LMS 2.1
+                                already, no size change needed. Custom X
+                                SVG -> lucide X. */}
                             <button
                                 type="button"
                                 onClick={() => setViewingYoutubeId(null)}
                                 aria-label="Close preview"
                                 className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-secondary hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand before:absolute before:-inset-1 before:content-['']"
                             >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                    <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                                </svg>
+                                <X size={18} aria-hidden="true" />
                             </button>
                         </div>
                         <div className="aspect-video">
@@ -524,9 +446,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                 aria-label="Close preview"
                                 className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-secondary hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand before:absolute before:-inset-1 before:content-['']"
                             >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                    <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                                </svg>
+                                <X size={18} aria-hidden="true" />
                             </button>
                         </div>
 
