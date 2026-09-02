@@ -1,114 +1,200 @@
 'use client'
 // features/missions/components/NewMissionForm.tsx
 //
-// Mirrors features/quizzes/components/NewQuizForm.tsx: collects a
-// title AND the first activity together, client-side, and only calls
-// the server (via createMissionWithFirstActivity) once — nothing is
-// written to the database until there's real content to write. Same
-// "never write an empty draft" principle as NewQuizForm.tsx.
+// UX REBUILD (2026-09-02): the previous version had a two-column
+// desktop layout (form controls + a separate "Student Preview" panel
+// showing tactile tiles), with a "stage one activity, click Add
+// activity to mission, repeat" intermediate step before one final
+// Create Mission click. User feedback after actually using it: the
+// split-preview layout read as confusing (screenshot showed how
+// cramped/disconnected it looked once real content was typed in), the
+// extra staging click was an unwanted extra step, and this app is
+// mobile-first — a wide two-column layout was never the right target
+// shape to begin with.
 //
-// Differences from NewQuizForm.tsx:
-// - No checklist or short_answer question types — see
-//   create-mission.ts's header for why short_answer is excluded.
-// - Settings are mission-shaped, not quiz-shaped: mastery_threshold
-//   and an optional description, instead of timer/max-attempts/
-//   deadline/results-visibility (missions have no equivalent columns
-//   for any of those).
-// - Adds a hint field, since activities (unlike questions) have
-//   hint_text.
+// What changed, confirmed explicitly with the user before rebuilding:
+//   1. NO separate preview panel anywhere. The question builder's
+//      OWN answer options are now real tactile tiles (same TILE_STYLES
+//      colors/icons as ActivityRunner.tsx's actual gameplay tiles) —
+//      the authoring UI IS the student-facing look, not a preview of
+//      it running alongside a plainer form.
+//   2. Marking the correct answer: tapping the TILE ITSELF marks it
+//      correct (green ring + check badge appears on that tile) — no
+//      separate bullet/radio control at all, confirmed explicitly.
+//   3. NO "Add activity to mission" staging step. Multiple activities
+//      are built inline, stacked as sections on one continuous page —
+//      "Add another activity" appends a new activity section below the
+//      current ones. Everything (mission details + every activity's
+//      every question) is collected in local state and sent together
+//      in ONE call when "Create mission" is clicked — nothing is
+//      staged/submitted per-activity anymore.
+//   4. Mobile-first single column, confirmed to stay single-column even
+//      on desktop (not a wider two-column layout) — centered, generous
+//      spacing, no side panel competing for width.
 //
-// The activity-building UI below (option rows, correct-answer marking)
-// is intentionally the same shape as AddActivityForm.tsx, same reason
-// NewQuizForm.tsx matches AddQuestionForm.tsx — it's the pattern
-// teachers already know from adding activity 2 onward.
+// True/false questions keep two tiles (True / False) using the same
+// tactile tile treatment — tapping either marks it correct, same
+// interaction as multiple choice, just a fixed two-option set.
 //
-// DESIGN-LMS 2.1 REDESIGN (2026-08-31): pure visual pass, no logic
-// touched — every state variable and the full handleSubmit body below
-// are byte-for-byte identical to before this pass. Changes:
-//   1. Two bugs found while reading this file for the redesign, not
-//      introduced by it, same classes fixed repeatedly elsewhere in
-//      this track: the remove-option button used `hover:border-red
-//      hover:text-red` (not real tokens — only `error`/`error-soft`
-//      exist) and a raw ✕ unicode glyph instead of an SVG icon.
-//      Corrected on sight: `border-red`/`text-red` → `border-error`/
-//      `text-error`; ✕ → lucide-react's X icon.
-//   2. Form controls stay Classroom Mode exactly as before — same
-//      standing pattern established for AddActivityForm.tsx and
-//      MissionSettingsForm.tsx: admin/CRUD controls stay clear and
-//      structured, Mission Mode tactile styling is reserved for a
-//      preview panel only.
-//   3. One COMBINED preview panel added (not two separate ones) since
-//      this form creates a mission's details AND its first activity
-//      together in a single submit — matches MissionSettingsForm.tsx's
-//      mission-details card (title/description/mastery-goal badge/
-//      mock Start Mission button) stacked above AddActivityForm.tsx's
-//      activity preview (Fredoka prompt + tactile option tiles with
-//      the correct answer marked for the teacher's reference, hint
-//      callout). Same non-interactive mock button and "preview only"
-//      captions as those two files, for the same reason: this isn't a
-//      real gameplay replica, it's a same-page check of both halves
-//      of what's being created.
-//   4. Preview only renders once EITHER half has real content (a
-//      title or a prompt) — an entirely empty preview isn't useful and
-//      the two sub-sections independently show/hide based on whether
-//      their own half of the form has anything typed yet, so a
-//      teacher who fills in the mission name first sees that section
-//      appear before they've started on the activity, and vice versa.
+// Server contract UNCHANGED: still calls createMissionWithFirstActivity
+// once, with the same 'activities' JSON array shape
+// (activities[].questions[].{prompt,questionType,options,
+// correctAnswer,hintText}) — only the CLIENT UI/interaction model
+// changed, not what gets sent to the server.
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Lightbulb, Eye, Play, Target } from 'lucide-react'
+import { X, Lightbulb, Plus, Check, Circle, Square, Triangle, Diamond, Target } from 'lucide-react'
 import { createMissionWithFirstActivity } from '@/features/missions/actions/create-mission'
 
-type ActivityType = 'multiple_choice_single' | 'true_false'
+type QuestionType = 'multiple_choice_single' | 'true_false'
 
-let optionKeySeed = 0
-function nextOptionKey() {
-    optionKeySeed += 1
-    return `option-${optionKeySeed}`
+// Same 4-color/4-shape tile system as ActivityRunner.tsx's real
+// gameplay tiles — copied here directly (not imported, since that
+// component doesn't export it) so the authoring tiles are visually
+// identical to what a student actually sees, not an approximation.
+const TILE_STYLES = [
+    { icon: Circle, bg: 'bg-brand' },
+    { icon: Square, bg: 'bg-info' },
+    { icon: Triangle, bg: 'bg-warning' },
+    { icon: Diamond, bg: 'bg-brand-hover' },
+]
+
+let keySeed = 0
+function nextKey(prefix: string) {
+    keySeed += 1
+    return `${prefix}-${keySeed}`
 }
 
 function makeEmptyOption() {
-    return { key: nextOptionKey(), text: '' }
+    return { key: nextKey('option'), text: '' }
 }
+
+function makeEmptyQuestion() {
+    return {
+        key: nextKey('question'),
+        questionType: 'multiple_choice_single' as QuestionType,
+        prompt: '',
+        options: [makeEmptyOption(), makeEmptyOption()],
+        correctIndex: null as number | null,
+        correctTf: 'True' as 'True' | 'False',
+        hintText: '',
+    }
+}
+
+type QuestionDraft = ReturnType<typeof makeEmptyQuestion>
+
+function makeEmptyActivity() {
+    return {
+        key: nextKey('activity'),
+        questions: [makeEmptyQuestion()],
+    }
+}
+
+type ActivityDraft = ReturnType<typeof makeEmptyActivity>
 
 export function NewMissionForm({ courseId, lessonId }: { courseId: string; lessonId: string }) {
     const router = useRouter()
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
-    const [activityType, setActivityType] = useState<ActivityType>('multiple_choice_single')
-    const [prompt, setPrompt] = useState('')
-    const [options, setOptions] = useState([makeEmptyOption(), makeEmptyOption()])
-    const [correctIndex, setCorrectIndex] = useState<number | null>(null)
-    const [correctTf, setCorrectTf] = useState<'True' | 'False'>('True')
-    const [hintText, setHintText] = useState('')
+
+    // Every activity being built, inline, on this one page — no
+    // separate staging list. Each activity has its own array of
+    // question drafts.
+    const [activities, setActivities] = useState<ActivityDraft[]>([makeEmptyActivity()])
+
     const [error, setError] = useState('')
     const [isPending, setIsPending] = useState(false)
 
-    // Settings — mission-shaped, collected here same as NewQuizForm.tsx
-    // collects quiz settings up front: applies the moment the mission
-    // is created, in the same submit as the title and first activity.
     const [masteryThreshold, setMasteryThreshold] = useState(3)
     const [publishNow, setPublishNow] = useState(false)
 
-    function updateOptionText(key: string, text: string) {
-        setOptions((prev) => prev.map((o) => (o.key === key ? { ...o, text } : o)))
+    function updateQuestion(activityKey: string, questionKey: string, patch: Partial<QuestionDraft>) {
+        setActivities((prev) =>
+            prev.map((a) =>
+                a.key !== activityKey
+                    ? a
+                    : { ...a, questions: a.questions.map((q) => (q.key === questionKey ? { ...q, ...patch } : q)) }
+            )
+        )
     }
 
-    function addOptionRow() {
-        setOptions((prev) => [...prev, makeEmptyOption()])
+    function addQuestionBlock(activityKey: string) {
+        setActivities((prev) =>
+            prev.map((a) => (a.key === activityKey ? { ...a, questions: [...a.questions, makeEmptyQuestion()] } : a))
+        )
     }
 
-    function removeOptionRow(key: string) {
-        setOptions((prev) => {
-            const removedIndex = prev.findIndex((o) => o.key === key)
-            const next = prev.filter((o) => o.key !== key)
-            if (correctIndex !== null) {
-                if (removedIndex === correctIndex) setCorrectIndex(null)
-                else if (removedIndex < correctIndex) setCorrectIndex(correctIndex - 1)
-            }
-            return next
-        })
+    function removeQuestionBlock(activityKey: string, questionKey: string) {
+        setActivities((prev) =>
+            prev.map((a) =>
+                a.key === activityKey && a.questions.length > 1
+                    ? { ...a, questions: a.questions.filter((q) => q.key !== questionKey) }
+                    : a
+            )
+        )
+    }
+
+    function updateOptionText(activityKey: string, questionKey: string, optionKey: string, text: string) {
+        setActivities((prev) =>
+            prev.map((a) =>
+                a.key !== activityKey
+                    ? a
+                    : {
+                          ...a,
+                          questions: a.questions.map((q) =>
+                              q.key === questionKey
+                                  ? { ...q, options: q.options.map((o) => (o.key === optionKey ? { ...o, text } : o)) }
+                                  : q
+                          ),
+                      }
+            )
+        )
+    }
+
+    function addOptionRow(activityKey: string, questionKey: string) {
+        setActivities((prev) =>
+            prev.map((a) =>
+                a.key !== activityKey
+                    ? a
+                    : {
+                          ...a,
+                          questions: a.questions.map((q) =>
+                              q.key === questionKey ? { ...q, options: [...q.options, makeEmptyOption()] } : q
+                          ),
+                      }
+            )
+        )
+    }
+
+    function removeOptionRow(activityKey: string, questionKey: string, optionKey: string) {
+        setActivities((prev) =>
+            prev.map((a) => {
+                if (a.key !== activityKey) return a
+                return {
+                    ...a,
+                    questions: a.questions.map((q) => {
+                        if (q.key !== questionKey) return q
+                        const removedIndex = q.options.findIndex((o) => o.key === optionKey)
+                        const nextOptions = q.options.filter((o) => o.key !== optionKey)
+                        let nextCorrectIndex = q.correctIndex
+                        if (nextCorrectIndex !== null) {
+                            if (removedIndex === nextCorrectIndex) nextCorrectIndex = null
+                            else if (removedIndex < nextCorrectIndex) nextCorrectIndex = nextCorrectIndex - 1
+                        }
+                        return { ...q, options: nextOptions, correctIndex: nextCorrectIndex }
+                    }),
+                }
+            })
+        )
+    }
+
+    function addActivity() {
+        setActivities((prev) => [...prev, makeEmptyActivity()])
+    }
+
+    function removeActivity(activityKey: string) {
+        setActivities((prev) => (prev.length > 1 ? prev.filter((a) => a.key !== activityKey) : prev))
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -125,36 +211,62 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
             return
         }
 
-        if (activityType === 'multiple_choice_single') {
-            const filledOptions = options.map((o) => o.text.trim()).filter(Boolean)
-            if (filledOptions.length < 2) {
-                setError('Add at least two answer options.')
-                return
-            }
-            if (correctIndex === null || !options[correctIndex]?.text.trim()) {
-                setError('Click the bullet next to the correct answer.')
-                return
+        // Validate every activity's every question before building the
+        // payload — same "never write an empty mission" principle as
+        // before, now checked across the whole inline page at once
+        // instead of per-staged-activity.
+        for (const [aIndex, activity] of activities.entries()) {
+            for (const [qIndex, q] of activity.questions.entries()) {
+                if (!q.prompt.trim()) {
+                    setError(`Activity ${aIndex + 1}, question ${qIndex + 1}: enter a prompt.`)
+                    return
+                }
+                if (q.questionType === 'multiple_choice_single') {
+                    const filled = q.options.map((o) => o.text.trim()).filter(Boolean)
+                    if (filled.length < 2) {
+                        setError(`Activity ${aIndex + 1}, question ${qIndex + 1}: add at least two answer options.`)
+                        return
+                    }
+                    if (q.correctIndex === null || !q.options[q.correctIndex]?.text.trim()) {
+                        setError(`Activity ${aIndex + 1}, question ${qIndex + 1}: tap a tile to mark the correct answer.`)
+                        return
+                    }
+                }
             }
         }
+
+        // Same payload shape create-mission.ts's createMissionSchema
+        // expects — built here in one pass across every activity/
+        // question instead of accumulated via a staging step.
+        const activitiesPayload = activities.map((activity) => ({
+            questions: activity.questions.map((q) => {
+                if (q.questionType === 'true_false') {
+                    return {
+                        prompt: q.prompt.trim(),
+                        questionType: q.questionType,
+                        correctAnswer: q.correctTf,
+                        hintText: q.hintText.trim() || undefined,
+                    }
+                }
+                const filledOptions = q.options.map((o) => o.text.trim()).filter(Boolean)
+                const correctOption = q.correctIndex !== null ? q.options[q.correctIndex] : undefined
+                return {
+                    prompt: q.prompt.trim(),
+                    questionType: q.questionType,
+                    options: filledOptions.join(','),
+                    correctAnswer: correctOption?.text.trim() ?? '',
+                    hintText: q.hintText.trim() || undefined,
+                }
+            }),
+        }))
 
         const formData = new FormData()
         formData.set('lessonId', lessonId)
         formData.set('title', title.trim())
         if (description.trim()) formData.set('description', description.trim())
         formData.set('masteryThreshold', String(masteryThreshold))
-        formData.set('prompt', prompt)
-        formData.set('activityType', activityType)
-        if (hintText.trim()) formData.set('hintText', hintText.trim())
         formData.set('publish', String(publishNow))
-
-        if (activityType === 'true_false') {
-            formData.set('correctAnswer', correctTf)
-        } else {
-            const filledOptions = options.map((o) => o.text.trim()).filter(Boolean)
-            const correctOption = correctIndex !== null ? options[correctIndex] : undefined
-            formData.set('options', filledOptions.join(','))
-            formData.set('correctAnswer', correctOption?.text.trim() ?? '')
-        }
+        formData.set('activities', JSON.stringify(activitiesPayload))
 
         setIsPending(true)
         const result = await createMissionWithFirstActivity(formData)
@@ -165,10 +277,6 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
             return
         }
 
-        // Same "posting is the done action" logic as
-        // saveQuizSettingsAndPublish/NewQuizForm.tsx: if published
-        // immediately, go see it live; otherwise land on the edit page
-        // to keep adding activities.
         if (publishNow) {
             router.push(`/teacher/courses/${courseId}/lessons/${lessonId}`)
         } else {
@@ -176,16 +284,11 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
         }
     }
 
-    const trimmedTitle = title.trim()
-    const trimmedPrompt = prompt.trim()
-    const showDetailsPreview = trimmedTitle.length > 0
-    const showActivityPreview = trimmedPrompt.length > 0
-    const showPreview = showDetailsPreview || showActivityPreview
+    const totalQuestionCount = activities.reduce((sum, a) => sum + a.questions.length, 0)
 
     return (
-        <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-            {/* ── Classroom Mode form controls — unchanged behavior ───────── */}
-            <form onSubmit={handleSubmit} className="space-y-5 bg-surface rounded-md border border-hairline shadow-card p-6">
+        <form onSubmit={handleSubmit} className="mx-auto w-full max-w-md space-y-6 py-4 sm:max-w-lg sm:py-8">
+            <div className="space-y-5 bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6">
                 <div>
                     <label htmlFor="newMissionTitle" className="text-label text-ink-soft block mb-2">
                         Mission name <span className="text-error">(required)</span>
@@ -218,134 +321,11 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                 </div>
 
                 <div>
-                    <label htmlFor="newMissionActivityType" className="text-label text-ink-soft block mb-2">
-                        Activity type
+                    <label htmlFor="newMissionMasteryThreshold" className="text-label text-ink-soft block mb-2">
+                        Correct in a row to master this mission
                     </label>
-                    <select
-                        id="newMissionActivityType"
-                        value={activityType}
-                        onChange={(e) => setActivityType(e.target.value as ActivityType)}
-                        className="w-full h-11 px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
-                    >
-                        <option value="multiple_choice_single">Multiple choice</option>
-                        <option value="true_false">True / False</option>
-                    </select>
-                </div>
-
-                <textarea
-                    aria-label="Activity prompt"
-                    rows={2}
-                    required
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
-                    placeholder="Type the activity prompt here"
-                />
-
-                {activityType === 'multiple_choice_single' && (
-                    <div className="space-y-2">
-                        <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
-                        {options.map((option, index) => (
-                            <div key={option.key} className="flex items-center gap-3">
-                                <button
-                                    type="button"
-                                    aria-label={`Mark option ${index + 1} as correct`}
-                                    onClick={() => setCorrectIndex(index)}
-                                    className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
-                                        correctIndex === index
-                                            ? 'border-brand bg-brand text-on-ink'
-                                            : 'border-hairline-strong hover:border-brand'
-                                    }`}
-                                >
-                                    {correctIndex === index && (
-                                        <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    )}
-                                </button>
-                                <input
-                                    type="text"
-                                    value={option.text}
-                                    onChange={(e) => updateOptionText(option.key, e.target.value)}
-                                    placeholder={`Option ${index + 1}`}
-                                    className="flex-1 min-h-[44px] px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
-                                />
-                                {options.length > 2 && (
-                                    <button
-                                        type="button"
-                                        aria-label={`Remove option ${index + 1}`}
-                                        onClick={() => removeOptionRow(option.key)}
-                                        className="flex h-8 w-8 items-center justify-center rounded-md border-[1.5px] border-hairline-strong text-text-secondary hover:border-error hover:text-error shrink-0"
-                                    >
-                                        <X size={16} aria-hidden="true" />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-                        <button
-                            type="button"
-                            onClick={addOptionRow}
-                            className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
-                        >
-                            + Add option
-                        </button>
-                    </div>
-                )}
-
-                {activityType === 'true_false' && (
-                    <div className="space-y-2">
-                        <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
-                        {(['True', 'False'] as const).map((label) => (
-                            <div key={label} className="flex items-center gap-3">
-                                <button
-                                    type="button"
-                                    aria-label={`Mark ${label} as correct`}
-                                    onClick={() => setCorrectTf(label)}
-                                    className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
-                                        correctTf === label
-                                            ? 'border-brand bg-brand text-on-ink'
-                                            : 'border-hairline-strong hover:border-brand'
-                                    }`}
-                                >
-                                    {correctTf === label && (
-                                        <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    )}
-                                </button>
-                                <span className="text-body-md text-ink">{label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                <div>
-                    <label htmlFor="newMissionHint" className="text-label text-ink-soft block mb-2">
-                        Hint (optional — shown after 2 wrong attempts)
-                    </label>
-                    <textarea
-                        id="newMissionHint"
-                        rows={2}
-                        value={hintText}
-                        onChange={(e) => setHintText(e.target.value)}
-                        placeholder="A nudge in the right direction, not the answer itself"
-                        className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
-                    />
-                </div>
-
-                <div className="border-t border-hairline pt-5 space-y-5">
-                    <div>
-                        <label htmlFor="newMissionMasteryThreshold" className="text-label text-ink-soft block mb-2">
-                            Correct in a row to master this mission
-                        </label>
+                    <div className="flex items-center gap-2">
+                        <Target size={16} className="text-text-secondary shrink-0" aria-hidden="true" />
                         <input
                             id="newMissionMasteryThreshold"
                             type="number"
@@ -355,17 +335,227 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                             className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                         />
                     </div>
-
-                    <label className="flex items-center gap-2 text-body-md text-ink cursor-pointer select-none">
-                        <input
-                            type="checkbox"
-                            checked={publishNow}
-                            onChange={(e) => setPublishNow(e.target.checked)}
-                            className="h-4 w-4 accent-brand"
-                        />
-                        Post immediately — students can see it as soon as it&apos;s created
-                    </label>
                 </div>
+            </div>
+
+            {/* ── Activities, stacked inline — no staging step ─────────── */}
+            {activities.map((activity, aIndex) => (
+                <div key={activity.key} className="space-y-4 bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                        <p className="text-label text-ink-soft">Activity {aIndex + 1}</p>
+                        {activities.length > 1 && (
+                            <button
+                                type="button"
+                                aria-label={`Remove activity ${aIndex + 1}`}
+                                onClick={() => removeActivity(activity.key)}
+                                className="text-text-secondary hover:text-error p-1 rounded-md transition-colors"
+                            >
+                                <X size={16} aria-hidden="true" />
+                            </button>
+                        )}
+                    </div>
+
+                    {activity.questions.map((q, qIndex) => (
+                        <div key={q.key} className="space-y-4 rounded-md border border-hairline p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="text-caption font-semibold text-text-secondary">Question {qIndex + 1}</p>
+                                {activity.questions.length > 1 && (
+                                    <button
+                                        type="button"
+                                        aria-label={`Remove question ${qIndex + 1}`}
+                                        onClick={() => removeQuestionBlock(activity.key, q.key)}
+                                        className="text-text-secondary hover:text-error p-1 rounded-md transition-colors"
+                                    >
+                                        <X size={16} aria-hidden="true" />
+                                    </button>
+                                )}
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor={`qtype-${q.key}`}
+                                    className="text-label text-ink-soft block mb-2"
+                                >
+                                    Question type
+                                </label>
+                                <select
+                                    id={`qtype-${q.key}`}
+                                    value={q.questionType}
+                                    onChange={(e) =>
+                                        updateQuestion(activity.key, q.key, { questionType: e.target.value as QuestionType })
+                                    }
+                                    className="w-full h-11 px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                >
+                                    <option value="multiple_choice_single">Multiple choice</option>
+                                    <option value="true_false">True / False</option>
+                                </select>
+                            </div>
+
+                            <textarea
+                                aria-label={`Question ${qIndex + 1} prompt`}
+                                rows={2}
+                                required
+                                value={q.prompt}
+                                onChange={(e) => updateQuestion(activity.key, q.key, { prompt: e.target.value })}
+                                className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                placeholder="Type the question prompt here"
+                            />
+
+                            {/* ── Tactile answer tiles — this IS the
+                                 student-facing look, no separate preview.
+                                 Tapping a tile marks it correct. ────────── */}
+                            {q.questionType === 'multiple_choice_single' && (
+                                <div className="space-y-3">
+                                    <p className="text-caption text-text-secondary">
+                                        Tap a tile to mark it as the correct answer
+                                    </p>
+                                    {q.options.map((option, optIndex) => {
+                                        const style = TILE_STYLES[optIndex % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                                        const Icon = style.icon
+                                        const isCorrect = q.correctIndex === optIndex
+                                        return (
+                                            <div
+                                                key={option.key}
+                                                className={`relative flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-on-ink shadow-card transition-all ${style.bg} ${
+                                                    isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
+                                                }`}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Mark option ${optIndex + 1} as correct`}
+                                                    onClick={() => updateQuestion(activity.key, q.key, { correctIndex: optIndex })}
+                                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20"
+                                                >
+                                                    {isCorrect ? (
+                                                        <Check size={20} aria-hidden="true" />
+                                                    ) : (
+                                                        <Icon size={18} aria-hidden="true" />
+                                                    )}
+                                                </button>
+                                                <input
+                                                    type="text"
+                                                    value={option.text}
+                                                    onChange={(e) =>
+                                                        updateOptionText(activity.key, q.key, option.key, e.target.value)
+                                                    }
+                                                    placeholder={`Option ${optIndex + 1}`}
+                                                    className="min-w-0 flex-1 bg-transparent font-sans font-bold text-base text-on-ink placeholder:text-on-ink/60 outline-none"
+                                                />
+                                                {isCorrect && (
+                                                    <span className="shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
+                                                        Correct
+                                                    </span>
+                                                )}
+                                                {q.options.length > 2 && (
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Remove option ${optIndex + 1}`}
+                                                        onClick={() => removeOptionRow(activity.key, q.key, option.key)}
+                                                        className="shrink-0 text-on-ink/70 hover:text-on-ink p-1 rounded-md"
+                                                    >
+                                                        <X size={16} aria-hidden="true" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                    <button
+                                        type="button"
+                                        onClick={() => addOptionRow(activity.key, q.key)}
+                                        className="text-caption font-semibold text-text-secondary hover:text-ink pl-2"
+                                    >
+                                        + Add option
+                                    </button>
+                                </div>
+                            )}
+
+                            {q.questionType === 'true_false' && (
+                                <div className="space-y-3">
+                                    <p className="text-caption text-text-secondary">
+                                        Tap a tile to mark it as the correct answer
+                                    </p>
+                                    {(['True', 'False'] as const).map((label, i) => {
+                                        const style = TILE_STYLES[i % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                                        const Icon = style.icon
+                                        const isCorrect = q.correctTf === label
+                                        return (
+                                            <button
+                                                key={label}
+                                                type="button"
+                                                onClick={() => updateQuestion(activity.key, q.key, { correctTf: label })}
+                                                className={`flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-left text-on-ink shadow-card transition-all ${style.bg} ${
+                                                    isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
+                                                }`}
+                                            >
+                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20">
+                                                    {isCorrect ? (
+                                                        <Check size={20} aria-hidden="true" />
+                                                    ) : (
+                                                        <Icon size={18} aria-hidden="true" />
+                                                    )}
+                                                </span>
+                                                <span className="font-sans font-bold text-base">{label}</span>
+                                                {isCorrect && (
+                                                    <span className="ml-auto shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
+                                                        Correct
+                                                    </span>
+                                                )}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            )}
+
+                            <div>
+                                <label htmlFor={`hint-${q.key}`} className="text-label text-ink-soft block mb-2">
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <Lightbulb size={14} aria-hidden="true" />
+                                        Hint (optional — shown after 2 wrong attempts)
+                                    </span>
+                                </label>
+                                <textarea
+                                    id={`hint-${q.key}`}
+                                    rows={2}
+                                    value={q.hintText}
+                                    onChange={(e) => updateQuestion(activity.key, q.key, { hintText: e.target.value })}
+                                    placeholder="A nudge in the right direction, not the answer itself"
+                                    className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                />
+                            </div>
+                        </div>
+                    ))}
+
+                    <button
+                        type="button"
+                        onClick={() => addQuestionBlock(activity.key)}
+                        className="flex items-center justify-center gap-2 w-full h-11 rounded-md border-2 border-dashed border-hairline-strong text-caption font-semibold text-text-secondary hover:border-brand hover:text-brand transition-colors"
+                    >
+                        <Plus size={16} aria-hidden="true" />
+                        Add another question to this activity
+                    </button>
+                </div>
+            ))}
+
+            <button
+                type="button"
+                onClick={addActivity}
+                className="flex items-center justify-center gap-2 w-full h-12 rounded-md border-2 border-dashed border-brand text-body-md font-semibold text-brand hover:bg-brand-soft transition-colors"
+            >
+                <Plus size={18} aria-hidden="true" />
+                Add another activity
+            </button>
+
+            {/* ── Publish + submit ─────────────────────────────────────── */}
+            <div className="space-y-5 bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6">
+                <label className="flex items-center gap-2 text-body-md text-ink cursor-pointer select-none">
+                    <input
+                        type="checkbox"
+                        checked={publishNow}
+                        onChange={(e) => setPublishNow(e.target.checked)}
+                        className="h-4 w-4 accent-brand"
+                    />
+                    Post immediately — students can see it as soon as it&apos;s created
+                </label>
 
                 {error && (
                     <p className="text-caption text-error" role="alert">
@@ -376,145 +566,15 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+                    className="w-full h-12 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
                 >
-                    {isPending ? 'Creating…' : publishNow ? 'Create & Post mission' : 'Create mission'}
+                    {isPending
+                        ? 'Creating…'
+                        : publishNow
+                          ? `Create & Post mission (${activities.length} ${activities.length === 1 ? 'activity' : 'activities'}, ${totalQuestionCount} ${totalQuestionCount === 1 ? 'question' : 'questions'})`
+                          : `Create mission (${activities.length} ${activities.length === 1 ? 'activity' : 'activities'}, ${totalQuestionCount} ${totalQuestionCount === 1 ? 'question' : 'questions'})`}
                 </button>
-            </form>
-
-            {/* ── Mission Mode live preview — student-facing look only ───── */}
-            <div className="lg:sticky lg:top-6">
-                <div className="flex items-center gap-2 mb-3 text-text-secondary">
-                    <Eye size={16} aria-hidden="true" />
-                    <p className="text-caption font-semibold uppercase tracking-wide">
-                        Student preview
-                    </p>
-                </div>
-
-                {!showPreview ? (
-                    <div className="rounded-2xl border-2 border-dashed border-hairline-strong p-8 text-center">
-                        <p className="font-sans text-caption text-text-muted">
-                            Start typing a mission name or activity prompt to see how this will
-                            look to students.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {/* Mission details half — mirrors MissionSettingsForm.tsx's preview */}
-                        {showDetailsPreview && (
-                            <div className="rounded-2xl bg-surface-sunken border-2 border-hairline p-6">
-                                <p className="font-heading text-mission md:text-[1.75rem] text-ink">
-                                    {trimmedTitle}
-                                </p>
-                                {description.trim() && (
-                                    <p className="font-sans text-body-md text-ink-soft mt-2">
-                                        {description.trim()}
-                                    </p>
-                                )}
-
-                                <div className="mt-5 inline-flex items-center gap-2 rounded-pill bg-warning-soft text-warning px-4 py-2">
-                                    <Target size={16} aria-hidden="true" />
-                                    <span className="font-sans text-caption font-semibold">
-                                        {masteryThreshold}-in-a-row to master
-                                    </span>
-                                </div>
-
-                                <div
-                                    aria-hidden="true"
-                                    className="w-full h-14 mt-6 rounded-2xl border-b-4 bg-gamified-green border-gamified-green-dark flex items-center justify-center gap-2 text-white font-heading text-lg tracking-wide uppercase select-none"
-                                >
-                                    <Play size={20} fill="currentColor" aria-hidden="true" />
-                                    Start Mission
-                                </div>
-                            </div>
-                        )}
-
-                        {/* First activity half — mirrors AddActivityForm.tsx's preview */}
-                        {showActivityPreview && (
-                            <div className="rounded-2xl bg-surface-sunken border-2 border-hairline p-6">
-                                <p className="font-heading text-mission md:text-[1.75rem] text-ink mb-5">
-                                    {trimmedPrompt}
-                                </p>
-
-                                {activityType === 'multiple_choice_single' && (
-                                    <div className="space-y-3">
-                                        {options
-                                            .map((option, index) => ({ option, index }))
-                                            .filter(({ option }) => option.text.trim().length > 0)
-                                            .map(({ option, index }) => {
-                                                const isCorrect = correctIndex === index
-                                                return (
-                                                    <div
-                                                        key={option.key}
-                                                        className={`w-full min-h-[60px] p-4 rounded-2xl border-2 border-b-4 flex items-center justify-between text-left ${
-                                                            isCorrect
-                                                                ? 'bg-success-soft border-success border-b-success'
-                                                                : 'bg-surface border-hairline border-b-hairline-strong'
-                                                        }`}
-                                                    >
-                                                        <span className="font-sans font-bold text-base text-ink">
-                                                            {option.text}
-                                                        </span>
-                                                        {isCorrect && (
-                                                            <span className="shrink-0 font-sans text-caption font-semibold text-success">
-                                                                Correct answer
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )
-                                            })}
-                                        {options.every((o) => !o.text.trim()) && (
-                                            <p className="font-sans text-caption text-text-muted">
-                                                Add answer options to preview them here.
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-
-                                {activityType === 'true_false' && (
-                                    <div className="space-y-3">
-                                        {(['True', 'False'] as const).map((label) => {
-                                            const isCorrect = correctTf === label
-                                            return (
-                                                <div
-                                                    key={label}
-                                                    className={`w-full min-h-[60px] p-4 rounded-2xl border-2 border-b-4 flex items-center justify-between text-left ${
-                                                        isCorrect
-                                                            ? 'bg-success-soft border-success border-b-success'
-                                                            : 'bg-surface border-hairline border-b-hairline-strong'
-                                                    }`}
-                                                >
-                                                    <span className="font-sans font-bold text-base text-ink">
-                                                        {label}
-                                                    </span>
-                                                    {isCorrect && (
-                                                        <span className="shrink-0 font-sans text-caption font-semibold text-success">
-                                                            Correct answer
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                )}
-
-                                {hintText.trim() && (
-                                    <div className="mt-5 flex items-start gap-2 rounded-md bg-warning-soft p-3">
-                                        <Lightbulb size={16} className="text-warning shrink-0 mt-0.5" aria-hidden="true" />
-                                        <p className="font-sans text-caption text-ink-soft">{hintText.trim()}</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        <p className="font-sans text-caption text-text-muted">
-                            Preview only — the correct answer is marked here for your reference;
-                            students never see it before they submit, and the Start Mission button
-                            above isn&apos;t clickable here.
-                        </p>
-                    </div>
-                )}
             </div>
-        </div>
+        </form>
     )
 }

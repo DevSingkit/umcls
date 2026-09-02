@@ -36,6 +36,16 @@
 // and the mission gameplay page fixed earlier this track. Classroom
 // Mode authoring page, no Fredoka.
 
+// EDIT-PAGE HEADING FIX (2026-09-02): matches the create-page's
+// activity+question count phrasing (NewMissionForm.tsx's submit button
+// reads "Create mission (N activities, M questions)") — this page's
+// "Activities (N)" heading now also shows a total question count,
+// since an activity can hold multiple questions per the migration-094
+// rework and the activity count alone no longer conveys the actual
+// size of the mission. No preview panel here — this page never had
+// one; the "match the create page" ask was specifically about this
+// count phrasing, not about adding/removing a preview.
+
 import { notFound } from 'next/navigation'
 import { getMissionForTeacher, getMissionProgressForTeacher } from '@/features/missions/actions/create-mission'
 import { MissionSettingsForm } from '@/features/missions/components/MissionSettingsForm'
@@ -56,6 +66,16 @@ export default async function EditMissionPage({
     }
     const { mission, activities } = result
     const m = mission as any
+
+    // Matches NewMissionForm.tsx's "N activities, M questions" phrasing
+    // on the create page — computed here rather than in ActivityCard/
+    // MissionSettingsForm since it's a page-level summary of the whole
+    // activities array, not something either of those components
+    // already tracks.
+    const totalQuestionCount = activities.reduce(
+        (sum: number, a: any) => sum + (a.questions?.length ?? 0),
+        0
+    )
 
     // GAP #3: only meaningful once the mission is postable/posted —
     // same reasoning as the reset-progress control in
@@ -85,7 +105,10 @@ export default async function EditMissionPage({
             />
 
             <div className="space-y-4">
-                <h2 className="text-h3 text-ink">Activities ({activities.length})</h2>
+                <h2 className="text-h3 text-ink">
+                    {activities.length} {activities.length === 1 ? 'activity' : 'activities'}, {totalQuestionCount}{' '}
+                    {totalQuestionCount === 1 ? 'question' : 'questions'}
+                </h2>
                 {activities.length === 0 && (
                     <p className="text-body-md text-text-secondary">No activities yet — add the first one below.</p>
                 )}

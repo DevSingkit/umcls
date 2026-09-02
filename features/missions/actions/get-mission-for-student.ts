@@ -35,6 +35,33 @@
 // mission_progress row, or the read path here and the write path
 // there will disagree about what a fresh student's first mission
 // should be.
+//
+// MULTI-QUESTION REWORK (2026-08-31): "one activity" is no longer one
+// prompt+options pair — it's a container holding MULTIPLE questions
+// (migration 094's activity_questions/activity_question_options),
+// Duolingo/Quizizz-style. This file's TWO exports are affected very
+// differently:
+//
+//   - getMissionsForStudent (the path-view function MissionPath.tsx
+//     renders) is UNCHANGED — confirmed by re-reading it against this
+//     rework's scope, not assumed. It only ever reads `missions` and
+//     `mission_progress`; it never touches activities or their
+//     content at all, so nothing about nested questions affects it.
+//     Kept byte-for-byte identical below.
+//
+//   - getMissionPreviewForStudent changes substantially: it now
+//     fetches each activity's activity_questions (not a flat prompt),
+//     each question's options (from the new
+//     activity_question_options_for_student view — mirrors
+//     activity_options_for_student's exact is_correct-omitted
+//     guarantee, see migration 094), and per-QUESTION mastery from the
+//     new question_mastery table instead of per-activity mastery from
+//     activity_mastery. The "unmastered first" initial sort described
+//     below now operates on activities using a computed "is this
+//     activity's question set fully mastered" rollup (every question
+//     mastered = activity counts as mastered for sort purposes), same
+//     rollup rule submit-question-attempt.ts uses to decide when to
+//     actually write activity_mastery.
 
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/get-current-user'
@@ -56,6 +83,9 @@ export type MissionForStudent = {
  * Loads every published mission in a lesson, with this student's
  * progress (or the computed bootstrapping default described above)
  * joined in. This is what MissionPath.tsx renders directly.
+ *
+ * UNCHANGED by the multi-question rework — only reads missions/
+ * mission_progress, neither of which the rework touches.
  */
 export async function getMissionsForStudent(lessonId: string): Promise<MissionForStudent[]> {
     const user = await requireRole(['student'])
@@ -122,21 +152,42 @@ export async function getMissionsForStudent(lessonId: string): Promise<MissionFo
     })
 }
 
+// One question within an activity, student-facing — no is_correct
+// anywhere on this type, same guarantee ActivityPreviewForStudent
+// always had, now one level deeper.
+export type QuestionPreviewForStudent = {
+    id: string
+    prompt: string
+    questionType: string
+    orderIndex: number
+    hintText: string | null
+    options: { id: string; optionText: string }[]
+    // Same seeding purpose as the old ActivityPreviewForStudent's
+    // initialCorrectStreak/isMastered, now scoped to ONE question
+    // instead of one whole activity — ActivityRunner.tsx's in-session
+    // queue is seeded per question, since mastery now lives per
+    // question (question_mastery), not per activity.
+    initialCorrectStreak: number
+    isMastered: boolean
+}
+
 export type ActivityPreviewForStudent = {
     id: string
     prompt: string
     activityType: string
     orderIndex: number
-    options: { id: string; optionText: string }[]
-    // PHASE 3 ADDITIONS (ADAPTIVE-ENGINE-PLAN.md) — read from
-    // activity_mastery (Phase 1/2), used by ActivityRunner.tsx to seed
-    // its in-session queue: isMastered drives the initial "unmastered
-    // first" sort below, initialCorrectStreak seeds the runner's local
-    // per-activity streak so it doesn't start every activity back at 0
-    // if the student already had progress toward this specific
-    // activity's own 3-in-a-row from an earlier session.
-    initialCorrectStreak: number
+    // NEW: the container's own questions. Replaces the old flat
+    // `options` field — an activity itself no longer has options
+    // directly, only its questions do.
+    questions: QuestionPreviewForStudent[]
+        // Rollup, computed here the same way submit-question-attempt.ts
+    // computes it when deciding whether to write activity_mastery:
+    // true only when EVERY question in `questions` is individually
+    // mastered. Used for this file's own "unmastered first" initial
+    // sort below, same purpose the old per-activity isMastered served.
     isMastered: boolean
+    masteredQuestionCount: number
+    totalQuestionCount: number
 }
 
 export type MissionPreviewForStudent = {
@@ -148,15 +199,18 @@ export type MissionPreviewForStudent = {
 }
 
 /**
- * Loads a single mission's activities for the student to work through
- * — the mission-detail equivalent of getQuizForStudent. Included for
- * Day 4's ActivityRunner.tsx to build on, since it needs this same
- * read; not required for Day 3's path view itself, which only needs
+ * Loads a single mission's activities — each with its own nested
+ * questions — for the student to work through. The mission-detail
+ * equivalent of getQuizForStudent. Included for ActivityRunner.tsx to
+ * build on; not required for the path view itself, which only needs
  * getMissionsForStudent above.
  *
- * Same guarantee as getQuizForStudent: this never returns is_correct,
- * because it only reads from activity_options_for_student, a view
- * that leaves is_correct out entirely.
+ * Same guarantee as getQuizForStudent, now one level deeper: this
+ * never returns is_correct anywhere, because question options are
+ * read from activity_question_options_for_student (migration 094), a
+ * view that leaves is_correct out entirely — same pattern as the
+ * existing activity_options_for_student view this file used to read
+ * activity-level options from before this rework.
  */
 export async function getMissionPreviewForStudent(missionId: string): Promise<MissionPreviewForStudent> {
     const user = await requireRole(['student'])
@@ -185,64 +239,114 @@ export async function getMissionPreviewForStudent(missionId: string): Promise<Mi
 
     const activityIds = (activities ?? []).map((a) => a.id)
 
-    const { data: options, error: optionsError } = await supabase
-        .from('activity_options_for_student')
-        .select('id, activity_id, option_text, order_index')
+    // NEW: every question belonging to every activity in this mission,
+    // fetched in one query rather than per-activity — same "fetch flat,
+    // group in memory" shape the old code already used for options.
+    const { data: questions, error: questionsError } = await supabase
+        .from('activity_questions')
+        .select('id, activity_id, prompt, question_type, order_index, hint_text')
         .in('activity_id', activityIds)
+        .order('order_index')
+
+    if (questionsError) {
+        throw new Error('Could not load activity questions')
+    }
+
+    const questionIds = (questions ?? []).map((q) => q.id)
+
+    // Reads from the NEW activity_question_options_for_student view
+    // (migration 094) — mirrors activity_options_for_student's exact
+    // is_correct-omitted shape, one level deeper (question_id instead
+    // of activity_id).
+    const { data: options, error: optionsError } = await supabase
+        .from('activity_question_options_for_student')
+        .select('id, question_id, option_text, order_index')
+        .in('question_id', questionIds)
         .order('order_index')
 
     if (optionsError) {
         throw new Error('Could not load answer options')
     }
 
-    // PHASE 3 ADDITION: this student's mastery state for every activity
-    // in this mission, used only to decide INITIAL ordering below (see
-    // ADAPTIVE-ENGINE-PLAN.md Phase 3 — "activities not yet mastered
-    // come before/mixed with mastered ones"). The live in-session
-    // requeue behavior itself (what happens after a wrong answer, or a
-    // correct answer that doesn't yet complete an activity's own
-    // 3-in-a-row) is NOT computed here — that's ActivityRunner.tsx's
-    // job, reacting to each attempt's result as it comes in (confirmed
-    // with user: split responsibility, this file does the one-time
-    // initial sort, the component owns live queue state). A missing
-    // row (student has never attempted this activity) is treated as
-    // unmastered/streak 0, same "no row = not yet mastered" reasoning
-    // used for mission_progress's own bootstrapping default above.
+    // Per-QUESTION mastery (migration 094's question_mastery table) —
+    // replaces the old per-activity activity_mastery read for this
+    // purpose. Same "no row = not yet mastered" reasoning as before:
+    // a question the student has never attempted is treated as
+    // unmastered with streak 0, not an error.
     const { data: masteryRows, error: masteryError } = await supabase
-        .from('activity_mastery')
-        .select('activity_id, correct_streak, state')
+        .from('question_mastery')
+        .select('question_id, correct_streak, state')
         .eq('student_id', user.id)
-        .in('activity_id', activityIds)
+        .in('question_id', questionIds)
 
     if (masteryError) {
-        throw new Error('Could not load activity mastery')
+        throw new Error('Could not load question mastery')
     }
 
-    const masteryByActivityId = new Map((masteryRows ?? []).map((m) => [m.activity_id, m]))
+    const masteryByQuestionId = new Map((masteryRows ?? []).map((m) => [m.question_id, m]))
 
-    // Stable partition: unmastered first, mastered last. The query
-    // above already returned `activities` ordered by order_index, and
-    // Array.prototype.sort is a stable sort in every JS engine this
-    // app runs on, so activities within each group keep their original
-    // order_index order — no secondary sort key needed.
+    const questionsByActivityId = new Map<string, QuestionPreviewForStudent[]>()
+    for (const question of questions ?? []) {
+        const mastery = masteryByQuestionId.get(question.id)
+        const preview: QuestionPreviewForStudent = {
+            id: question.id,
+            prompt: question.prompt,
+            questionType: question.question_type,
+            orderIndex: question.order_index,
+            hintText: question.hint_text,
+            options: (options ?? [])
+                .filter((o) => o.question_id === question.id)
+                .map((o) => ({ id: o.id, optionText: o.option_text })),
+            initialCorrectStreak: mastery?.correct_streak ?? 0,
+            isMastered: mastery?.state === 'mastered',
+        }
+        const existing = questionsByActivityId.get(question.activity_id) ?? []
+        existing.push(preview)
+        questionsByActivityId.set(question.activity_id, existing)
+    }
+
+    // Rollup per activity: mastered only if it has at least one
+    // question AND every one of them is mastered. An activity with
+    // zero questions (shouldn't happen given create-mission.ts's own
+    // "never write an empty mission/activity" validation, but not
+    // assumed impossible here) is treated as NOT mastered rather than
+    // vacuously true, so it never gets sorted as "done" ahead of
+    // activities that actually have content.
+        function getActivityMasteryRollup(activityId: string): {
+        isMastered: boolean
+        masteredCount: number
+        totalCount: number
+    } {
+        const activityQuestions = questionsByActivityId.get(activityId) ?? []
+        const totalCount = activityQuestions.length
+        const masteredCount = activityQuestions.filter((q) => q.isMastered).length
+        return {
+            isMastered: totalCount > 0 && masteredCount === totalCount,
+            masteredCount,
+            totalCount,
+        }
+    }
+
+    // Stable partition: unmastered first, mastered last — same
+    // ordering rule as before, now driven by the computed rollup
+    // instead of a direct activity_mastery read.
     const sortedActivities = [...(activities ?? [])].sort((a, b) => {
-        const aMastered = masteryByActivityId.get(a.id)?.state === 'mastered' ? 1 : 0
-        const bMastered = masteryByActivityId.get(b.id)?.state === 'mastered' ? 1 : 0
+        const aMastered = getActivityMasteryRollup(a.id).isMastered ? 1 : 0
+        const bMastered = getActivityMasteryRollup(b.id).isMastered ? 1 : 0
         return aMastered - bMastered
     })
 
-    const activitiesWithOptions = sortedActivities.map((activity) => {
-        const mastery = masteryByActivityId.get(activity.id)
+    const activitiesWithQuestions: ActivityPreviewForStudent[] = sortedActivities.map((activity) => {
+        const rollup = getActivityMasteryRollup(activity.id)
         return {
             id: activity.id,
             prompt: activity.prompt,
             activityType: activity.activity_type,
             orderIndex: activity.order_index,
-            options: (options ?? [])
-                .filter((o) => o.activity_id === activity.id)
-                .map((o) => ({ id: o.id, optionText: o.option_text })),
-            initialCorrectStreak: mastery?.correct_streak ?? 0,
-            isMastered: mastery?.state === 'mastered',
+            questions: (questionsByActivityId.get(activity.id) ?? []).sort((a, b) => a.orderIndex - b.orderIndex),
+            isMastered: rollup.isMastered,
+            masteredQuestionCount: rollup.masteredCount,
+            totalQuestionCount: rollup.totalCount,
         }
     })
 
@@ -251,6 +355,6 @@ export async function getMissionPreviewForStudent(missionId: string): Promise<Mi
         title: mission.title,
         description: mission.description,
         masteryThreshold: mission.mastery_threshold,
-        activities: activitiesWithOptions,
+        activities: activitiesWithQuestions,
     }
 }

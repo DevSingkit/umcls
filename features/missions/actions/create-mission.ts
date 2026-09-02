@@ -24,49 +24,127 @@
 // 'short_answer' — nothing stops a row with that value from being
 // inserted outside this file, this is only an application-level
 // restriction.
+//
+// CONFLICT FIX / MULTI-ACTIVITY + MULTI-QUESTION REBUILD (2026-09-02):
+// this file's createMissionWithFirstActivity had regressed to
+// single-activity/single-question creation somewhere along the way —
+// only the table names were updated for migration 094
+// (activity_questions/activity_question_options), the actual staging
+// feature (stage several activities, each with several questions,
+// before one save) was never carried over. create-activity.ts's
+// addActivity (the EDIT-mission "add another activity" flow) already
+// got the correct multi-question rework — this brings creation in
+// line with it and extends one level further (multiple ACTIVITIES too,
+// per the original ask), reusing create-activity.ts's exact
+// questionInputSchema shape rather than inventing a slightly different
+// one. buildOptionRows is duplicated here rather than imported, since
+// it isn't exported from create-activity.ts and this project doesn't
+// have a shared missions-internal util module — same content, kept in
+// sync by hand if either copy's validation ever needs to change.
+//
+// "Never write an empty mission" still holds, now checked one level
+// deeper: at least one activity is required, AND every activity must
+// have at least one question (mirroring create-activity.ts's own
+// questionsArraySchema.min(1) per activity).
 
 import { z } from 'zod'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const activityTypeSchema = z.enum(['multiple_choice_single', 'true_false'])
+const questionTypeSchema = z.enum(['multiple_choice_single', 'true_false'])
+
+// Mirrors create-activity.ts's questionInputSchema field-for-field —
+// deliberately the same shape so a staged question here and a staged
+// question in AddActivityForm.tsx behave identically once submitted.
+const questionInputSchema = z.object({
+    prompt: z.string().min(2, 'Question prompt is too short'),
+    questionType: questionTypeSchema,
+    options: z.string().optional(),
+    correctAnswer: z.string().min(1, 'Enter the correct answer'),
+    hintText: z.string().optional(),
+})
+
+const questionsArraySchema = z.array(questionInputSchema).min(1, 'Each activity needs at least one question.')
+
+// One staged activity: its questions, plus an optional remediation
+// link — same two fields addActivity's own form-level inputs collect
+// (remediatesActivityId + questions), just nested here instead of
+// being the whole payload.
+const stagedActivitySchema = z.object({
+    questions: questionsArraySchema,
+    remediatesActivityId: z.string().uuid().optional(),
+})
 
 const createMissionSchema = z.object({
     lessonId: z.string().uuid(),
     title: z.string().min(2, 'Give this mission a name (at least 2 characters).'),
     description: z.string().optional(),
     masteryThreshold: z.string().optional(),
-    // First activity — same "never write an empty mission" principle
-    // as createQuizWithFirstQuestion below.
-    prompt: z.string().min(2, 'Activity prompt is too short'),
-    activityType: activityTypeSchema,
-    options: z.string().optional(),
-    correctAnswer: z.string().min(1, 'Enter the correct answer'),
-    hintText: z.string().optional(),
+    // Never write an empty mission — at least one staged activity is
+    // required, and (via stagedActivitySchema's own questions field)
+    // every one of those activities must have at least one question.
+    activities: z.array(stagedActivitySchema).min(1, 'Add at least one activity.'),
     publish: z.string().optional(),
 })
 
 export type CreateMissionResult = { ok: true; missionId: string } | { ok: false; error: string }
 
-// A mission row is only ever written once a title AND a real first
-// activity exist together, inserted in the same action — same
-// reasoning as createQuizWithFirstQuestion: there should never be a
-// moment a titled-but-empty mission exists in the database.
+function buildOptionRows(
+    questionId: string,
+    questionType: 'multiple_choice_single' | 'true_false',
+    options: string | undefined,
+    correctAnswer: string
+): { question_id: string; option_text: string; is_correct: boolean; order_index: number }[] | { error: string } {
+    if (questionType === 'true_false') {
+        return [
+            { question_id: questionId, option_text: 'True', is_correct: correctAnswer === 'True', order_index: 0 },
+            { question_id: questionId, option_text: 'False', is_correct: correctAnswer === 'False', order_index: 1 },
+        ]
+    }
+
+    const optionTexts = (options ?? '')
+        .split(',')
+        .map((text) => text.trim())
+        .filter(Boolean)
+
+    if (optionTexts.length < 2) {
+        return { error: 'Each multiple choice question needs at least two answer options.' }
+    }
+
+    return optionTexts.map((text, index) => ({
+        question_id: questionId,
+        option_text: text,
+        is_correct: text === correctAnswer,
+        order_index: index,
+    }))
+}
+
+// A mission row is only ever written once a title AND at least one
+// real activity (with at least one real question) exist together,
+// inserted in the same action — same reasoning as
+// createQuizWithFirstQuestion: there should never be a moment a
+// titled-but-empty mission exists in the database. Now covers N
+// activities, each with N questions, staged client-side and sent
+// together as one JSON-encoded 'activities' field.
 export async function createMissionWithFirstActivity(formData: FormData): Promise<CreateMissionResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
+
+    const rawActivities = formData.get('activities')
+    let parsedActivitiesJson: unknown
+    try {
+        parsedActivitiesJson = rawActivities ? JSON.parse(rawActivities as string) : undefined
+    } catch {
+        return { ok: false, error: 'Could not read the staged activities. Please try again.' }
+    }
 
     const parsed = createMissionSchema.safeParse({
         lessonId: formData.get('lessonId'),
         title: formData.get('title'),
         description: formData.get('description') ?? undefined,
         masteryThreshold: formData.get('masteryThreshold') ?? undefined,
-        prompt: formData.get('prompt'),
-        activityType: formData.get('activityType'),
-        options: formData.get('options') ?? undefined,
-        correctAnswer: formData.get('correctAnswer'),
-        hintText: formData.get('hintText') ?? undefined,
+        activities: parsedActivitiesJson,
         publish: formData.get('publish') ?? undefined,
     })
 
@@ -74,27 +152,30 @@ export async function createMissionWithFirstActivity(formData: FormData): Promis
         return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form.' }
     }
 
-    const { lessonId, title, description, prompt, activityType, options, correctAnswer } = parsed.data
+    const { lessonId, title, description, activities } = parsed.data
 
     const masteryThreshold = parsed.data.masteryThreshold ? Number(parsed.data.masteryThreshold) : 3
     if (!Number.isInteger(masteryThreshold) || masteryThreshold < 1) {
         return { ok: false, error: 'Mastery threshold must be at least 1.' }
     }
 
-    const hintText =
-        parsed.data.hintText && parsed.data.hintText.trim() !== '' ? parsed.data.hintText.trim() : null
     const publish = parsed.data.publish === 'true'
 
-    // Validate the activity content BEFORE creating anything — same
-    // order as createQuizWithFirstQuestion, a bad activity should never
-    // leave a half-created mission behind.
-    if (activityType === 'multiple_choice_single') {
-        const optionTexts = (options ?? '')
-            .split(',')
-            .map((text) => text.trim())
-            .filter(Boolean)
-        if (optionTexts.length < 2) {
-            return { ok: false, error: 'Add at least two answer options.' }
+    // Validate EVERY staged activity's EVERY question's options BEFORE
+    // creating anything — same order/reasoning as the original
+    // single-activity version and as create-activity.ts's addActivity:
+    // a bad question anywhere in the whole staged batch should never
+    // leave a half-created mission behind. Checked up front, in full,
+    // before any insert happens.
+    for (const [activityIndex, activity] of activities.entries()) {
+        for (const [questionIndex, question] of activity.questions.entries()) {
+            const rows = buildOptionRows('placeholder', question.questionType, question.options, question.correctAnswer)
+            if ('error' in rows) {
+                return {
+                    ok: false,
+                    error: `Activity ${activityIndex + 1}, question ${questionIndex + 1}: ${rows.error}`,
+                }
+            }
         }
     }
 
@@ -135,54 +216,106 @@ export async function createMissionWithFirstActivity(formData: FormData): Promis
         return { ok: false, error: 'Could not create the mission. Please try again.' }
     }
 
-    const { data: activity, error: activityError } = await supabase
-        .from('activities')
-        .insert({
-            mission_id: mission.id,
-            prompt,
-            activity_type: activityType,
-            points: 1,
-            hint_text: hintText,
-            order_index: 0,
-        })
-        .select('id')
-        .single()
+    // Insert every staged activity in order, each with its own
+    // questions and their options — mirrors create-activity.ts's
+    // addActivity insert logic exactly, one activity at a time, now
+    // run in an outer loop instead of being the whole function body.
+    // If ANY activity, question, or its options fail to insert, the
+    // mission row is rolled back — this also implicitly discards
+    // whatever activities/questions/options already inserted earlier
+    // in this same run, since they're all children of the mission row
+    // — "never leave a half-built mission behind" now covers the full
+    // three-level batch, not just one activity.
+    for (const [activityIndex, activity] of activities.entries()) {
+        // Same TypeScript-can't-see-Zod's-min(1) gap as
+        // create-activity.ts's addActivity/updateActivity — fixed the
+        // same way there after this file's own version of this bug
+        // broke the build. Destructure + explicit guard instead of a
+        // non-null assertion.
+        const [firstQuestion] = activity.questions
+        if (!firstQuestion) {
+            await supabase.from('missions').delete().eq('id', mission.id)
+            return { ok: false, error: `Activity ${activityIndex + 1} needs at least one question.` }
+        }
 
-    if (activityError || !activity) {
-        // Roll back the mission row — don't leave an empty mission
-        // behind just because the activity failed to save. Same
-        // principle as createQuizWithFirstQuestion's rollback.
-        await supabase.from('missions').delete().eq('id', mission.id)
-        return { ok: false, error: 'Could not save the first activity. Please try again.' }
-    }
+        const { data: insertedActivity, error: activityError } = await supabase
+            .from('activities')
+            .insert({
+                mission_id: mission.id,
+                // prompt/activity_type are still NOT NULL columns on
+                // `activities` per the existing schema — the container
+                // itself has no real prompt anymore in this model, so
+                // these are set from the activity's first question
+                // purely to satisfy the columns, same as
+                // create-activity.ts's addActivity does, never read
+                // back anywhere that matters.
+                prompt: firstQuestion.prompt,
+                activity_type: firstQuestion.questionType,
+                points: activity.questions.length,
+                order_index: activityIndex,
+                remediates_activity_id: activity.remediatesActivityId ?? null,
+            })
+            .select('id')
+            .single()
 
-    let optionRows: { activity_id: string; option_text: string; is_correct: boolean; order_index: number }[] = []
+        if (activityError || !insertedActivity) {
+            await supabase.from('missions').delete().eq('id', mission.id)
+            return { ok: false, error: `Could not save activity ${activityIndex + 1}. Please try again.` }
+        }
 
-    if (activityType === 'true_false') {
-        optionRows = [
-            { activity_id: activity.id, option_text: 'True', is_correct: correctAnswer === 'True', order_index: 0 },
-            { activity_id: activity.id, option_text: 'False', is_correct: correctAnswer === 'False', order_index: 1 },
-        ]
-    } else {
-        const optionTexts = (options ?? '')
-            .split(',')
-            .map((text) => text.trim())
-            .filter(Boolean)
-        optionRows = optionTexts.map((text, index) => ({
-            activity_id: activity.id,
-            option_text: text,
-            is_correct: text === correctAnswer,
-            order_index: index,
-        }))
-    }
+        for (const [questionIndex, question] of activity.questions.entries()) {
+            const hintText = question.hintText && question.hintText.trim() !== '' ? question.hintText.trim() : null
 
-    const { error: optionsError } = await supabase.from('activity_options').insert(optionRows)
+            const { data: insertedQuestion, error: questionError } = await supabase
+                .from('activity_questions')
+                .insert({
+                    activity_id: insertedActivity.id,
+                    prompt: question.prompt,
+                    question_type: question.questionType,
+                    points: 1,
+                    hint_text: hintText,
+                    order_index: questionIndex,
+                })
+                .select('id')
+                .single()
 
-    if (optionsError) {
-        // Same rollback principle — a half-saved activity with no
-        // options is just as much an "empty" mission in practice.
-        await supabase.from('missions').delete().eq('id', mission.id)
-        return { ok: false, error: 'Could not save the answer options. Please try again.' }
+            if (questionError || !insertedQuestion) {
+                await supabase.from('missions').delete().eq('id', mission.id)
+                return {
+                    ok: false,
+                    error: `Could not save activity ${activityIndex + 1}, question ${questionIndex + 1}. Please try again.`,
+                }
+            }
+
+            const optionRows = buildOptionRows(
+                insertedQuestion.id,
+                question.questionType,
+                question.options,
+                question.correctAnswer
+            )
+
+            if ('error' in optionRows) {
+                // Already validated up front above — this branch should
+                // be unreachable, but handled rather than assumed
+                // impossible, same defensive posture as the rest of
+                // this file's error handling.
+                await supabase.from('missions').delete().eq('id', mission.id)
+                return { ok: false, error: optionRows.error }
+            }
+
+            const { error: optionsError } = await supabase.from('activity_question_options').insert(optionRows)
+
+            if (optionsError) {
+                // Same rollback principle — a half-saved question with
+                // no options is just as much an "empty" mission in
+                // practice.
+                await supabase.from('missions').delete().eq('id', mission.id)
+                return {
+                    ok: false,
+                    error: `Could not save the answer options for activity ${activityIndex + 1}, question ${questionIndex + 1}. Please try again.`,
+                }
+            }
+        }
     }
 
     return { ok: true, missionId: mission.id }
@@ -199,6 +332,13 @@ export async function createMissionWithFirstActivity(formData: FormData): Promis
 // against real data. If activity_options DOES grant authenticated
 // SELECT, this still works fine, it's just a stricter read than
 // strictly necessary since ownership was already verified above.
+// MIGRATION 094 FIX (2026-09-01): activities are now containers —
+// prompt/activity_type/hint_text no longer live on the activity row in
+// any way that matters to the UI (still physically present as NOT NULL
+// columns per addActivity's comment, but stale/unused). This now reads
+// each activity's real activity_questions, each with its own
+// activity_question_options nested inside — the shape ActivityCard.tsx
+// and AddActivityForm.tsx consume directly as `activity.questions`.
 export async function getMissionForTeacher(missionId: string) {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
@@ -219,7 +359,7 @@ export async function getMissionForTeacher(missionId: string) {
     const { data: activities, error: activitiesError } = await supabaseAdmin
         .from('activities')
         .select(
-            'id, prompt, activity_type, points, hint_text, order_index, remediates_activity_id, activity_options(id, option_text, is_correct, order_index)'
+            'id, order_index, remediates_activity_id, activity_questions(id, prompt, question_type, hint_text, order_index, activity_question_options(id, option_text, is_correct, order_index))'
         )
         .eq('mission_id', missionId)
         .order('order_index')
@@ -228,12 +368,25 @@ export async function getMissionForTeacher(missionId: string) {
         console.error('getMissionForTeacher: failed to load activities', activitiesError)
     }
 
-    const activitiesWithSortedOptions = (activities ?? []).map((a: any) => ({
-        ...a,
-        activity_options: [...(a.activity_options ?? [])].sort((x, y) => x.order_index - y.order_index),
+    const activitiesWithQuestions = (activities ?? []).map((a: any) => ({
+        id: a.id,
+        order_index: a.order_index,
+        remediates_activity_id: a.remediates_activity_id,
+        questions: [...(a.activity_questions ?? [])]
+            .sort((x, y) => x.order_index - y.order_index)
+            .map((q: any) => ({
+                id: q.id,
+                prompt: q.prompt,
+                question_type: q.question_type,
+                hint_text: q.hint_text,
+                order_index: q.order_index,
+                options: [...(q.activity_question_options ?? [])].sort(
+                    (x: any, y: any) => x.order_index - y.order_index
+                ),
+            })),
     }))
 
-    return { mission, activities: activitiesWithSortedOptions }
+    return { mission, activities: activitiesWithQuestions }
 }
 
 export type MissionSummary = {

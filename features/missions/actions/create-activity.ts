@@ -1,66 +1,110 @@
 'use server'
-// Activity-level actions for the mission builder — mirrors the
-// addQuestion / updateQuestion / deleteQuestion section of
-// features/quizzes/actions/create-quiz.ts. Mission-level actions
-// (create/settings/load) live in create-mission.ts instead — see that
-// file's header for why this project splits the two, unlike quizzes'
-// single combined file.
+// Activity-level actions for the mission builder.
 //
-// Only multiple_choice_single and true_false are supported. See
-// create-mission.ts's header for why short_answer is deliberately
-// excluded (no reference-answer column on `activities` yet, and
-// attempt_events.is_correct is NOT NULL so it can't defer to manual
-// grading the way quizzes' short_answer does).
+// SCOPE CHANGE (migration 094, 2026-08-31): an "activity" is no longer
+// a single prompt+options pair — it's now a CONTAINER holding multiple
+// activity_questions, each with its own activity_question_options.
+// Duolingo/Quizizz-style: one activity plays like a mini-quiz-within-
+// a-mission. This file's addActivity/updateActivity previously wrote
+// directly to `activities`+`activity_options`; they now write
+// `activities` (container row only: mission_id, order_index,
+// remediates_activity_id — prompt/hint/points/activity_type moved down
+// to the question level) plus N rows each in `activity_questions` +
+// `activity_question_options`.
+//
+// Only multiple_choice_single and true_false are supported per
+// question, same restriction as before, just moved down a level.
 
 import { z } from 'zod'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 
-const activityTypeSchema = z.enum(['multiple_choice_single', 'true_false'])
+const questionTypeSchema = z.enum(['multiple_choice_single', 'true_false'])
 
-const addActivitySchema = z.object({
-    missionId: z.string().uuid(),
-    prompt: z.string().min(2, 'Activity prompt is too short'),
-    activityType: activityTypeSchema,
+const questionInputSchema = z.object({
+    prompt: z.string().min(2, 'Question prompt is too short'),
+    questionType: questionTypeSchema,
     options: z.string().optional(),
     correctAnswer: z.string().min(1, 'Enter the correct answer'),
     hintText: z.string().optional(),
+})
+
+// The client sends one JSON-encoded array of questions under the
+// `questions` field, rather than repeated indexed form fields — much
+// simpler to validate as one array with Zod than to reconstruct
+// questions[0].prompt/questions[1].prompt-style repeated keys from a
+// raw FormData.
+const questionsArraySchema = z.array(questionInputSchema).min(1, 'Add at least one question.')
+
+const addActivitySchema = z.object({
+    missionId: z.string().uuid(),
     // Optional: marks this new activity as the fallback shown when a
-    // student is still wrong after the hint on an EXISTING activity
-    // (Day 4's plan for remediates_activity_id). Left unset by default
-    // — a teacher can only meaningfully wire this up once there's more
-    // than one activity in the mission to point at.
+    // student is still wrong after the hint on an EXISTING activity.
     remediatesActivityId: z.string().uuid().optional(),
 })
 
 export type AddActivityResult = { ok: true; missionPublished: boolean } | { ok: false; error: string }
 
-// Adds one activity, plus its answer options, to an existing mission.
-// Mirrors addQuestion.
+function buildOptionRows(
+    questionId: string,
+    questionType: 'multiple_choice_single' | 'true_false',
+    options: string | undefined,
+    correctAnswer: string
+): { question_id: string; option_text: string; is_correct: boolean; order_index: number }[] | { error: string } {
+    if (questionType === 'true_false') {
+        return [
+            { question_id: questionId, option_text: 'True', is_correct: correctAnswer === 'True', order_index: 0 },
+            { question_id: questionId, option_text: 'False', is_correct: correctAnswer === 'False', order_index: 1 },
+        ]
+    }
+
+    const optionTexts = (options ?? '')
+        .split(',')
+        .map((text) => text.trim())
+        .filter(Boolean)
+
+    if (optionTexts.length < 2) {
+        return { error: 'Each multiple choice question needs at least two answer options.' }
+    }
+
+    return optionTexts.map((text, index) => ({
+        question_id: questionId,
+        option_text: text,
+        is_correct: text === correctAnswer,
+        order_index: index,
+    }))
+}
+
+// Adds one activity (a container) plus its questions and their answer
+// options to an existing mission.
 export async function addActivity(formData: FormData): Promise<AddActivityResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
-    const parsed = addActivitySchema.safeParse({
+    const parsedActivity = addActivitySchema.safeParse({
         missionId: formData.get('missionId'),
-        prompt: formData.get('prompt'),
-        activityType: formData.get('activityType'),
-        // formData.get() returns null when a field isn't present at
-        // all — same normalization null -> undefined as addQuestion,
-        // since Zod's .optional() only accepts undefined.
-        options: formData.get('options') ?? undefined,
-        correctAnswer: formData.get('correctAnswer'),
-        hintText: formData.get('hintText') ?? undefined,
         remediatesActivityId: formData.get('remediatesActivityId') || undefined,
     })
 
-    if (!parsed.success) {
-        return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form.' }
+    if (!parsedActivity.success) {
+        return { ok: false, error: parsedActivity.error.issues[0]?.message ?? 'Please check the form.' }
     }
 
-    const { missionId, prompt, activityType, options, correctAnswer, remediatesActivityId } = parsed.data
-    const hintText =
-        parsed.data.hintText && parsed.data.hintText.trim() !== '' ? parsed.data.hintText.trim() : null
+    const rawQuestions = formData.get('questions')
+    let questionsInput: unknown
+    try {
+        questionsInput = JSON.parse(typeof rawQuestions === 'string' ? rawQuestions : '[]')
+    } catch {
+        return { ok: false, error: 'Could not read the questions for this activity.' }
+    }
+
+    const parsedQuestions = questionsArraySchema.safeParse(questionsInput)
+    if (!parsedQuestions.success) {
+        return { ok: false, error: parsedQuestions.error.issues[0]?.message ?? 'Please check the questions.' }
+    }
+
+    const { missionId, remediatesActivityId } = parsedActivity.data
+    const questions = parsedQuestions.data
 
     const { data: mission } = await supabase
         .from('missions')
@@ -72,31 +116,45 @@ export async function addActivity(formData: FormData): Promise<AddActivityResult
         return { ok: false, error: 'You do not have access to this mission.' }
     }
 
-    if (activityType === 'multiple_choice_single') {
-        const optionTexts = (options ?? '')
-            .split(',')
-            .map((text) => text.trim())
-            .filter(Boolean)
-        if (optionTexts.length < 2) {
-            return { ok: false, error: 'Add at least two answer options.' }
+    // Validate every question's options up front, before writing
+    // anything — a mid-way failure would otherwise leave an activity
+    // container with a partial question set.
+    for (const q of questions) {
+        const rows = buildOptionRows('placeholder', q.questionType, q.options, q.correctAnswer)
+        if ('error' in rows) {
+            return { ok: false, error: rows.error }
         }
     }
 
-    // Same order_index fix as addQuestion — count existing activities
-    // first so a new one always appends after the current last one.
     const { count } = await supabase
         .from('activities')
         .select('id', { count: 'exact', head: true })
         .eq('mission_id', missionId)
 
+    // questionsArraySchema.min(1) already guarantees at least one
+    // element at RUNTIME, but TypeScript can't see through that Zod
+    // constraint — questions[0] alone still types as possibly
+    // undefined (index access is never narrowed just from an array
+    // being non-empty). Destructuring here + an explicit guard gives
+    // TypeScript a real narrowing point instead of reaching for a
+    // non-null assertion, which would silently paper over the case if
+    // this invariant were ever broken by a later refactor.
+    const [firstQuestion] = questions
+    if (!firstQuestion) {
+        return { ok: false, error: 'Add at least one question.' }
+    }
+
     const { data: activity, error: activityError } = await supabase
         .from('activities')
         .insert({
             mission_id: missionId,
-            prompt,
-            activity_type: activityType,
-            points: 1,
-            hint_text: hintText,
+            // prompt is still NOT NULL on `activities` per the existing
+            // schema — the container itself has no real prompt anymore,
+            // so this is set to the first question's prompt purely to
+            // satisfy the column, not read anywhere in the new model.
+            prompt: firstQuestion.prompt,
+            activity_type: firstQuestion.questionType,
+            points: questions.length,
             order_index: count ?? 0,
             remediates_activity_id: remediatesActivityId ?? null,
         })
@@ -107,30 +165,37 @@ export async function addActivity(formData: FormData): Promise<AddActivityResult
         return { ok: false, error: 'Could not save the activity.' }
     }
 
-    let optionRows: { activity_id: string; option_text: string; is_correct: boolean; order_index: number }[] = []
+        for (let i = 0; i < questions.length; i++) {
+        const q = questions[i]
+        if (!q) continue
+        const hintText = q.hintText && q.hintText.trim() !== '' ? q.hintText.trim() : null
 
-    if (activityType === 'true_false') {
-        optionRows = [
-            { activity_id: activity.id, option_text: 'True', is_correct: correctAnswer === 'True', order_index: 0 },
-            { activity_id: activity.id, option_text: 'False', is_correct: correctAnswer === 'False', order_index: 1 },
-        ]
-    } else {
-        const optionTexts = (options ?? '')
-            .split(',')
-            .map((text) => text.trim())
-            .filter(Boolean)
-        optionRows = optionTexts.map((text, index) => ({
-            activity_id: activity.id,
-            option_text: text,
-            is_correct: text === correctAnswer,
-            order_index: index,
-        }))
-    }
+        const { data: question, error: questionError } = await supabase
+            .from('activity_questions')
+            .insert({
+                activity_id: activity.id,
+                prompt: q.prompt,
+                question_type: q.questionType,
+                points: 1,
+                hint_text: hintText,
+                order_index: i,
+            })
+            .select('id')
+            .single()
 
-    const { error: optionsError } = await supabase.from('activity_options').insert(optionRows)
+        if (questionError || !question) {
+            return { ok: false, error: 'Could not save one of the questions.' }
+        }
 
-    if (optionsError) {
-        return { ok: false, error: 'Could not save the answer options.' }
+        const optionRows = buildOptionRows(question.id, q.questionType, q.options, q.correctAnswer)
+        if ('error' in optionRows) {
+            return { ok: false, error: optionRows.error }
+        }
+
+        const { error: optionsError } = await supabase.from('activity_question_options').insert(optionRows)
+        if (optionsError) {
+            return { ok: false, error: 'Could not save the answer options for one of the questions.' }
+        }
     }
 
     return { ok: true, missionPublished: (mission as any).is_published }
@@ -138,55 +203,48 @@ export async function addActivity(formData: FormData): Promise<AddActivityResult
 
 const updateActivitySchema = z.object({
     activityId: z.string().uuid(),
-    prompt: z.string().min(2, 'Activity prompt is too short'),
-    activityType: activityTypeSchema,
-    options: z.string().optional(),
-    correctAnswer: z.string().min(1, 'Enter the correct answer'),
-    hintText: z.string().optional(),
-    // REMEDIATION FIX (2026-08-30, continued conversation): addActivity
-    // already accepted this field (see its own comment above — "a
-    // teacher can only meaningfully wire this up once there's more
-    // than one activity in the mission to point at"), but updateActivity
-    // never did, and no UI anywhere ever actually sent it — meaning
-    // this feature has been unreachable in practice since it was built.
-    // Empty string (the "None" option in the picker) means "clear the
-    // remediation link" — handled explicitly below, not left to
-    // Zod's .optional() alone, since an empty string isn't `undefined`.
     remediatesActivityId: z.string().optional(),
 })
 
 export type UpdateActivityResult = { ok: true; missionPublished: boolean } | { ok: false; error: string }
 
-// Edits an existing activity in place. Answer options are replaced
-// wholesale (delete then re-insert), same as updateQuestion.
+// Edits an existing activity's question set. Questions/options are
+// replaced wholesale (delete then re-insert), same wipe-and-rebuild
+// approach as before, just one level deeper.
 export async function updateActivity(formData: FormData): Promise<UpdateActivityResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
-    const parsed = updateActivitySchema.safeParse({
+    const parsedActivity = updateActivitySchema.safeParse({
         activityId: formData.get('activityId'),
-        prompt: formData.get('prompt'),
-        activityType: formData.get('activityType'),
-        options: formData.get('options') ?? undefined,
-        correctAnswer: formData.get('correctAnswer'),
-        hintText: formData.get('hintText') ?? undefined,
+        remediatesActivityId: formData.get('remediatesActivityId') ?? undefined,
     })
 
-    if (!parsed.success) {
-        return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form.' }
+    if (!parsedActivity.success) {
+        return { ok: false, error: parsedActivity.error.issues[0]?.message ?? 'Please check the form.' }
     }
 
-    const { activityId, prompt, activityType, options, correctAnswer } = parsed.data
-    const hintText =
-        parsed.data.hintText && parsed.data.hintText.trim() !== '' ? parsed.data.hintText.trim() : null
+    const rawQuestions = formData.get('questions')
+    let questionsInput: unknown
+    try {
+        questionsInput = JSON.parse(typeof rawQuestions === 'string' ? rawQuestions : '[]')
+    } catch {
+        return { ok: false, error: 'Could not read the questions for this activity.' }
+    }
 
-    // Empty string ("None" in the picker) clears the link; anything
-    // else must be a real uuid pointing at a DIFFERENT activity — an
-    // activity can't remediate itself, that's a meaningless self-loop
-    // AddActivityForm's picker prevents by construction (it never
-    // lists the activity being edited as an option), but this is
-    // re-checked server-side rather than trusted from the client.
-    const rawRemediatesId = parsed.data.remediatesActivityId
+    const parsedQuestions = questionsArraySchema.safeParse(questionsInput)
+    if (!parsedQuestions.success) {
+        return { ok: false, error: parsedQuestions.error.issues[0]?.message ?? 'Please check the questions.' }
+    }
+
+    const { activityId } = parsedActivity.data
+    const questions = parsedQuestions.data
+
+    // Empty string ("None" in the picker) clears the remediation link;
+    // anything else must be a real uuid pointing at a DIFFERENT
+    // activity — re-checked server-side rather than trusted from the
+    // client, same as before.
+    const rawRemediatesId = parsedActivity.data.remediatesActivityId
     let remediatesActivityId: string | null = null
     if (rawRemediatesId && rawRemediatesId.trim() !== '') {
         const parsedRemediatesId = z.string().uuid().safeParse(rawRemediatesId)
@@ -209,12 +267,27 @@ export async function updateActivity(formData: FormData): Promise<UpdateActivity
         return { ok: false, error: 'You do not have access to this activity.' }
     }
 
+    for (const q of questions) {
+        const rows = buildOptionRows('placeholder', q.questionType, q.options, q.correctAnswer)
+        if ('error' in rows) {
+            return { ok: false, error: rows.error }
+        }
+    }
+
+    // Same TypeScript-can't-see-Zod's-min(1) situation as addActivity
+    // above — destructure + explicit guard instead of a non-null
+    // assertion.
+    const [firstQuestion] = questions
+    if (!firstQuestion) {
+        return { ok: false, error: 'Add at least one question.' }
+    }
+
     const { error: updateError } = await supabase
         .from('activities')
         .update({
-            prompt,
-            activity_type: activityType,
-            hint_text: hintText,
+            prompt: firstQuestion.prompt,
+            activity_type: firstQuestion.questionType,
+            points: questions.length,
             remediates_activity_id: remediatesActivityId,
         })
         .eq('id', activityId)
@@ -223,47 +296,71 @@ export async function updateActivity(formData: FormData): Promise<UpdateActivity
         return { ok: false, error: 'Could not save the activity.' }
     }
 
-    // Wipe existing options, then rebuild from scratch below — same
-    // approach as updateQuestion, keeps order_index/is_correct
-    // consistent with whatever the teacher just edited.
-    const { error: deleteOptionsError } = await supabase
-        .from('activity_options')
-        .delete()
+    // Wipe existing questions — FK cascade on activity_question_options
+    // (via activity_questions_pkey -> activity_question_options_question_id_fkey)
+    // is NOT declared with ON DELETE CASCADE in migration 094, so
+    // options must be deleted explicitly first via their parent
+    // question ids, same two-step order the mission_progress/
+    // activity_mastery cleanup elsewhere in this codebase already uses
+    // when no cascade exists.
+    const { data: existingQuestions } = await supabase
+        .from('activity_questions')
+        .select('id')
         .eq('activity_id', activityId)
 
-    if (deleteOptionsError) {
-        return { ok: false, error: 'Could not update the answer options.' }
-    }
+    const existingQuestionIds = (existingQuestions ?? []).map((q) => q.id)
 
-    let optionRows: { activity_id: string; option_text: string; is_correct: boolean; order_index: number }[] = []
+    if (existingQuestionIds.length > 0) {
+        const { error: deleteOptionsError } = await supabase
+            .from('activity_question_options')
+            .delete()
+            .in('question_id', existingQuestionIds)
 
-    if (activityType === 'true_false') {
-        optionRows = [
-            { activity_id: activityId, option_text: 'True', is_correct: correctAnswer === 'True', order_index: 0 },
-            { activity_id: activityId, option_text: 'False', is_correct: correctAnswer === 'False', order_index: 1 },
-        ]
-    } else {
-        const optionTexts = (options ?? '')
-            .split(',')
-            .map((text) => text.trim())
-            .filter(Boolean)
-
-        if (optionTexts.length < 2) {
-            return { ok: false, error: 'Add at least two answer options, separated by commas.' }
+        if (deleteOptionsError) {
+            return { ok: false, error: 'Could not update the answer options.' }
         }
 
-        optionRows = optionTexts.map((text, index) => ({
-            activity_id: activityId,
-            option_text: text,
-            is_correct: text === correctAnswer,
-            order_index: index,
-        }))
+        const { error: deleteQuestionsError } = await supabase
+            .from('activity_questions')
+            .delete()
+            .eq('activity_id', activityId)
+
+        if (deleteQuestionsError) {
+            return { ok: false, error: 'Could not update the questions.' }
+        }
     }
 
-    const { error: optionsError } = await supabase.from('activity_options').insert(optionRows)
+    for (let i = 0; i < questions.length; i++) {
+        const q = questions[i]
+        if (!q) continue
+        const hintText = q.hintText && q.hintText.trim() !== '' ? q.hintText.trim() : null
 
-    if (optionsError) {
-        return { ok: false, error: 'Could not save the answer options.' }
+        const { data: question, error: questionError } = await supabase
+            .from('activity_questions')
+            .insert({
+                activity_id: activityId,
+                prompt: q.prompt,
+                question_type: q.questionType,
+                points: 1,
+                hint_text: hintText,
+                order_index: i,
+            })
+            .select('id')
+            .single()
+
+        if (questionError || !question) {
+            return { ok: false, error: 'Could not save one of the questions.' }
+        }
+
+        const optionRows = buildOptionRows(question.id, q.questionType, q.options, q.correctAnswer)
+        if ('error' in optionRows) {
+            return { ok: false, error: optionRows.error }
+        }
+
+        const { error: optionsError } = await supabase.from('activity_question_options').insert(optionRows)
+        if (optionsError) {
+            return { ok: false, error: 'Could not save the answer options for one of the questions.' }
+        }
     }
 
     return { ok: true, missionPublished: (activity as any).missions.is_published }
@@ -271,10 +368,13 @@ export async function updateActivity(formData: FormData): Promise<UpdateActivity
 
 export type DeleteActivityResult = { ok: true; missionPublished: boolean } | { ok: false; error: string }
 
-// Deletes an activity and its answer options (FK cascade handles the
-// options). Ownership checked the same way as updateActivity — through
-// the activity's mission, through the mission's lesson, to the
-// lesson's course, to the course's teacher_id. Mirrors deleteQuestion.
+// Deletes an activity and its questions/options. No DB cascade exists
+// (see the note in updateActivity above), so this explicitly deletes
+// activity_question_options -> activity_questions -> activities in
+// that order, then the FK cascade that DOES exist on
+// activities -> activity_options handles that older table
+// automatically if any legacy rows are still attached to this
+// activity_id.
 export async function deleteActivity(activityId: string): Promise<DeleteActivityResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
@@ -292,6 +392,33 @@ export async function deleteActivity(activityId: string): Promise<DeleteActivity
 
     if (!activity || (activity as any).missions.lessons.courses.teacher_id !== user.id) {
         return { ok: false, error: 'You do not have access to this activity.' }
+    }
+
+    const { data: existingQuestions } = await supabase
+        .from('activity_questions')
+        .select('id')
+        .eq('activity_id', activityId)
+
+    const existingQuestionIds = (existingQuestions ?? []).map((q) => q.id)
+
+    if (existingQuestionIds.length > 0) {
+        const { error: deleteOptionsError } = await supabase
+            .from('activity_question_options')
+            .delete()
+            .in('question_id', existingQuestionIds)
+
+        if (deleteOptionsError) {
+            return { ok: false, error: 'Could not delete the activity. Please try again.' }
+        }
+
+        const { error: deleteQuestionsError } = await supabase
+            .from('activity_questions')
+            .delete()
+            .eq('activity_id', activityId)
+
+        if (deleteQuestionsError) {
+            return { ok: false, error: 'Could not delete the activity. Please try again.' }
+        }
     }
 
     const { error } = await supabase.from('activities').delete().eq('id', activityId)

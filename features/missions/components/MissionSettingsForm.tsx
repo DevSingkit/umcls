@@ -176,7 +176,7 @@ export function MissionSettingsForm({
                         id="missionSettingsTitle"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="w-full h-11 px-4 text-body-emphasis text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
+                        className="w-full h-11 px-4 text-body-emphasis text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
 
@@ -189,7 +189,7 @@ export function MissionSettingsForm({
                         rows={2}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
 
@@ -204,7 +204,7 @@ export function MissionSettingsForm({
                             min={1}
                             value={masteryThreshold}
                             onChange={(e) => setMasteryThreshold(Number(e.target.value))}
-                            className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                            className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                         />
                         <span className="text-body-md text-text-secondary">
                             A student unlocks the next mission after {masteryThreshold} correct answer
@@ -281,12 +281,12 @@ export function MissionSettingsForm({
                             <button
                                 type="button"
                                 onClick={() => setIsResetConfirming(true)}
-                                className="h-11 px-6 rounded-md border-[1.5px] border-error text-error font-semibold hover:bg-error-soft disabled:opacity-60"
+                                className="h-11 px-6 rounded-md border-2 border-error text-error font-semibold hover:bg-error-soft disabled:opacity-60"
                             >
                                 Reset student progress…
                             </button>
                         ) : (
-                            <div className="rounded-md border-[1.5px] border-error bg-error-soft p-5">
+                            <div className="rounded-md border-2 border-error bg-error-soft p-5">
                                 <p className="text-body-emphasis text-ink">
                                     Reset every student&apos;s progress on &ldquo;{title}&rdquo;?
                                 </p>
@@ -300,7 +300,7 @@ export function MissionSettingsForm({
                                         type="button"
                                         onClick={() => setIsResetConfirming(false)}
                                         disabled={isResetting}
-                                        className="h-10 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken disabled:opacity-60"
+                                        className="h-10 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken disabled:opacity-60"
                                     >
                                         Cancel
                                     </button>
