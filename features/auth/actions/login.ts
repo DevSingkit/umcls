@@ -73,26 +73,37 @@ export async function login(formData: FormData) {
         await supabase.auth.signOut()
         return { error: 'This account is not active. Please contact your school admin.' }
     }
-    // Seed last_seen_at so middleware inactivity check doesn't
-    // immediately fire on the first request after login (null = inactive by design)
-    await supabase
-        .from('users')
-        .update({ last_seen_at: new Date().toISOString() })
-        .eq('id', data.user.id)
-    await supabase.rpc('log_audit_event', {
-        p_action: 'AUTH_LOGIN',
-        p_metadata: { ip },
-    })
-    // Record this login for the admin dashboard's weekly activity graph.
-    // Logging the error here (temporarily) so we can see in the server
-    // console exactly why this insert is failing, instead of it failing
-    // silently like before.
-    const { error: loginEventError } = await supabase.from('login_events').insert({
-        user_id: data.user.id,
-        role: profile.role,
-    })
-    if (loginEventError) {
-        console.error('login_events insert failed:', loginEventError.message)
+    // The three writes below (last_seen_at update, audit log, login_events
+    // insert) are independent of each other — none of them read a result
+    // the others produce, they only depend on data.user.id / profile.role
+    // which we already have. They used to run one after another, paying
+    // for 3 full sequential round-trips. Running them concurrently costs
+    // roughly the time of the single slowest one instead of the sum of
+    // all three — this was the single biggest contributor to login being
+    // slow.
+    //
+    // last_seen_at is seeded here so middleware's inactivity check
+    // doesn't immediately fire on the first request after login (null =
+    // inactive by design).
+    //
+    // login_events insert failures are logged (not thrown) so a logging
+    // hiccup never blocks someone from actually logging in.
+    const [, , loginEventResult] = await Promise.all([
+        supabase
+            .from('users')
+            .update({ last_seen_at: new Date().toISOString() })
+            .eq('id', data.user.id),
+        supabase.rpc('log_audit_event', {
+            p_action: 'AUTH_LOGIN',
+            p_metadata: { ip },
+        }),
+        supabase.from('login_events').insert({
+            user_id: data.user.id,
+            role: profile.role,
+        }),
+    ])
+    if (loginEventResult.error) {
+        console.error('login_events insert failed:', loginEventResult.error.message)
     }
     if (profile.role === 'admin') {
         redirect('/admin/dashboard')

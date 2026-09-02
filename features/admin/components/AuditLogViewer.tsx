@@ -1,17 +1,18 @@
 'use client'
-// Filterable, paginated, read-only audit log view (PH2-004). No edit
-// or delete controls anywhere in this file — audit_logs is immutable
-// by design (see audit_logs_immutable trigger, 017_triggers.sql §7.9).
+// Filterable, paginated, read-only audit log view. No edit or delete
+// controls anywhere in this file — audit_logs is immutable by design.
+//
+// DESIGN-LMS 2.1 migration: filter controls (search, actor, action,
+// date range) bumped h-11 -> h-12 (48px secondary floor). Everything
+// else already matched real 2.1 tokens.
 import { useEffect, useState, useTransition, useCallback } from 'react'
 import { getAuditLogs, type AuditLogRow } from '@/features/admin/actions/audit-logs'
 
-// "CREATE_USER" -> "Create user"
 function toSentenceCase(value: string) {
     const spaced = value.replace(/_/g, ' ').toLowerCase()
     return spaced.charAt(0).toUpperCase() + spaced.slice(1)
 }
 
-// "8/17/2026, 2:18:09 PM" -> date + "2:18 PM" (no seconds)
 function formatWhen(isoString: string) {
     const d = new Date(isoString)
     const date = d.toLocaleDateString()
@@ -60,7 +61,6 @@ export function AuditLogViewer({
         setPage(1)
     }
 
-    // Client-side search over the current page (actor name/role + action label).
     const visibleRows = data.rows.filter((row) => {
         if (!search.trim()) return true
         const q = search.trim().toLowerCase()
@@ -79,12 +79,12 @@ export function AuditLogViewer({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by actor or action"
-                    className="h-11 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption placeholder:text-text-muted focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-56"
+                    className="h-12 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption placeholder:text-text-muted focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-56"
                 />
                 <select
                     value={actorId}
                     onChange={(e) => updateFilter(setActorId, e.target.value)}
-                    className="h-11 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
+                    className="h-12 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
                 >
                     <option value="">All actors</option>
                     {actors.map((actor) => (
@@ -96,7 +96,7 @@ export function AuditLogViewer({
                 <select
                     value={actionType}
                     onChange={(e) => updateFilter(setActionType, e.target.value)}
-                    className="h-11 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
+                    className="h-12 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
                 >
                     <option value="">All actions</option>
                     {actionTypes.map((type) => (
@@ -106,9 +106,7 @@ export function AuditLogViewer({
                     ))}
                 </select>
 
-                {/* Single combined date-range control. Each date input has its own
-                    min-width so "mm/dd/yyyy" never gets clipped. */}
-                <div className="h-11 flex items-center gap-2 rounded-md border-2 border-hairline bg-surface px-3 focus-within:border-brand w-full sm:w-auto">
+                <div className="h-12 flex items-center gap-2 rounded-md border-2 border-hairline bg-surface px-3 focus-within:border-brand w-full sm:w-auto">
                     <input
                         type="date"
                         value={dateFrom}
@@ -127,8 +125,6 @@ export function AuditLogViewer({
                 </div>
             </div>
 
-            {/* overflow-x-auto lets the whole table, including the When column,
-                scroll horizontally together on narrow screens. */}
             <div className="bg-surface rounded-md shadow-card overflow-x-auto">
                 <table className="w-full text-left min-w-[640px]">
                     <thead>

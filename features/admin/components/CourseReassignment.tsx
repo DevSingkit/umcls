@@ -1,11 +1,8 @@
 'use client'
-// Lets an admin reassign which teacher owns a course (FR-ADMIN-10 /
-// US-010).
+// Lets an admin reassign which teacher owns a course.
 //
-// 2026-08-17: replaced both native <select> dropdowns with
-// SearchableSelect — type to filter, click to pick — since the course
-// and teacher lists can get long enough that scrolling a plain
-// dropdown isn't practical.
+// DESIGN-LMS 2.1 migration: submit h-11 -> h-14 (56px primary floor).
+// SearchableSelect handles its own migration.
 
 import { useActionState } from 'react'
 import { assignCourseTeacher, type AssignTeacherResult } from '@/features/admin/actions/users'
@@ -74,7 +71,7 @@ export function CourseReassignment({
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
+                className="w-full h-14 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
                 {isPending ? 'Reassigning…' : 'Reassign course'}
             </button>

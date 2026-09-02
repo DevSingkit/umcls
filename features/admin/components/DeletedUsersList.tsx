@@ -1,12 +1,9 @@
 'use client'
-// List of deleted (soft-deleted) user accounts with a Restore action,
-// for the admin Archives page. Mirrors AdminCourseList.tsx's pattern —
-// client state for immediate feedback, per-row error surfacing.
+// List of deleted (soft-deleted) user accounts with a Restore action.
 //
-// Design pass: deletion status now shows as a real §7.3 badge next to
-// the name, instead of being folded into the metadata caption as plain
-// colored text. Restore stays a single click (no confirm modal) since
-// it's a reversible, low-risk action, same reasoning as Reactivate.
+// DESIGN-LMS 2.1 migration: dead red/bg-red/bg-red-soft tokens (3
+// instances) -> error/bg-error/bg-error-soft. Restore button h-11 ->
+// h-14 (56px primary floor).
 
 import { useState, useTransition } from 'react'
 import { restoreUser } from '@/features/admin/actions/erase-user'
@@ -52,15 +49,15 @@ export function DeletedUsersList({ initialUsers }: { initialUsers: ArchivedUserR
                                     {user.email} · {user.role}
                                 </p>
                             </div>
-                            <span className="inline-flex items-center gap-1.5 rounded-pill bg-red-soft px-3 py-1 text-caption font-semibold text-red">
-                                <span className="h-1.5 w-1.5 rounded-pill bg-red" aria-hidden="true" />
+                            <span className="inline-flex items-center gap-1.5 rounded-pill bg-error-soft px-3 py-1 text-caption font-semibold text-error">
+                                <span className="h-1.5 w-1.5 rounded-pill bg-error" aria-hidden="true" />
                                 Deleted {new Date(user.deletedAt).toLocaleDateString()}
                             </span>
                         </div>
                         <button
                             onClick={() => handleRestore(user.id)}
                             disabled={isPending}
-                            className="h-11 px-6 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                            className="h-14 px-6 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
                         >
                             Restore
                         </button>

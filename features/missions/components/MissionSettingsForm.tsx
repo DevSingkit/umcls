@@ -29,34 +29,28 @@
 // mission_progress/attempt_events/activity_mastery for every student
 // on this mission), so it doesn't fire on a single click.
 //
-// DESIGN-LMS 2.1 REDESIGN (2026-08-31): pure visual pass, no logic
-// touched — every state variable, the full validation chain inside
-// handleSave, and handleResetProgress are byte-for-byte identical to
-// before this pass. Three changes only:
-//   1. BUG FIX, found while reading this file for the redesign, not
-//      introduced by it: the reset-progress section used text-red/
-//      border-red/bg-red-soft/bg-red throughout. None of these are
-//      real tokens in tailwind.config.ts (only `error`/`error.soft`
-//      exist) — same invalid-token bug class fixed everywhere else
-//      this session (amber, text-heading-lg, etc.). Corrected to
-//      text-error/border-error/bg-error-soft/bg-error, on sight, per
-//      the standing rule established earlier in this track.
-//   2. Form controls (inputs, Save/Post/Update buttons, reset-confirm
-//      buttons) stay Classroom Mode exactly as before — user's
-//      explicit direction was to keep admin/CRUD controls clear and
-//      structured, not gamified.
-//   3. A new Mission Mode preview card added alongside the form.
-//      Per user's scope: title + description rendered inside the
-//      tactile student card frame (Fredoka), a mastery-goal badge
-//      showing the streak target, and a mock "Start Mission" button
-//      with full tactile border-b-4 styling — this button is
-//      deliberately non-interactive (no onClick, aria-hidden where
-//      appropriate) since it's a preview of what the student sees,
-//      not a real navigation control.
+// CONSISTENCY FIX (2026-09-02): the earlier DESIGN-LMS 2.1 pass added a
+// two-column layout (form + a separate "Student Preview" panel with a
+// mock tactile card). NewMissionForm.tsx was later rebuilt to drop that
+// pattern entirely — mobile-first single column, no preview panel at
+// all, per explicit user direction. This page (the edit-mission
+// settings section) never got that same rebuild, leaving it visibly
+// inconsistent with the create page (confirmed via screenshots: this
+// form still showed the "Student Preview" side panel while
+// NewMissionForm.tsx did not). Brought in line here: the preview panel
+// and its lg:grid-cols-2 wrapper are removed; the form is now a single
+// centered column with the same max-w-md/max-w-lg breathing room
+// NewMissionForm.tsx uses, on both mobile and desktop.
+//
+// No logic touched by this pass — every state variable, the full
+// validation chain inside handleSave, and handleResetProgress are
+// byte-for-byte identical to before. Only the outer wrapper markup and
+// the removed preview block changed. The bug fix from the earlier pass
+// (text-red/border-red/etc. → text-error/border-error/etc.) stays as
+// already corrected.
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Play, Target, Eye } from 'lucide-react'
 import { updateMissionSettings, resetMissionProgress } from '@/features/missions/actions/create-mission'
 
 export function MissionSettingsForm({
@@ -165,9 +159,8 @@ export function MissionSettingsForm({
     }
 
     return (
-        <div className="grid gap-6 lg:grid-cols-2 lg:items-start mb-8">
-            {/* ── Classroom Mode form controls — unchanged behavior ───────── */}
-            <div className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-8">
+        <div className="mx-auto w-full max-w-md space-y-6 sm:max-w-lg mb-8">
+            <div className="bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 space-y-8">
                 <div>
                     <label htmlFor="missionSettingsTitle" className="text-label text-ink-soft block mb-2">
                         Mission name <span className="text-error">(required)</span>
@@ -323,44 +316,6 @@ export function MissionSettingsForm({
                         )}
                     </div>
                 )}
-            </div>
-
-            {/* ── Mission Mode preview — student-facing look only ────────── */}
-            <div className="lg:sticky lg:top-6">
-                <div className="flex items-center gap-2 mb-3 text-text-secondary">
-                    <Eye size={16} aria-hidden="true" />
-                    <p className="text-caption font-semibold uppercase tracking-wide">
-                        Student preview
-                    </p>
-                </div>
-
-                <div className="rounded-2xl bg-surface-sunken border-2 border-hairline p-6">
-                    <p className="font-heading text-mission md:text-[1.75rem] text-ink">
-                        {title.trim() || 'Untitled mission'}
-                    </p>
-                    {description.trim() && (
-                        <p className="font-sans text-body-md text-ink-soft mt-2">{description.trim()}</p>
-                    )}
-
-                    <div className="mt-5 inline-flex items-center gap-2 rounded-pill bg-warning-soft text-warning px-4 py-2">
-                        <Target size={16} aria-hidden="true" />
-                        <span className="font-sans text-caption font-semibold">
-                            {masteryThreshold}-in-a-row to master
-                        </span>
-                    </div>
-
-                    <div
-                        aria-hidden="true"
-                        className="w-full h-14 mt-6 rounded-2xl border-b-4 bg-gamified-green border-gamified-green-dark flex items-center justify-center gap-2 text-white font-heading text-lg tracking-wide uppercase select-none"
-                    >
-                        <Play size={20} fill="currentColor" aria-hidden="true" />
-                        Start Mission
-                    </div>
-
-                    <p className="font-sans text-caption text-text-muted mt-4">
-                        This is a preview only — the button above isn&apos;t clickable here.
-                    </p>
-                </div>
             </div>
         </div>
     )

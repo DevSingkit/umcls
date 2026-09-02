@@ -1,17 +1,10 @@
 'use client'
-// "Erase User Data" confirmation modal.
+// "Erase User Data" confirmation modal — reversible soft delete, see
+// erase-user.ts. Copy/behavior unchanged from the 2026-08-17 rework.
 //
-// 2026-08-17 — REWORKED along with erase-user.ts: this used to warn
-// "This cannot be undone" and require typing the exact full name,
-// because the old eraseUser() genuinely, permanently anonymized the
-// account and deleted its login. That's no longer true — eraseUser()
-// is now a reversible soft delete (sets deleted_at only), restorable
-// from the admin Archives page. The button/menu item is still labeled
-// "Erase User Data" on purpose (day-to-day wording didn't change),
-// but this modal's copy was corrected so it doesn't lie about
-// permanence, and the type-to-confirm friction was removed since it
-// no longer matches how serious/irreversible the action actually is —
-// a plain confirm, same weight as Deactivate's, is now appropriate.
+// DESIGN-LMS 2.1 migration: bg-red -> bg-error, h-11 -> h-12 (48px
+// secondary floor), border -> border-2 border-hairline-strong,
+// bg-black/40 -> bg-ink/40 (established overlay token).
 import { useState } from 'react'
 import { eraseUser } from '@/features/admin/actions/erase-user'
 
@@ -51,7 +44,7 @@ export function EraseUserModal({
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4">
             <div className="bg-surface rounded-md shadow-modal p-6 max-w-md w-full">
                 <p className="text-body-emphasis text-ink mb-2">Erase User Data for {fullName}?</p>
                 <p className="text-body-md text-text-secondary mb-4">
@@ -64,14 +57,14 @@ export function EraseUserModal({
                 <div className="flex gap-3 justify-end">
                     <button
                         onClick={handleClose}
-                        className="h-11 px-6 flex items-center rounded-md border border-hairline font-medium"
+                        className="h-12 px-6 flex items-center rounded-md border-2 border-hairline-strong font-medium"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleErase}
                         disabled={isSubmitting}
-                        className="h-11 px-6 flex items-center rounded-md bg-red text-on-ink font-medium disabled:opacity-40"
+                        className="h-12 px-6 flex items-center rounded-md bg-error text-on-ink font-medium disabled:opacity-40"
                     >
                         {isSubmitting ? 'Erasing…' : 'Erase User Data'}
                     </button>

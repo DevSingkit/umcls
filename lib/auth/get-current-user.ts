@@ -1,4 +1,5 @@
 // See lib/auth/AUTH_NOTES.md for why these checks exist
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { isSessionInactive } from '@/lib/security/guards'
@@ -16,6 +17,13 @@ type Role = 'admin' | 'teacher' | 'student'
  * This function is also used in places that just want to know "who's
  * logged in, if anyone" without forcing a redirect.
  *
+ * Wrapped in React's cache() so multiple calls within the same request
+ * (e.g. requireRole() being called separately by several dashboard-stats
+ * functions on one page) resolve to a single Supabase round-trip instead
+ * of one per call. This does NOT dedupe across the middleware's own
+ * auth.getUser() call — that's a separate request lifecycle — only
+ * within this request's server-component/action tree.
+ *
  * PHASE 8 / DB CLEANUP FIX (2026-08-30, continued conversation): this
  * file previously selected preferred_simplify_language and returned it
  * as preferredSimplifyLanguage on the user object. That column was
@@ -31,7 +39,7 @@ type Role = 'admin' | 'teacher' | 'student'
  * that a column-drop migration's blast radius includes every file
  * that reads that table, not just the ones already reviewed.
  */
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async function getCurrentUser() {
     const supabase = await createClient()
     const {
         data: { user },
@@ -55,7 +63,7 @@ export async function getCurrentUser() {
         fullName: profile.full_name,
         lastSeenAt: profile.last_seen_at as string | null,
     }
-}
+})
 
 /**
  * Stops the page if nobody is logged in, or if their session has gone

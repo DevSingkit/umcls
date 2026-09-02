@@ -18,11 +18,38 @@
 // - No checklist or short_answer types.
 // - No resetQuizAttempts-equivalent step after save/delete — deferred
 //   to Day 4, same as before.
-// - No OptionBullet.tsx equivalent was provided, so the correct/
-//   incorrect option display below is a small inline reimplementation.
+//
+// CONSISTENCY FIX (2026-09-02): both view mode and edit mode still
+// used a small radio-dot/bullet pattern for answer options (OptionRow
+// in view mode; a bordered-circle "click to mark correct" button in
+// edit mode) — confirmed inconsistent against NewMissionForm.tsx,
+// which was already rebuilt to show every answer option as a real
+// tactile tile (same TILE_STYLES colors/icons as ActivityRunner.tsx's
+// actual gameplay tiles), with the correct one tapped directly on the
+// tile rather than a separate bullet control. Screenshots showed this
+// card still rendering plain radio-style rows, visibly inconsistent
+// with the create page. Both modes rebuilt below to match exactly:
+//   - View mode: each question's options render as tactile tiles,
+//     correct one highlighted with the green ring + check badge, same
+//     as NewMissionForm.tsx's read view of a staged question — this
+//     mode has no interaction (nothing to tap, it's a summary), so the
+//     tiles are non-interactive, but visually identical.
+//   - Edit mode: options are the same tap-the-tile-to-mark-correct
+//     tiles as NewMissionForm.tsx's builder — the small bordered-circle
+//     bullet control is gone entirely.
+// OptionRow (the old view-mode helper) is removed — no longer used
+// anywhere in this file.
+//
+// No business logic touched by this pass: buildDraftFromQuestion,
+// updateQuestion/addQuestionBlock/removeQuestionBlock/
+// updateOptionText/addOptionRow/removeOptionRow, handleSave's
+// validation and questionsPayload construction, and handleDelete are
+// all byte-for-byte identical to before. Only the two option-list
+// render blocks (view mode's per-question options, edit mode's
+// multiple_choice_single options) changed.
 
 import { useState } from 'react'
-import { X, Plus } from 'lucide-react'
+import { X, Plus, Check, Circle, Square, Triangle, Diamond } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { updateActivity, deleteActivity } from '@/features/missions/actions/create-activity'
 
@@ -53,6 +80,17 @@ type Activity = {
     remediates_activity_id: string | null
     questions: Question[]
 }
+
+// Same 4-color/4-shape tile system as ActivityRunner.tsx's real
+// gameplay tiles and NewMissionForm.tsx's builder tiles — copied here
+// directly (not imported, since neither file exports it) so this
+// card's tiles are visually identical to both.
+const TILE_STYLES = [
+    { icon: Circle, bg: 'bg-brand' },
+    { icon: Square, bg: 'bg-info' },
+    { icon: Triangle, bg: 'bg-warning' },
+    { icon: Diamond, bg: 'bg-brand-hover' },
+]
 
 let keySeed = 0
 function nextKey(prefix: string) {
@@ -91,32 +129,6 @@ function buildDraftFromQuestion(q: Question) {
 }
 
 type QuestionDraft = ReturnType<typeof buildDraftFromQuestion>
-
-// Small inline stand-in for the OptionBullet component — not provided,
-// so this is a minimal reimplementation rather than a guess at its
-// real styling.
-function OptionRow({ text, isCorrect }: { text: string; isCorrect: boolean }) {
-    return (
-        <div className="flex items-center gap-2">
-            <span
-                className={`flex items-center justify-center w-4 h-4 rounded-pill shrink-0 ${
-                    isCorrect ? 'bg-brand text-on-ink' : 'border-2 border-hairline'
-                }`}
-            >
-                {isCorrect && (
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="w-2.5 h-2.5">
-                        <path
-                            fillRule="evenodd"
-                            d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
-                )}
-            </span>
-            <span className={`text-body-md ${isCorrect ? 'text-ink font-medium' : 'text-ink-soft'}`}>{text}</span>
-        </div>
-    )
-}
 
 export function ActivityCard({
     activity,
@@ -241,7 +253,7 @@ export function ActivityCard({
                     return
                 }
                 if (q.correctIndex === null || !q.options[q.correctIndex]?.text.trim()) {
-                    setError('Click the bullet next to each question\u2019s correct answer.')
+                    setError('Tap a tile to mark each question\u2019s correct answer.')
                     return
                 }
             }
@@ -303,7 +315,7 @@ export function ActivityCard({
 
     if (!isEditing) {
         return (
-            <div className="bg-surface rounded-md border border-hairline shadow-card p-6 border-l-4 border-l-brand space-y-5">
+            <div className="mx-auto w-full max-w-md sm:max-w-lg bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 border-l-4 border-l-brand space-y-5">
                 <div className="flex items-center justify-between mb-1 gap-3">
                     <p className="text-caption text-text-secondary">
                         Activity {index + 1} · {activity.questions.length} question
@@ -336,11 +348,42 @@ export function ActivityCard({
                             </span>
                         </div>
                         <p className="text-body-emphasis text-ink mb-3">{q.prompt}</p>
+
+                        {/* Tactile tiles — non-interactive here (view
+                            mode is a summary, nothing to tap), but
+                            visually identical to NewMissionForm.tsx's
+                            builder tiles and ActivityRunner.tsx's real
+                            gameplay tiles. Correct option is highlighted
+                            with the same green ring + check badge. */}
                         <div className="space-y-2">
-                            {q.options.map((option) => (
-                                <OptionRow key={option.id} text={option.option_text} isCorrect={option.is_correct} />
-                            ))}
+                            {q.options.map((option, optIndex) => {
+                                const style = TILE_STYLES[optIndex % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                                const Icon = style.icon
+                                return (
+                                    <div
+                                        key={option.id}
+                                        className={`flex min-h-[56px] w-full items-center gap-3 rounded-md p-3 text-on-ink shadow-card ${style.bg} ${
+                                            option.is_correct ? 'ring-4 ring-success ring-offset-2' : ''
+                                        }`}
+                                    >
+                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill bg-white/20">
+                                            {option.is_correct ? (
+                                                <Check size={16} aria-hidden="true" />
+                                            ) : (
+                                                <Icon size={15} aria-hidden="true" />
+                                            )}
+                                        </span>
+                                        <span className="font-sans font-bold text-sm">{option.option_text}</span>
+                                        {option.is_correct && (
+                                            <span className="ml-auto shrink-0 rounded-pill bg-white/20 px-2 py-0.5 text-caption">
+                                                Correct
+                                            </span>
+                                        )}
+                                    </div>
+                                )
+                            })}
                         </div>
+
                         {q.hint_text && (
                             <p className="text-caption text-text-secondary italic mt-3">Hint: {q.hint_text}</p>
                         )}
@@ -363,7 +406,7 @@ export function ActivityCard({
     return (
         <form
             onSubmit={handleSave}
-            className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6 border-l-4 border-l-brand"
+            className="mx-auto w-full max-w-md sm:max-w-lg bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 space-y-6 border-l-4 border-l-brand"
         >
             <h2 className="text-body-emphasis text-ink">Editing activity {index + 1}</h2>
 
@@ -403,54 +446,66 @@ export function ActivityCard({
                         placeholder="Type the question prompt here"
                     />
 
+                    {/* Tactile tiles — tap the tile to mark it correct,
+                        same interaction as NewMissionForm.tsx's builder.
+                        No separate bullet/radio control. */}
                     {q.questionType === 'multiple_choice_single' && (
-                        <div className="space-y-2">
-                            <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
-                            {q.options.map((option, optIndex) => (
-                                <div key={option.key} className="flex items-center gap-3">
-                                    <button
-                                        type="button"
-                                        aria-label={`Mark option ${optIndex + 1} as correct`}
-                                        onClick={() => updateQuestion(q.key, { correctIndex: optIndex })}
-                                        className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
-                                            q.correctIndex === optIndex
-                                                ? 'border-brand bg-brand text-on-ink'
-                                                : 'border-hairline hover:border-brand'
+                        <div className="space-y-3">
+                            <p className="text-caption text-text-secondary">
+                                Tap a tile to mark it as the correct answer
+                            </p>
+                            {q.options.map((option, optIndex) => {
+                                const style = TILE_STYLES[optIndex % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                                const Icon = style.icon
+                                const isCorrect = q.correctIndex === optIndex
+                                return (
+                                    <div
+                                        key={option.key}
+                                        className={`relative flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-on-ink shadow-card transition-all ${style.bg} ${
+                                            isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                         }`}
                                     >
-                                        {q.correctIndex === optIndex && (
-                                            <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
-                                        )}
-                                    </button>
-                                    <input
-                                        type="text"
-                                        value={option.text}
-                                        onChange={(e) => updateOptionText(q.key, option.key, e.target.value)}
-                                        placeholder={`Option ${optIndex + 1}`}
-                                        className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
-                                    />
-                                    {q.options.length > 2 && (
                                         <button
                                             type="button"
-                                            aria-label={`Remove option ${optIndex + 1}`}
-                                            onClick={() => removeOptionRow(q.key, option.key)}
-                                            className="text-text-secondary hover:text-error text-body-md px-2"
+                                            aria-label={`Mark option ${optIndex + 1} as correct`}
+                                            onClick={() => updateQuestion(q.key, { correctIndex: optIndex })}
+                                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20"
                                         >
-                                            <X size={14} aria-hidden="true" />
+                                            {isCorrect ? (
+                                                <Check size={20} aria-hidden="true" />
+                                            ) : (
+                                                <Icon size={18} aria-hidden="true" />
+                                            )}
                                         </button>
-                                    )}
-                                </div>
-                            ))}
+                                        <input
+                                            type="text"
+                                            value={option.text}
+                                            onChange={(e) => updateOptionText(q.key, option.key, e.target.value)}
+                                            placeholder={`Option ${optIndex + 1}`}
+                                            className="min-w-0 flex-1 bg-transparent font-sans font-bold text-base text-on-ink placeholder:text-on-ink/60 outline-none"
+                                        />
+                                        {isCorrect && (
+                                            <span className="shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
+                                                Correct
+                                            </span>
+                                        )}
+                                        {q.options.length > 2 && (
+                                            <button
+                                                type="button"
+                                                aria-label={`Remove option ${optIndex + 1}`}
+                                                onClick={() => removeOptionRow(q.key, option.key)}
+                                                className="shrink-0 text-on-ink/70 hover:text-on-ink p-1 rounded-md"
+                                            >
+                                                <X size={16} aria-hidden="true" />
+                                            </button>
+                                        )}
+                                    </div>
+                                )
+                            })}
                             <button
                                 type="button"
                                 onClick={() => addOptionRow(q.key)}
-                                className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
+                                className="text-caption font-semibold text-text-secondary hover:text-ink pl-2"
                             >
                                 + Add option
                             </button>
@@ -458,33 +513,39 @@ export function ActivityCard({
                     )}
 
                     {q.questionType === 'true_false' && (
-                        <div className="space-y-2">
-                            <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
-                            {(['True', 'False'] as const).map((label) => (
-                                <div key={label} className="flex items-center gap-3">
+                        <div className="space-y-3">
+                            <p className="text-caption text-text-secondary">
+                                Tap a tile to mark it as the correct answer
+                            </p>
+                            {(['True', 'False'] as const).map((label, i) => {
+                                const style = TILE_STYLES[i % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                                const Icon = style.icon
+                                const isCorrect = q.correctTf === label
+                                return (
                                     <button
+                                        key={label}
                                         type="button"
-                                        aria-label={`Mark ${label} as correct`}
                                         onClick={() => updateQuestion(q.key, { correctTf: label })}
-                                        className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
-                                            q.correctTf === label
-                                                ? 'border-brand bg-brand text-on-ink'
-                                                : 'border-hairline hover:border-brand'
+                                        className={`flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-left text-on-ink shadow-card transition-all ${style.bg} ${
+                                            isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                         }`}
                                     >
-                                        {q.correctTf === label && (
-                                            <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
+                                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20">
+                                            {isCorrect ? (
+                                                <Check size={20} aria-hidden="true" />
+                                            ) : (
+                                                <Icon size={18} aria-hidden="true" />
+                                            )}
+                                        </span>
+                                        <span className="font-sans font-bold text-base">{label}</span>
+                                        {isCorrect && (
+                                            <span className="ml-auto shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
+                                                Correct
+                                            </span>
                                         )}
                                     </button>
-                                    <span className="text-body-md text-ink">{label}</span>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     )}
 

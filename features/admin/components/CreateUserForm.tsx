@@ -1,23 +1,15 @@
 'use client'
-// Form to create the first teacher or student accounts (PH2-002).
-// Extracted from admin/users/page.tsx so that page can become a server
-// component and load the user list alongside this form. See
-// features/admin/actions/create-user.ts for what happens on submit.
+// Form to create the first teacher or student accounts.
 //
-// 2026-08-17: all fields are now controlled. Previously, on a failed
-// submit (e.g. duplicate email), the browser could clear the entire
-// form depending on browser/autofill behavior, forcing the admin to
-// retype everything just to fix one field. Now every value is held in
-// React state and only ever cleared on a genuinely successful create.
-
+// DESIGN-LMS 2.1 migration: inputs h-11 -> h-13 (52px form-input floor,
+// §5.1), border border-hairline-strong + focus:border-[1.5px] ->
+// border-2 border-hairline (established pattern). Submit h-11 -> h-14
+// (56px primary floor).
 import { useActionState, useEffect, useState } from 'react'
 import { createUser, type CreateUserResult } from '@/features/admin/actions/create-user'
 
 const initialState: CreateUserResult = { ok: false, error: '' }
 
-// useActionState needs a (prevState, formData) function, but createUser
-// only takes formData. This small wrapper adapts one to the other, same
-// pattern used in app/(auth)/login/page.tsx.
 async function createUserAction(_prevState: CreateUserResult, formData: FormData) {
     return createUser(formData)
 }
@@ -30,8 +22,6 @@ export function CreateUserForm() {
     const [role, setRole] = useState('teacher')
     const [temporaryPassword, setTemporaryPassword] = useState('')
 
-    // Only reset the form on a confirmed successful create — never on
-    // error, and never as a side effect of anything else re-rendering.
     useEffect(() => {
         if (state.ok) {
             setFullName('')
@@ -54,7 +44,7 @@ export function CreateUserForm() {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="e.g. Maria Santos"
                 />
             </div>
@@ -72,7 +62,7 @@ export function CreateUserForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     aria-describedby={!state.ok && state.error ? 'create-user-error' : undefined}
                     aria-invalid={!state.ok && state.error ? true : undefined}
-                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="name@school.edu"
                 />
             </div>
@@ -87,7 +77,7 @@ export function CreateUserForm() {
                     required
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     <option value="teacher">Teacher</option>
                     <option value="student">Student</option>
@@ -107,7 +97,7 @@ export function CreateUserForm() {
                     minLength={12}
                     value={temporaryPassword}
                     onChange={(e) => setTemporaryPassword(e.target.value)}
-                    className="w-full h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="At least 12 characters, with upper, lower, and a number"
                 />
                 <p className="text-caption text-text-secondary mt-2">
@@ -130,7 +120,7 @@ export function CreateUserForm() {
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
+                className="w-full h-14 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
                 {isPending ? 'Creating account…' : 'Create account'}
             </button>

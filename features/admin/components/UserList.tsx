@@ -1,16 +1,23 @@
 'use client'
 // Searchable/filterable user list with deactivate, reactivate, and
-// password-reset actions (PH2-002 full scope). Debounces search input
-// by 300ms per the task's acceptance criteria.
+// password-reset actions.
 //
 // All state-consolidation logic (single openPanel slot, deactivate/
-// erase confirm modals) is unchanged from the previous session — see
-// the original file's header comment for that full history. This pass
-// only touches: (1) status now renders as a real §7.3 badge instead of
-// colored inline text, (2) the "⋮" trigger button gets a visible
-// resting style per §7.1a instead of relying only on hover/active
-// background, (3) Deactivate/Erase modal buttons switched to the
-// design doc's actual `red`/`red-soft` destructive tokens.
+// erase confirm modals) is unchanged from prior sessions.
+//
+// DESIGN-LMS 2.1 migration (this pass): dead red/bg-red/border-red/
+// bg-red-soft tokens (7 instances) replaced with error/bg-error/
+// border-error/bg-error-soft. border-[1.5px] -> border-2 (established
+// pairing with border-hairline-strong). font-heading removed from the
+// deactivate-confirm modal heading (Classroom Mode heading, defaults
+// to font-sans via globals.css's base layer, no class needed). Inline
+// action buttons (Set password/Save/role select/unenroll) bumped from
+// h-10/h-8 to h-12 (48px secondary floor). Menu trigger kept at its
+// visible 36px (h-9) per the dense-row-action exception, with its tap
+// boundary extended to 44px via the invisible-hitbox technique.
+// Deactivate/Erase modal buttons bumped h-10 -> h-12. Destructive
+// action modal stays inlined here (not extracted to match
+// EraseUserModal's pattern) — deliberate, confirmed with user.
 import { useEffect, useState, useTransition, useCallback, useRef } from 'react'
 import { MoreVertical, AlertTriangle } from 'lucide-react'
 import {
@@ -202,12 +209,12 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by name or email…"
-                    className="flex-1 h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="flex-1 h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-2 focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 />
                 <select
                     value={role}
                     onChange={(e) => setRole(e.target.value as typeof role)}
-                    className="h-11 px-4 rounded-md border border-hairline-strong bg-surface outline-none focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-11 px-4 rounded-md border border-hairline-strong bg-surface outline-none focus:border-2 focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     <option value="all">All roles</option>
                     <option value="admin">Admin</option>
@@ -217,7 +224,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                 <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as typeof status)}
-                    className="h-11 px-4 rounded-md border border-hairline-strong bg-surface outline-none focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-11 px-4 rounded-md border border-hairline-strong bg-surface outline-none focus:border-2 focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     <option value="all">All statuses</option>
                     <option value="active">Active</option>
@@ -244,17 +251,16 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                             {user.email} · {user.role}
                                         </p>
                                     </div>
-                                    {/* §7.3: status is a real badge, not colored inline text */}
                                     <span
                                         className={`inline-flex items-center gap-1.5 rounded-pill px-3 py-1 text-caption font-semibold ${
                                             user.is_active
                                                 ? 'bg-brand-soft text-brand'
-                                                : 'bg-red-soft text-red'
+                                                : 'bg-error-soft text-error'
                                         }`}
                                     >
                                         <span
                                             className={`h-1.5 w-1.5 rounded-pill ${
-                                                user.is_active ? 'bg-brand' : 'bg-red'
+                                                user.is_active ? 'bg-brand' : 'bg-error'
                                             }`}
                                             aria-hidden="true"
                                         />
@@ -262,13 +268,15 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
+                                    {/* Dense-row-action exception: 36px visible (h-9), tap
+                                        boundary extended to 44px via invisible hitbox. */}
                                     <div className="relative" ref={openMenuId === user.id ? menuRef : undefined}>
                                         <button
                                             onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
                                             aria-haspopup="menu"
                                             aria-expanded={openMenuId === user.id}
                                             aria-label={`Actions for ${user.full_name}`}
-                                            className={`flex h-9 w-9 items-center justify-center rounded-md border-[1.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                                            className={`relative flex h-9 w-9 items-center justify-center rounded-md border-2 before:absolute before:-inset-2 before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                                                 openMenuId === user.id
                                                     ? 'border-brand bg-brand-soft'
                                                     : 'border-hairline-strong bg-surface hover:bg-surface-sunken'
@@ -335,7 +343,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                             setOpenMenuId(null)
                                                             setDeactivateConfirmUser(user)
                                                         }}
-                                                        className="block w-full px-4 py-2.5 text-left text-caption font-medium text-red hover:bg-red-soft disabled:opacity-60"
+                                                        className="block w-full px-4 py-2.5 text-left text-caption font-medium text-error hover:bg-error-soft disabled:opacity-60"
                                                     >
                                                         Deactivate
                                                     </button>
@@ -358,7 +366,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                         setOpenMenuId(null)
                                                         setEraseConfirmUser(user)
                                                     }}
-                                                    className="block w-full px-4 py-2.5 text-left text-caption font-medium text-red hover:bg-red-soft"
+                                                    className="block w-full px-4 py-2.5 text-left text-caption font-medium text-error hover:bg-error-soft"
                                                 >
                                                     Erase User Data
                                                 </button>
@@ -377,11 +385,11 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                         required
                                         minLength={12}
                                         placeholder="New temporary password (12+ chars)"
-                                        className="flex-1 h-10 px-4 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="flex-1 h-12 px-4 rounded-md border border-hairline-strong bg-surface focus:border-2 focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                     />
                                     <button
                                         type="submit"
-                                        className="h-10 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                     >
                                         Set password
                                     </button>
@@ -396,7 +404,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                         required
                                         defaultValue={user.full_name}
                                         placeholder="Full name"
-                                        className="flex-1 h-10 px-4 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="flex-1 h-12 px-4 rounded-md border border-hairline-strong bg-surface focus:border-2 focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                     />
                                     <input
                                         type="email"
@@ -404,11 +412,11 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                         required
                                         defaultValue={user.email}
                                         placeholder="Email"
-                                        className="flex-1 h-10 px-4 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="flex-1 h-12 px-4 rounded-md border border-hairline-strong bg-surface focus:border-2 focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                     />
                                     <button
                                         type="submit"
-                                        className="h-10 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                     >
                                         Save
                                     </button>
@@ -423,7 +431,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                             handleChangeRole(user.id, e.target.value as 'admin' | 'teacher' | 'student')
                                         }
                                         disabled={isPending}
-                                        className="h-10 px-4 rounded-md border border-hairline-strong bg-surface outline-none focus:border-[1.5px] focus:border-brand focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                                        className="h-12 px-4 rounded-md border border-hairline-strong bg-surface outline-none focus:border-2 focus:border-brand focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
                                     >
                                         <option value="student">Student</option>
                                         <option value="teacher">Teacher</option>
@@ -454,7 +462,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                     <button
                                                         onClick={() => handleUnenroll(e.enrollmentId)}
                                                         disabled={unenrollPendingId === e.enrollmentId}
-                                                        className="h-8 px-3 rounded-md border-[1.5px] border-red bg-surface text-red text-caption font-medium hover:bg-red-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                                                        className="h-12 px-3 rounded-md border-2 border-error bg-surface text-error text-caption font-medium hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
                                                     >
                                                         {unenrollPendingId === e.enrollmentId ? 'Unenrolling…' : 'Unenroll'}
                                                     </button>
@@ -495,11 +503,11 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                 >
                     <div className="w-full max-w-sm rounded-md bg-surface p-6 shadow-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-start gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-red-soft">
-                                <AlertTriangle className="h-5 w-5 text-red" strokeWidth={2} aria-hidden="true" />
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-error-soft">
+                                <AlertTriangle className="h-5 w-5 text-error" strokeWidth={2} aria-hidden="true" />
                             </div>
                             <div>
-                                <h2 id="deactivate-confirm-title" className="font-heading text-body-emphasis text-ink">
+                                <h2 id="deactivate-confirm-title" className="text-body-emphasis text-ink">
                                     Deactivate this account?
                                 </h2>
                                 <p className="mt-2 text-caption text-text-secondary">
@@ -513,14 +521,14 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                         <div className="mt-6 flex justify-end gap-2">
                             <button
                                 onClick={() => setDeactivateConfirmUser(null)}
-                                className="h-10 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-12 px-4 rounded-md border-2 border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDeactivate}
                                 disabled={isPending}
-                                className="h-10 px-4 rounded-md bg-red text-on-ink text-caption font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                                className="h-12 px-4 rounded-md bg-error text-on-ink text-caption font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
                             >
                                 {isPending ? 'Deactivating…' : 'Deactivate'}
                             </button>

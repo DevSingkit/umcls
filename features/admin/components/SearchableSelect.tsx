@@ -1,16 +1,12 @@
 'use client'
 // features/admin/components/SearchableSelect.tsx
 //
-// Type-to-filter, click-to-select combobox, replacing plain <select>
-// dropdowns in CourseReassignment.tsx and EnrollForm.tsx (both had
-// long lists — courses, teachers, students — with no way to search).
+// Type-to-filter, click-to-select combobox, used in EnrollForm.tsx and
+// CourseReassignment.tsx in place of native <select> dropdowns.
 //
-// Submits the same way a native <select> would: a hidden
-// <input type="hidden" name={name} value={selectedId} /> carries the
-// actual id into the surrounding <form>'s FormData, same as before.
-// The visible text input is purely for searching/display, it never
-// submits its own value.
-
+// DESIGN-LMS 2.1 migration: input h-11 -> h-13 (52px form-input floor,
+// §5.1), border border-hairline-strong + focus:border-[1.5px] ->
+// border-2 border-hairline.
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 
@@ -52,7 +48,6 @@ export function SearchableSelect({
         )
     }, [query, options])
 
-    // Close the list when clicking anywhere outside this component.
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
             if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -73,9 +68,6 @@ export function SearchableSelect({
         setQuery(value)
         setIsOpen(true)
         setHighlightedIndex(0)
-        // Typing after having picked something invalidates that pick —
-        // don't silently submit a stale id that no longer matches what's
-        // shown in the box.
         if (selectedId) setSelectedId('')
     }
 
@@ -103,10 +95,6 @@ export function SearchableSelect({
 
     return (
         <div ref={containerRef} className="relative">
-            {/* Carries the real value into the surrounding form's
-                FormData under the original field name — everything
-                downstream (the server action) reads this exactly like
-                it read the old <select>'s value. */}
             <input type="hidden" name={name} value={selectedId} required={required} />
 
             <div className="relative">
@@ -123,7 +111,7 @@ export function SearchableSelect({
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
                     autoComplete="off"
-                    className="w-full h-11 px-5 pr-11 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full h-13 px-5 pr-11 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 disabled:cursor-not-allowed"
                 />
                 <ChevronDown
                     className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary"
@@ -148,10 +136,6 @@ export function SearchableSelect({
                                 role="option"
                                 aria-selected={option.id === selectedId}
                                 onMouseDown={(e) => {
-                                    // mousedown, not click — fires before
-                                    // the input's onBlur/outside-click
-                                    // handler would otherwise close the
-                                    // list first and swallow the click.
                                     e.preventDefault()
                                     selectOption(option)
                                 }}
@@ -173,11 +157,6 @@ export function SearchableSelect({
                 </ul>
             )}
 
-            {/* Native required-field validation can't attach to a
-                hidden input reliably across browsers — this visible,
-                non-interactive proxy gives the same "please fill this
-                field" prompt if submitted empty, anchored right under
-                the visible text input. */}
             {required && (
                 <input
                     tabIndex={-1}

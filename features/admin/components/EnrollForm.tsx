@@ -1,9 +1,8 @@
 'use client'
 // Form to enroll one student into one course.
 //
-// No max-w wrapper of its own — fills whatever container the page
-// puts it in. The enroll page now applies max-w-2xl directly (§7.8
-// single-form content), so this form's card fills that width exactly.
+// DESIGN-LMS 2.1 migration: submit h-11 -> h-14 (56px primary floor).
+// SearchableSelect handles its own migration.
 
 import { useActionState } from 'react'
 import { enrollStudent, type EnrollResult } from '@/features/admin/actions/enroll-student'
@@ -73,7 +72,7 @@ export function EnrollForm({
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
+                className="w-full h-14 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
                 {isPending ? 'Enrolling…' : 'Enroll student'}
             </button>
