@@ -41,6 +41,7 @@ import {
     Star,
     Sparkles,
     Flame,
+    Pause,
 } from 'lucide-react'
 import { submitQuestionAttempt } from '@/features/missions/actions/submit-question-attempt'
 import type { MissionPreviewForStudent, ActivityPreviewForStudent, QuestionPreviewForStudent } from '@/features/missions/actions/get-mission-for-student'
@@ -58,6 +59,35 @@ const TILE_STYLES = [
     { icon: Triangle, bg: 'bg-warning', ring: 'ring-warning' },
     { icon: Diamond, bg: 'bg-brand-hover', ring: 'ring-brand-hover' },
 ]
+
+// PHASE C GRID FIX (2026-09-04): the answer grid was a hardcoded
+// grid-cols-2 regardless of option count. That's fine for 2 or 4
+// options, but breaks down for odd counts (5 options -> a lone 5th
+// tile stranded alone in the left column, an ugly empty gap on the
+// right where nothing was ever there to fill it) and gets needlessly
+// tall for 5-6 options (3 stacked rows at the same big min-h as a
+// 2-option question can push "Check answer" off-screen). This keeps
+// the exact same tile look (icon-left/label-right, same colors) —
+// only the column count, tile height, and icon/text size scale with
+// how many options and rows there actually are.
+function getGridLayout(optionCount: number) {
+    if (optionCount <= 2) {
+        return { colsClass: 'grid-cols-2', tileMinH: 'min-h-[120px]', padding: 'p-6', iconSize: 28, textSize: 'text-base' }
+    }
+    if (optionCount === 3) {
+        // 3 divides evenly into a single row of 3 — no leftover gap,
+        // but each column is narrower, so the tile shrinks to fit.
+        return { colsClass: 'grid-cols-3', tileMinH: 'min-h-[100px]', padding: 'p-3', iconSize: 20, textSize: 'text-sm' }
+    }
+    // 4+: stay in 2 columns (4 = a clean 2x2). For 5-6 that's 3 rows,
+    // so the tile shrinks a step further to keep the whole grid from
+    // growing taller than 4's 2x2 footprint.
+    const rows = Math.ceil(optionCount / 2)
+    if (rows >= 3) {
+        return { colsClass: 'grid-cols-2', tileMinH: 'min-h-[76px]', padding: 'p-3', iconSize: 20, textSize: 'text-sm' }
+    }
+    return { colsClass: 'grid-cols-2', tileMinH: 'min-h-[100px]', padding: 'p-4', iconSize: 24, textSize: 'text-base' }
+}
 
 type QueueItem = { activityId: string; questionId: string }
 
@@ -112,6 +142,7 @@ export function ActivityRunner({
     const [showMastered, setShowMastered] = useState(false)
     const [unlockedNextMission, setUnlockedNextMission] = useState(false)
     const [overrideActivityId, setOverrideActivityId] = useState<string | null>(null)
+    const [showPauseMenu, setShowPauseMenu] = useState(false)
 
     // Per-QUESTION streak cache — seeded from each question's own
     // initialCorrectStreak, updated locally after every submit so the
@@ -264,7 +295,18 @@ export function ActivityRunner({
     }
 
     if (queue.length === 0) {
-        return <p className="font-sans text-body-md text-text-secondary">This mission has no activities yet.</p>
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+                <p className="font-sans text-body-md text-text-secondary">This mission has no activities yet.</p>
+                <button
+                    type="button"
+                    onClick={exitToLesson}
+                    className="font-sans text-body-emphasis text-brand hover:underline"
+                >
+                    ← Back to lesson
+                </button>
+            </div>
+        )
     }
 
     if (showMastered) {
@@ -298,107 +340,155 @@ export function ActivityRunner({
     }
 
     if (!activeQuestion || !activeActivity) {
-        return <p className="font-sans text-body-md text-text-secondary">This mission has no activities yet.</p>
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+                <p className="font-sans text-body-md text-text-secondary">This mission has no activities yet.</p>
+                <button
+                    type="button"
+                    onClick={exitToLesson}
+                    className="font-sans text-body-emphasis text-brand hover:underline"
+                >
+                    ← Back to lesson
+                </button>
+            </div>
+        )
     }
 
+    const gridLayout = getGridLayout(activeQuestion.options.length)
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-3 px-4 sm:px-8">
-                <div className="flex-1 h-3 rounded-pill bg-hairline overflow-hidden">
-                    <div
-                        className="h-full bg-brand rounded-pill transition-[width] duration-300"
-                        style={{ width: `${Math.min(100, (correctStreak / masteryThreshold) * 100)}%` }}
-                    />
+        <div className="min-h-screen flex flex-col">
+            {/* ── Compact header: pause + streak progress + hint indicator
+                all in one row, so the rest of the screen (question,
+                answers) gets the space instead. ─────────────────────── */}
+            <div className="px-4 sm:px-8 pt-3 pb-2 space-y-2">
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setShowPauseMenu(true)}
+                        aria-label="Pause mission"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors"
+                    >
+                        <Pause size={18} aria-hidden="true" />
+                    </button>
+                    <div className="flex-1 h-3 rounded-pill bg-hairline overflow-hidden">
+                        <div
+                            className="h-full bg-brand rounded-pill transition-[width] duration-300"
+                            style={{ width: `${Math.min(100, (correctStreak / masteryThreshold) * 100)}%` }}
+                        />
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <Flame
+                            size={20}
+                            className={correctStreak > 0 ? 'text-warning' : 'text-text-muted'}
+                            fill={correctStreak > 0 ? 'currentColor' : 'none'}
+                            aria-hidden="true"
+                        />
+                        <span className="font-sans text-body-emphasis text-ink">{correctStreak}</span>
+                    </div>
+                    {/* Hint indicator only — still triggered by the existing
+                        auto-after-2-wrong logic, just relocated up here for
+                        visual hierarchy. Not yet a tap-to-reveal control. */}
+                    {feedback?.hintText && (
+                        <span
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-info-soft text-info"
+                            aria-hidden="true"
+                        >
+                            <Lightbulb size={18} />
+                        </span>
+                    )}
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                    <Flame
-                        size={22}
-                        className={correctStreak > 0 ? 'text-warning' : 'text-text-muted'}
-                        fill={correctStreak > 0 ? 'currentColor' : 'none'}
-                        aria-hidden="true"
-                    />
-                    <span className="font-sans text-body-emphasis text-ink">{correctStreak}</span>
-                </div>
+
+                {(activeRollup && activeRollup.totalCount > 1) || overrideActivityId || (isReturningQuestion && !overrideActivityId) ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                        {activeRollup && activeRollup.totalCount > 1 && (
+                            <span className="font-sans text-caption font-semibold text-text-secondary bg-surface-sunken rounded-pill px-3 py-1">
+                                {activeRollup.masteredCount}/{activeRollup.totalCount} Questions Mastered
+                            </span>
+                        )}
+                        {overrideActivityId && (
+                            <span className="font-sans text-caption font-semibold text-info bg-info-soft rounded-pill px-3 py-1">
+                                Related question
+                            </span>
+                        )}
+                        {isReturningQuestion && !overrideActivityId && (
+                            <span className="inline-flex items-center gap-1.5 font-sans text-caption font-semibold text-warning bg-warning-soft rounded-pill px-3 py-1">
+                                <RotateCcw size={14} aria-hidden="true" />
+                                Let&apos;s review again!
+                            </span>
+                        )}
+                    </div>
+                ) : null}
             </div>
 
-            {activeRollup && activeRollup.totalCount > 1 && (
-                <div className="px-4 sm:px-8">
-                    <span className="font-sans text-caption font-semibold text-text-secondary bg-surface-sunken rounded-pill px-3 py-1">
-                        {activeRollup.masteredCount}/{activeRollup.totalCount} Questions Mastered
-                    </span>
-                </div>
-            )}
-
-            {overrideActivityId && (
-                <div className="px-4 sm:px-8">
-                    <span className="font-sans text-caption font-semibold text-info bg-info-soft rounded-pill px-3 py-1">
-                        Related question
-                    </span>
-                </div>
-            )}
-
-            {isReturningQuestion && !overrideActivityId && (
-                <div className="px-4 sm:px-8">
-                    <span className="inline-flex items-center gap-1.5 font-sans text-caption font-semibold text-warning bg-warning-soft rounded-pill px-3 py-1">
-                        <RotateCcw size={14} aria-hidden="true" />
-                        Let&apos;s review again!
-                    </span>
-                </div>
-            )}
-
-            <div className="px-4 sm:px-8 space-y-6">
+            {/* ── Question + answers: generous breathing room here is the
+                whole point of shrinking the header above. ─────────────── */}
+            <div className="flex-1 flex flex-col justify-center gap-8 sm:gap-10 px-4 sm:px-8 py-6 max-w-2xl mx-auto w-full">
                 <p className="text-center font-heading text-mission md:text-[1.75rem] text-ink">
                     {activeQuestion.prompt}
                 </p>
 
-                <div className="grid grid-cols-2 gap-3">
-                    {activeQuestion.options.map((option, i) => {
-                        const style = TILE_STYLES[i % TILE_STYLES.length] ?? TILE_STYLES[0]!
-                        const Icon = style.icon
-                        const isSelected = selectedOptionId === option.id
-                        const isCorrectAnswer = feedback && feedback.isCorrect && isSelected
-                        const isWrongAnswer = feedback && !feedback.isCorrect && isSelected
-                        return (
-                            <button
-                                key={option.id}
-                                type="button"
-                                disabled={Boolean(feedback)}
-                                onClick={() => handleSelectOption(option.id)}
-                                className={[
-                                    'flex min-h-[120px] w-full items-center gap-4 rounded-md p-6 text-left font-sans font-bold text-base text-on-ink shadow-card transition-opacity',
-                                    style.bg,
-                                    isSelected ? `ring-4 ${style.ring} ring-offset-2` : '',
-                                    isCorrectAnswer ? 'ring-4 ring-success ring-offset-2' : '',
-                                    isWrongAnswer ? 'opacity-50' : '',
-                                    feedback && !isSelected ? 'opacity-50' : '',
-                                ].join(' ')}
-                            >
-                                <Icon size={28} aria-hidden="true" />
-                                <span>{option.optionText}</span>
-                            </button>
-                        )
-                    })}
+                <div className="space-y-6">
+                    <div className={`grid ${gridLayout.colsClass} gap-3`}>
+                        {activeQuestion.options.map((option, i) => {
+                            const style = TILE_STYLES[i % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                            const Icon = style.icon
+                            const isSelected = selectedOptionId === option.id
+                            const isCorrectAnswer = feedback && feedback.isCorrect && isSelected
+                            const isWrongAnswer = feedback && !feedback.isCorrect && isSelected
+                            const isLast = i === activeQuestion.options.length - 1
+                            // Odd option count in a 2-column grid leaves the
+                            // last tile alone in the left column with a dead
+                            // gap on the right — span it full-width instead.
+                            const spanFull =
+                                gridLayout.colsClass === 'grid-cols-2' &&
+                                activeQuestion.options.length % 2 === 1 &&
+                                isLast
+                            return (
+                                <button
+                                    key={option.id}
+                                    type="button"
+                                    disabled={Boolean(feedback)}
+                                    onClick={() => handleSelectOption(option.id)}
+                                    className={[
+                                        `flex ${gridLayout.tileMinH} w-full items-center gap-3 rounded-md ${gridLayout.padding} text-left font-sans font-bold ${gridLayout.textSize} text-on-ink shadow-card transition-opacity`,
+                                        style.bg,
+                                        spanFull ? 'col-span-2' : '',
+                                        isSelected ? `ring-4 ${style.ring} ring-offset-2` : '',
+                                        isCorrectAnswer ? 'ring-4 ring-success ring-offset-2' : '',
+                                        isWrongAnswer ? 'opacity-50' : '',
+                                        feedback && !isSelected ? 'opacity-50' : '',
+                                    ].join(' ')}
+                                >
+                                    <Icon size={gridLayout.iconSize} aria-hidden="true" />
+                                    <span>{option.optionText}</span>
+                                </button>
+                            )
+                        })}
+                    </div>
+
+                    {feedback?.isCorrect && (
+                        <p className="text-center font-sans text-body-emphasis text-success">
+                            {feedback.questionCorrectStreak} in a row!
+                        </p>
+                    )}
+
+                    {feedback?.hintText && (
+                        <p className="flex items-start gap-2 font-sans text-body-md text-info bg-info-soft rounded-md px-4 py-3 font-medium">
+                            <Lightbulb size={20} className="shrink-0 mt-0.5" aria-hidden="true" />
+                            <span>Hint: {feedback.hintText}</span>
+                        </p>
+                    )}
+
+                    {error && (
+                        <p className="font-sans text-caption text-error text-center" role="alert">
+                            {error}
+                        </p>
+                    )}
                 </div>
+            </div>
 
-                {feedback?.isCorrect && (
-                    <p className="text-center font-sans text-body-emphasis text-success">
-                        {feedback.questionCorrectStreak} in a row!
-                    </p>
-                )}
-
-                {feedback?.hintText && (
-                    <p className="flex items-start gap-2 font-sans text-body-md text-info bg-info-soft rounded-md px-4 py-3 font-medium">
-                        <Lightbulb size={20} className="shrink-0 mt-0.5" aria-hidden="true" />
-                        <span>Hint: {feedback.hintText}</span>
-                    </p>
-                )}
-
-                {error && (
-                    <p className="font-sans text-caption text-error text-center" role="alert">
-                        {error}
-                    </p>
-                )}
-
+            <div className="px-4 sm:px-8 pb-6 sm:pb-8 max-w-2xl mx-auto w-full space-y-3">
                 {!feedback && (
                     <button
                         type="button"
@@ -440,6 +530,42 @@ export function ActivityRunner({
                     </button>
                 )}
             </div>
+
+            {/* ── Pause sheet: Resume/Quit. Quit reuses exitToLesson,
+                same route + refresh the mastery-screen's "Back to
+                missions" button already used. ─────────────────────────── */}
+            {showPauseMenu && (
+                <div
+                    className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40"
+                    onClick={() => setShowPauseMenu(false)}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full max-w-md rounded-t-2xl bg-surface p-6 pb-8 space-y-3 animate-drawer-up"
+                    >
+                        <div className="text-center mb-2">
+                            <p className="font-heading text-mission text-ink">{mission.title}</p>
+                            {mission.description && (
+                                <p className="font-sans text-caption text-text-secondary mt-1">{mission.description}</p>
+                            )}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowPauseMenu(false)}
+                            className="w-full h-14 rounded-2xl bg-brand hover:bg-brand-hover text-white font-heading text-lg uppercase tracking-wide shadow-card border-b-4 border-brand-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
+                        >
+                            Resume
+                        </button>
+                        <button
+                            type="button"
+                            onClick={exitToLesson}
+                            className="w-full h-14 rounded-2xl bg-surface-sunken hover:bg-hairline text-ink font-heading text-lg uppercase tracking-wide border-b-4 border-hairline-strong active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
+                        >
+                            Quit mission
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

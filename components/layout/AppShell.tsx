@@ -44,6 +44,37 @@ interface AppShellProps {
  */
 export function AppShell({ user, children }: AppShellProps) {
     const pathname = usePathname();
+
+    // PHASE C/D FULL-SCREEN MISSION MODE (2026-09-04): the student
+    // mission-play route needs zero chrome — no Sidebar, TopNav, or
+    // MobileBottomNav — so the gameplay screen (ActivityRunner) can
+    // use the entire viewport, matching the Duolingo/Quizizz-style
+    // Mission Mode this app is going for. Scoped to an EXACT match on
+    // this one route shape (not a broad "/student" prefix check) so
+    // it never accidentally swallows other student pages (dashboard,
+    // course view, lesson reader, quiz-taking, etc.) that still need
+    // normal navigation chrome. Chrome returns automatically the
+    // moment the student navigates away (Quit or mastery's "Back to
+    // missions" both route elsewhere), so there's no need to track a
+    // "game is done" state here — leaving the route IS "done".
+    const isMissionPlayRoute = /^\/student\/courses\/[^/]+\/lessons\/[^/]+\/missions\/[^/]+\/?$/.test(
+        pathname
+    );
+
+    if (isMissionPlayRoute) {
+        return (
+            <div className="min-h-screen bg-canvas">
+                <a
+                    href="#main-content"
+                    className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-brand focus:px-4 focus:py-2 focus:text-on-ink"
+                >
+                    Skip to main content
+                </a>
+                <main id="main-content">{children}</main>
+            </div>
+        );
+    }
+
     const primaryNavPaths = NAV_ITEMS[user.role].map((item) => item.href);
     const showBackButton = !primaryNavPaths.includes(pathname);
 

@@ -18,17 +18,35 @@
 // unchanged — remediation still applies to the whole activity
 // container, not to an individual question.
 //
-// Preview panel: extended to loop over every question block in order,
-// same tactile-tile treatment as before, so a teacher can proof the
-// whole mini-quiz-within-a-mission before saving, not just its first
-// question.
+// PHASE A VISUAL-ONLY PASS (2026-09-04): this form was missed in the
+// earlier tactile-tile rebuild that already covered NewMissionForm.tsx
+// and ActivityCard.tsx — it still used a plain bordered-circle "click
+// to mark correct" bullet for options, and still carried the full
+// lg:grid-cols-2 "Student preview" side panel. Both removed here to
+// match those two files exactly: options (and true/false) now render
+// as the same tactile tiles (tap tile = mark correct, colored bg,
+// check badge), and the layout collapses to single-column mobile-first
+// with no preview column. No business logic touched — questions state,
+// handlers, validation, and questionsPayload construction are all
+// byte-for-byte identical to before.
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Lightbulb, Eye, Plus } from 'lucide-react'
+import { X, Lightbulb, Plus, Check, Circle, Square, Triangle, Diamond } from 'lucide-react'
 import { addActivity } from '@/features/missions/actions/create-activity'
 
 type QuestionType = 'multiple_choice_single' | 'true_false'
+
+// Same 4-color/4-shape tile system as ActivityRunner.tsx's real gameplay
+// tiles, NewMissionForm.tsx's builder, and ActivityCard.tsx's editor —
+// copied here directly (not imported, since none of those files export
+// it) so this form's tiles are visually identical to all three.
+const TILE_STYLES = [
+    { icon: Circle, bg: 'bg-brand' },
+    { icon: Square, bg: 'bg-info' },
+    { icon: Triangle, bg: 'bg-warning' },
+    { icon: Diamond, bg: 'bg-brand-hover' },
+]
 
 type ExistingActivity = {
     id: string
@@ -192,9 +210,11 @@ export function AddActivityForm({
     }
 
     return (
-        <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-            {/* ── Classroom Mode form controls ────────────────────────────── */}
-            <form ref={formRef} onSubmit={handleSubmit} className="space-y-6 bg-surface rounded-md border border-hairline shadow-card p-6">
+        <form
+            ref={formRef}
+            onSubmit={handleSubmit}
+            className="mx-auto w-full max-w-md sm:max-w-lg space-y-6 bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6"
+        >
                 {questions.map((q, qIndex) => (
                     <div
                         key={q.key}
@@ -240,53 +260,62 @@ export function AddActivityForm({
                         />
 
                         {q.questionType === 'multiple_choice_single' && (
-                            <div className="space-y-2">
-                                <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
-                                {q.options.map((option, optIndex) => (
-                                    <div key={option.key} className="flex items-center gap-3">
-                                        <button
-                                            type="button"
-                                            aria-label={`Mark option ${optIndex + 1} as correct`}
-                                            onClick={() => updateQuestion(q.key, { correctIndex: optIndex })}
-                                            className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
-                                                q.correctIndex === optIndex
-                                                    ? 'border-brand bg-brand text-on-ink'
-                                                    : 'border-hairline hover:border-brand'
+                            <div className="space-y-3">
+                                <p className="text-caption text-text-secondary">
+                                    Tap a tile to mark it as the correct answer
+                                </p>
+                                {q.options.map((option, optIndex) => {
+                                    const style = TILE_STYLES[optIndex % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                                    const Icon = style.icon
+                                    const isCorrect = q.correctIndex === optIndex
+                                    return (
+                                        <div
+                                            key={option.key}
+                                            className={`relative flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-on-ink shadow-card transition-all ${style.bg} ${
+                                                isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                             }`}
                                         >
-                                            {q.correctIndex === optIndex && (
-                                                <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            )}
-                                        </button>
-                                        <input
-                                            type="text"
-                                            value={option.text}
-                                            onChange={(e) => updateOptionText(q.key, option.key, e.target.value)}
-                                            placeholder={`Option ${optIndex + 1}`}
-                                            className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
-                                        />
-                                        {q.options.length > 2 && (
                                             <button
                                                 type="button"
-                                                aria-label={`Remove option ${optIndex + 1}`}
-                                                onClick={() => removeOptionRow(q.key, option.key)}
-                                                className="text-text-secondary hover:text-error p-2 rounded-md transition-colors"
+                                                aria-label={`Mark option ${optIndex + 1} as correct`}
+                                                onClick={() => updateQuestion(q.key, { correctIndex: optIndex })}
+                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20"
                                             >
-                                                <X size={18} aria-hidden="true" />
+                                                {isCorrect ? (
+                                                    <Check size={20} aria-hidden="true" />
+                                                ) : (
+                                                    <Icon size={18} aria-hidden="true" />
+                                                )}
                                             </button>
-                                        )}
-                                    </div>
-                                ))}
+                                            <input
+                                                type="text"
+                                                value={option.text}
+                                                onChange={(e) => updateOptionText(q.key, option.key, e.target.value)}
+                                                placeholder={`Option ${optIndex + 1}`}
+                                                className="min-w-0 flex-1 bg-transparent font-sans font-bold text-base text-on-ink placeholder:text-on-ink/60 outline-none"
+                                            />
+                                            {isCorrect && (
+                                                <span className="shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
+                                                    Correct
+                                                </span>
+                                            )}
+                                            {q.options.length > 2 && (
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Remove option ${optIndex + 1}`}
+                                                    onClick={() => removeOptionRow(q.key, option.key)}
+                                                    className="shrink-0 text-on-ink/70 hover:text-on-ink p-1 rounded-md"
+                                                >
+                                                    <X size={16} aria-hidden="true" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    )
+                                })}
                                 <button
                                     type="button"
                                     onClick={() => addOptionRow(q.key)}
-                                    className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
+                                    className="text-caption font-semibold text-text-secondary hover:text-ink pl-2"
                                 >
                                     + Add option
                                 </button>
@@ -294,33 +323,39 @@ export function AddActivityForm({
                         )}
 
                         {q.questionType === 'true_false' && (
-                            <div className="space-y-2">
-                                <p className="text-caption text-text-secondary">Click the bullet to mark the correct answer</p>
-                                {(['True', 'False'] as const).map((label) => (
-                                    <div key={label} className="flex items-center gap-3">
+                            <div className="space-y-3">
+                                <p className="text-caption text-text-secondary">
+                                    Tap a tile to mark it as the correct answer
+                                </p>
+                                {(['True', 'False'] as const).map((label, i) => {
+                                    const style = TILE_STYLES[i % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                                    const Icon = style.icon
+                                    const isCorrect = q.correctTf === label
+                                    return (
                                         <button
+                                            key={label}
                                             type="button"
-                                            aria-label={`Mark ${label} as correct`}
                                             onClick={() => updateQuestion(q.key, { correctTf: label })}
-                                            className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
-                                                q.correctTf === label
-                                                    ? 'border-brand bg-brand text-on-ink'
-                                                    : 'border-hairline hover:border-brand'
+                                            className={`flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-left text-on-ink shadow-card transition-all ${style.bg} ${
+                                                isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                             }`}
                                         >
-                                            {q.correctTf === label && (
-                                                <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
+                                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20">
+                                                {isCorrect ? (
+                                                    <Check size={20} aria-hidden="true" />
+                                                ) : (
+                                                    <Icon size={18} aria-hidden="true" />
+                                                )}
+                                            </span>
+                                            <span className="font-sans font-bold text-base">{label}</span>
+                                            {isCorrect && (
+                                                <span className="ml-auto shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
+                                                    Correct
+                                                </span>
                                             )}
                                         </button>
-                                        <span className="text-body-md text-ink">{label}</span>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         )}
 
@@ -387,108 +422,5 @@ export function AddActivityForm({
                     {isPending ? 'Adding…' : 'Add activity'}
                 </button>
             </form>
-
-            {/* ── Mission Mode live preview — student-facing look only ───── */}
-            <div className="lg:sticky lg:top-6">
-                <div className="flex items-center gap-2 mb-3 text-text-secondary">
-                    <Eye size={16} aria-hidden="true" />
-                    <p className="text-caption font-semibold uppercase tracking-wide">
-                        Student preview
-                    </p>
-                </div>
-
-                {!questions.some((q) => q.prompt.trim()) ? (
-                    <div className="rounded-2xl border-2 border-dashed border-hairline p-8 text-center">
-                        <p className="font-sans text-caption text-text-muted">
-                            Start typing a prompt to see how this activity will look to students.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {questions
-                            .filter((q) => q.prompt.trim())
-                            .map((q, i) => (
-                                <div key={q.key} className="rounded-2xl bg-surface-sunken border-2 border-hairline p-6">
-                                    <p className="font-sans text-caption text-text-muted mb-2">Question {i + 1}</p>
-                                    <p className="font-heading text-mission md:text-[1.75rem] text-ink mb-5">
-                                        {q.prompt.trim()}
-                                    </p>
-
-                                    {q.questionType === 'multiple_choice_single' && (
-                                        <div className="space-y-3">
-                                            {q.options
-                                                .map((option, index) => ({ option, index }))
-                                                .filter(({ option }) => option.text.trim().length > 0)
-                                                .map(({ option, index }) => {
-                                                    const isCorrect = q.correctIndex === index
-                                                    return (
-                                                        <div
-                                                            key={option.key}
-                                                            className={`w-full min-h-[60px] p-4 rounded-2xl border-2 border-b-4 flex items-center justify-between text-left ${
-                                                                isCorrect
-                                                                    ? 'bg-success-soft border-success border-b-success'
-                                                                    : 'bg-surface border-hairline border-b-hairline-strong'
-                                                            }`}
-                                                        >
-                                                            <span className="font-sans font-bold text-base text-ink">
-                                                                {option.text}
-                                                            </span>
-                                                            {isCorrect && (
-                                                                <span className="shrink-0 font-sans text-caption font-semibold text-success">
-                                                                    Correct answer
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    )
-                                                })}
-                                            {q.options.every((o) => !o.text.trim()) && (
-                                                <p className="font-sans text-caption text-text-muted">
-                                                    Add answer options to preview them here.
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {q.questionType === 'true_false' && (
-                                        <div className="space-y-3">
-                                            {(['True', 'False'] as const).map((label) => {
-                                                const isCorrect = q.correctTf === label
-                                                return (
-                                                    <div
-                                                        key={label}
-                                                        className={`w-full min-h-[60px] p-4 rounded-2xl border-2 border-b-4 flex items-center justify-between text-left ${
-                                                            isCorrect
-                                                                ? 'bg-success-soft border-success border-b-success'
-                                                                : 'bg-surface border-hairline border-b-hairline-strong'
-                                                        }`}
-                                                    >
-                                                        <span className="font-sans font-bold text-base text-ink">{label}</span>
-                                                        {isCorrect && (
-                                                            <span className="shrink-0 font-sans text-caption font-semibold text-success">
-                                                                Correct answer
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    )}
-
-                                    {q.hintText.trim() && (
-                                        <div className="mt-5 flex items-start gap-2 rounded-md bg-warning-soft p-3">
-                                            <Lightbulb size={16} className="text-warning shrink-0 mt-0.5" aria-hidden="true" />
-                                            <p className="font-sans text-caption text-ink-soft">{q.hintText.trim()}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        <p className="font-sans text-caption text-text-muted">
-                            Correct answers are marked here for your reference only — students never see this
-                            until after they submit.
-                        </p>
-                    </div>
-                )}
-            </div>
-        </div>
     )
 }

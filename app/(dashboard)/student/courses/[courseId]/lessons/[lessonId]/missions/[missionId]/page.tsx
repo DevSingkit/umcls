@@ -28,6 +28,7 @@
 //     (Nunito = Mission Mode body/UI text app-wide).
 
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { getMissionsForStudent, getMissionPreviewForStudent } from '@/features/missions/actions/get-mission-for-student'
 import { ActivityRunner } from '@/features/missions/components/ActivityRunner'
 
@@ -47,13 +48,21 @@ export default async function TakeMissionPage({
 
     if (missionState.status === 'locked') {
         return (
-            <div className="max-w-2xl mx-auto py-8 px-4">
-                <div className="bg-surface-sunken rounded-md border border-hairline p-6 text-center space-y-2">
+            <div className="max-w-2xl mx-auto py-10 px-4 space-y-4 text-center">
+                <div className="bg-surface-sunken rounded-md border border-hairline p-6 space-y-2">
                     <p className="font-heading text-mission text-ink">This mission is locked</p>
                     <p className="font-sans text-body-md text-text-secondary">
                         Complete the mission before it in the path to unlock this one.
                     </p>
                 </div>
+                {/* AppShell strips all nav chrome on this route (full-screen
+                    Mission Mode), so this state needs its own way out. */}
+                <Link
+                    href={`/student/courses/${courseId}/lessons/${lessonId}`}
+                    className="inline-block font-sans text-body-emphasis text-brand hover:underline"
+                >
+                    ← Back to lesson
+                </Link>
             </div>
         )
     }
@@ -66,20 +75,11 @@ export default async function TakeMissionPage({
     }
 
     return (
-        <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
-            <div>
-                <h1 className="font-heading text-mission md:text-[1.75rem] text-ink">{mission.title}</h1>
-                {mission.description && (
-                    <p className="font-sans text-body-md text-text-secondary mt-1">{mission.description}</p>
-                )}
-            </div>
-
-            <ActivityRunner
-                mission={mission}
-                courseId={courseId}
-                lessonId={lessonId}
-                initialCorrectStreak={missionState.correctStreak}
-            />
-        </div>
+        <ActivityRunner
+            mission={mission}
+            courseId={courseId}
+            lessonId={lessonId}
+            initialCorrectStreak={missionState.correctStreak}
+        />
     )
 }

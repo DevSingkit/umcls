@@ -64,6 +64,16 @@ function buildCsp(nonce: string) {
 // NextResponse.next()/redirect() call in this file, including the one
 // Supabase's cookie setAll() callback creates, or the nonce silently
 // stops propagating on requests that refresh the session cookie.
+//
+// IMPORTANT: NextResponse.next({ request: { headers } }) bakes the
+// header values in AT CALL TIME — it does not keep a live reference to
+// the Headers object. Mutating `requestHeaders` after a response has
+// already been created from it does NOT retroactively update that
+// response. This is exactly why the cookie setAll() callback below
+// rebuilds `response` from scratch every time it needs to add a header —
+// and it's why the PERF-002 fix (adding x-user-* identity headers)
+// follows the same rebuild-and-reattach-cookies pattern instead of just
+// calling requestHeaders.set() partway through and hoping it sticks.
 function buildRequestHeaders(request: NextRequest, nonce: string, csp: string): Headers {
     const requestHeaders = new Headers(request.headers)
     requestHeaders.set('x-nonce', nonce)
@@ -129,7 +139,7 @@ export async function middleware(request: NextRequest) {
     if (user && isProtectedPath) {
         const { data: profile } = await supabase
             .from('users')
-            .select('role, is_active, last_seen_at')
+            .select('role, is_active, last_seen_at, full_name')
             .eq('id', user.id)
             .single()
 
@@ -163,6 +173,39 @@ export async function middleware(request: NextRequest) {
         if (isStudentPath && role !== 'student') {
             return applyResponseHeaders(NextResponse.redirect(new URL('/unauthorized', request.url), 303), csp)
         }
+
+        // PERF-002: we already have the fully-verified user + profile
+        // right here. Without this, every server component/action on the
+        // page (getCurrentUser -> requireUser -> requireRole) redoes an
+        // identical auth.getUser() + users select, doubling the auth
+        // round-trip cost on every single protected page load. Stamp the
+        // already-verified identity onto the request headers so
+        // getCurrentUser() can read it directly instead of re-fetching.
+        //
+        // This does NOT weaken the check — auth.getUser() above already
+        // confirmed the session against Supabase directly (not just a
+        // trusted cookie), and these headers are request-scoped values
+        // Next.js reconstructs server-side; a client cannot inject or
+        // spoof them from the browser.
+        //
+        // Per the NextResponse.next() bake-at-call-time note above, we
+        // can't just requestHeaders.set() at this point and trust it to
+        // reach the page — `response` may already have been built (e.g.
+        // by the cookie setAll() callback during auth.getUser()). So we
+        // capture whatever cookies are currently queued on `response`,
+        // rebuild `response` from the now-updated requestHeaders, and
+        // reattach those cookies. This mirrors the exact rebuild pattern
+        // setAll() already uses for the same reason.
+        requestHeaders.set('x-user-id', user.id)
+        requestHeaders.set('x-user-email', user.email ?? '')
+        requestHeaders.set('x-user-role', role)
+        requestHeaders.set('x-user-active', 'true')
+        requestHeaders.set('x-user-last-seen', profile.last_seen_at ?? '')
+        requestHeaders.set('x-user-full-name', encodeURIComponent(profile.full_name ?? ''))
+
+        const pendingCookies = response.cookies.getAll()
+        response = NextResponse.next({ request: { headers: requestHeaders } })
+        pendingCookies.forEach((cookie) => response.cookies.set(cookie))
 
         const cacheKey = `seen:${user.id}`
         const alreadyTracked = await redis.get(cacheKey)
