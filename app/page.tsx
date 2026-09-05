@@ -1,7 +1,26 @@
 // app/page.tsx
 //
 // Landing page — UMCLSI LMS
-// Rebuilt with verified factual institutional data.
+//
+// DESIGN-LMS 2.1 fact-correction pass (2026-09-06):
+// - Removed all DepEd permit numbers (K-0025, E-0024) — these were
+//   unverified and the school asked for them to be dropped entirely
+//   rather than guess at correct permit IDs. Recognition is now
+//   stated generically ("DepEd Recognized") without inventing a
+//   permit number.
+// - Grade levels corrected: the school offers Nursery, Kindergarten 1,
+//   Kindergarten 2, and Elementary Grades 1–6 — NOT "Kindergarten" and
+//   "Elementary (Grades 4 to 6)" as the previous copy claimed.
+// - Enrollment is real but not published as exact headcounts on the
+//   public site per the school's instruction — reflected here only
+//   as qualitative language ("growing community of learners"), never
+//   as numbers.
+// - Contact details corrected to verified info: phone 0994 584 9446,
+//   email umcls20educ@gmail.com, address "847 Sampaguita Street, Tala,
+//   Caloocan City, Metro Manila". Old placeholder phone/email/partial
+//   address removed from the footer.
+// - Only one verified social channel exists (Facebook) — footer link
+//   text/URL left as-is, no other socials implied.
 
 import Image from "next/image";
 import Link from "next/link";
@@ -12,6 +31,7 @@ import {
   Users2,
   HandHeart,
   Phone,
+  Mail,
   MapPin,
   ArrowUpRight,
   ArrowRight,
@@ -25,7 +45,7 @@ import { SiteNav } from "@/components/layout/SiteNav";
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const trustStats = [
-  { label: "DepEd Permit K-0025 & E-0024" },
+  { label: "DepEd Recognized" },
   { label: "Christ-Centered & Values-Focused" },
   { label: "Cooperative Learning Approach" },
 ];
@@ -33,13 +53,13 @@ const trustStats = [
 const programs = [
   {
     icon: Users2,
-    title: "Kindergarten",
+    title: "Nursery & Kindergarten",
     description:
-      "Early childhood education focused on play-based literacy, foundational math, and Christian character formation.",
+      "Early childhood education across Nursery, Kindergarten 1, and Kindergarten 2 — play-based literacy, foundational math, and Christian character formation.",
   },
   {
     icon: BookOpen,
-    title: "Elementary (Grades 4 to 6)",
+    title: "Elementary (Grades 1 to 6)",
     description:
       "DepEd K-12 aligned curriculum emphasizing academic excellence, cooperative learning, and moral development.",
   },
@@ -88,7 +108,7 @@ const announcements = [
   {
     date: "Enrollment",
     title: "School Year Enrollment Open",
-    description: "Slots for Kindergarten and Grades 4–6 are now open — visit the registrar or inquire online.",
+    description: "Slots for Nursery, Kindergarten, and Grades 1–6 are now open — visit the registrar or inquire online.",
   },
   {
     date: "Academics",
@@ -122,8 +142,10 @@ export default function LandingPage() {
             </h1>
 
             <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
-              Quality Christian education paired with interactive learning technology 
-              for Kindergarten and Elementary learners at UMCLSI.
+              A private Christian basic education institution serving the
+              community of Tala, Caloocan City — offering Nursery,
+              Kindergarten, and Elementary (Grades 1–6) education paired with
+              interactive learning technology.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-4">
@@ -131,21 +153,25 @@ export default function LandingPage() {
                 href="/admissions"
                 className="inline-flex h-14 items-center gap-2 rounded-md bg-brand px-7 text-body-md font-semibold text-on-ink transition-colors hover:bg-brand-hover"
               >
-                Enroll Now
+                Admissions
                 <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
               </Link>
               <Link
                 href="/login"
                 className="inline-flex h-12 items-center gap-2 rounded-md border-2 border-hairline bg-surface px-7 text-body-md font-semibold text-ink transition-colors hover:bg-surface-sunken"
               >
-                Explore LMS Portal
+                Log in
               </Link>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-2.5">
               <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
                 <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                DepEd NCR Recognized (Permit K-0025 / E-0024)
+                DepEd Recognized
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-surface-sunken px-4 py-1.5 text-caption font-semibold text-ink-soft">
+                <MapPin className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+                847 Sampaguita Street, Tala, Caloocan City
               </span>
             </div>
           </div>
@@ -158,14 +184,6 @@ export default function LandingPage() {
       {/* ── Trust & credentials bar ─────────────────────────────────────── */}
       <section className="border-y border-hairline bg-surface px-4 py-8 sm:px-6">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-6">
-          <div className="flex flex-wrap gap-2.5">
-            <span className="inline-flex items-center rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
-              DepEd Permit K-0025 s.2023
-            </span>
-            <span className="inline-flex items-center rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
-              DepEd Permit E-0024 s.2023
-            </span>
-          </div>
           <ul className="flex flex-wrap gap-x-8 gap-y-2">
             {trustStats.map((stat) => (
               <li key={stat.label} className="text-caption font-semibold text-text-secondary">
@@ -188,9 +206,11 @@ export default function LandingPage() {
             students grow academically by encouraging one another rather than competing against each other.
           </p>
           <p className="mt-4 text-body-md text-text-secondary">
-            By combining caring instruction with interactive tools like our Mission Engine LMS, 
-            we ensure every learner receives focused attention, sound academic guidance, 
-            and a strong moral foundation.
+            We&apos;re a growing community of learners across Nursery,
+            Kindergarten, and Elementary, and by combining caring instruction
+            with interactive tools like our Mission Engine LMS, we ensure
+            every learner receives focused attention, sound academic
+            guidance, and a strong moral foundation.
           </p>
         </div>
       </section>
@@ -241,7 +261,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Educational Commitments (Refactored Testimonials) ───────────── */}
+      {/* ── Educational Commitments ──────────────────────────────────────── */}
       <section className="bg-surface px-4 py-16 sm:px-6 md:py-20">
         <div className="mx-auto max-w-[1200px]">
           <p className="text-label text-text-secondary">What drives our mission</p>
@@ -259,7 +279,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Announcements ────────────────────────────────────────────────── */}
+      {/* ── Announcements & LMS portal notice ────────────────────────────── */}
       <section className="px-4 py-16 sm:px-6 md:py-20">
         <div className="mx-auto max-w-[1200px]">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -290,6 +310,25 @@ export default function LandingPage() {
                 <p className="mt-2 text-caption text-text-secondary">{item.description}</p>
               </div>
             ))}
+          </div>
+
+          {/* Portal callout */}
+          <div className="mt-10 flex flex-col items-start justify-between gap-6 rounded-md bg-brand-soft p-8 sm:flex-row sm:items-center">
+            <div>
+              <h3 className="text-body-emphasis text-ink">
+                Students and parents: access the LMS portal
+              </h3>
+              <p className="mt-1 text-body-md text-ink-soft">
+                Check schedules, coursework, and updates any time.
+              </p>
+            </div>
+            <Link
+              href="/login"
+              className="inline-flex h-14 shrink-0 items-center gap-2 rounded-md bg-brand px-7 text-body-md font-semibold text-on-ink transition-colors hover:bg-brand-hover"
+            >
+              Go to LMS Portal
+              <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </section>
@@ -322,20 +361,26 @@ export default function LandingPage() {
                 <li className="flex items-start gap-2 text-caption text-on-ink/70">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
                   <span>
-                    847 Sampaguita St., San Jose,
+                    847 Sampaguita Street, Tala,
                     <br />
-                    Tala, Caloocan City, Metro Manila 1437
+                    Caloocan City, Metro Manila
                   </span>
                 </li>
                 <li className="flex items-center gap-2 text-caption text-on-ink/70">
                   <Phone className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                  <a href="tel:+639751521284" className="hover:underline">
-                    +63 975 152 1284
+                  <a href="tel:+639945849446" className="hover:underline">
+                    0994 584 9446
+                  </a>
+                </li>
+                <li className="flex items-center gap-2 text-caption text-on-ink/70">
+                  <Mail className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                  <a href="mailto:umcls20educ@gmail.com" className="hover:underline">
+                    umcls20educ@gmail.com
                   </a>
                 </li>
                 <li className="flex items-center gap-2 text-caption">
                   <Link
-                    href="https://facebook.com/profile.php?id=100091770643479"
+                    href="https://facebook.com/p/United-Methodist-Cooperative-Learning-System-Inc-61576554814851"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex min-h-12 items-center gap-1 text-on-ink hover:underline"
@@ -351,8 +396,7 @@ export default function LandingPage() {
               <p className="text-label text-on-ink">Government Recognition</p>
               <ul className="mt-3 space-y-2 text-caption text-on-ink/70">
                 <li>DepEd NCR Region</li>
-                <li>Permit K-0025 s.2023 (Kindergarten)</li>
-                <li>Permit E-0024 s.2023 (Elementary Grades 4–6)</li>
+                <li>Nursery through Elementary Grade 6</li>
               </ul>
             </div>
           </div>

@@ -60,6 +60,18 @@ export function MissionSettingsForm({
     currentTitle,
     currentDescription,
     currentMasteryThreshold,
+    // NEW (migration 099). Optional with a `true` fallback so this
+    // form doesn't break if the page rendering it hasn't been updated
+    // to pass this through yet — but until it is, this form will
+    // always show/save "on" regardless of what's actually saved in
+    // the DB. The edit page needs `getMissionForTeacher`'s
+    // `mission.reveal_correct_answer` threaded into this prop for the
+    // toggle to reflect real saved state.
+    currentRevealCorrectAnswer = true,
+    // NEW (migration 100). Same optional-with-safe-fallback pattern as
+    // currentRevealCorrectAnswer — but defaults to false here to match
+    // the column's own DB default (no shuffle) rather than true.
+    currentShuffleOptions = false,
     totalActivities,
     isPublished,
 }: {
@@ -69,6 +81,8 @@ export function MissionSettingsForm({
     currentTitle: string
     currentDescription: string | null
     currentMasteryThreshold: number
+    currentRevealCorrectAnswer?: boolean
+    currentShuffleOptions?: boolean
     totalActivities: number
     isPublished: boolean
 }) {
@@ -81,6 +95,8 @@ export function MissionSettingsForm({
     const [title, setTitle] = useState(currentTitle)
     const [description, setDescription] = useState(currentDescription ?? '')
     const [masteryThreshold, setMasteryThreshold] = useState(currentMasteryThreshold)
+    const [revealCorrectAnswer, setRevealCorrectAnswer] = useState(currentRevealCorrectAnswer)
+    const [shuffleOptions, setShuffleOptions] = useState(currentShuffleOptions)
 
     const [isResetConfirming, setIsResetConfirming] = useState(false)
     const [isResetting, startResetting] = useTransition()
@@ -132,6 +148,8 @@ export function MissionSettingsForm({
         formData.set('title', title.trim())
         if (description.trim()) formData.set('description', description.trim())
         formData.set('masteryThreshold', String(masteryThreshold))
+        formData.set('revealCorrectAnswer', String(revealCorrectAnswer))
+        formData.set('shuffleOptions', String(shuffleOptions))
         // Publish is monotonic from this form, same as
         // QuizSettingsForm.tsx — once posted, this always sends true
         // again; there's no path here that ever sends false.
@@ -204,6 +222,47 @@ export function MissionSettingsForm({
                             {masteryThreshold === 1 ? '' : 's'} in a row on this one
                         </span>
                     </div>
+                </div>
+
+                <div className="border-t border-hairline pt-6">
+                    <label htmlFor="missionSettingsRevealCorrectAnswer" className="flex items-start gap-3 cursor-pointer">
+                        <input
+                            id="missionSettingsRevealCorrectAnswer"
+                            type="checkbox"
+                            checked={revealCorrectAnswer}
+                            onChange={(e) => setRevealCorrectAnswer(e.target.checked)}
+                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
+                        />
+                        <span>
+                            <span className="text-label text-ink-soft block">
+                                Show the correct answer after a wrong attempt
+                            </span>
+                            <span className="text-caption text-text-secondary">
+                                When off, students only see whether they were right or wrong — not what the
+                                correct answer was.
+                            </span>
+                        </span>
+                    </label>
+                </div>
+
+                <div>
+                    <label htmlFor="missionSettingsShuffleOptions" className="flex items-start gap-3 cursor-pointer">
+                        <input
+                            id="missionSettingsShuffleOptions"
+                            type="checkbox"
+                            checked={shuffleOptions}
+                            onChange={(e) => setShuffleOptions(e.target.checked)}
+                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
+                        />
+                        <span>
+                            <span className="text-label text-ink-soft block">
+                                Shuffle answer order for each student
+                            </span>
+                            <span className="text-caption text-text-secondary">
+                                When off, options always appear in the order you added them.
+                            </span>
+                        </span>
+                    </label>
                 </div>
 
                 {errors.length > 0 && (

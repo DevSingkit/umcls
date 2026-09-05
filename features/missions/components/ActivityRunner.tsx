@@ -29,7 +29,7 @@
 // activities aren't guaranteed to correspond 1:1 with the question
 // that triggered them.
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     Circle,
@@ -71,22 +71,54 @@ const TILE_STYLES = [
 // only the column count, tile height, and icon/text size scale with
 // how many options and rows there actually are.
 function getGridLayout(optionCount: number) {
+    const lgColsClass = getDesktopColsClass(optionCount)
     if (optionCount <= 2) {
-        return { colsClass: 'grid-cols-2', tileMinH: 'min-h-[120px]', padding: 'p-6', iconSize: 28, textSize: 'text-base' }
+        return { colsClass: 'grid-cols-2', lgColsClass, tileMinH: 'min-h-[120px]', padding: 'p-6', iconSize: 28, textSize: 'text-base', rows: 1 }
     }
     if (optionCount === 3) {
         // 3 divides evenly into a single row of 3 — no leftover gap,
         // but each column is narrower, so the tile shrinks to fit.
-        return { colsClass: 'grid-cols-3', tileMinH: 'min-h-[100px]', padding: 'p-3', iconSize: 20, textSize: 'text-sm' }
+        return { colsClass: 'grid-cols-3', lgColsClass, tileMinH: 'min-h-[100px]', padding: 'p-3', iconSize: 20, textSize: 'text-sm', rows: 1 }
     }
     // 4+: stay in 2 columns (4 = a clean 2x2). For 5-6 that's 3 rows,
     // so the tile shrinks a step further to keep the whole grid from
-    // growing taller than 4's 2x2 footprint.
+    // growing taller than 4's 2x2 footprint. Desktop (lgColsClass)
+    // ignores all of this — it always fits every option in one row
+    // regardless of count, since desktop has far more width to spend.
     const rows = Math.ceil(optionCount / 2)
     if (rows >= 3) {
-        return { colsClass: 'grid-cols-2', tileMinH: 'min-h-[76px]', padding: 'p-3', iconSize: 20, textSize: 'text-sm' }
+        return { colsClass: 'grid-cols-2', lgColsClass, tileMinH: 'min-h-[76px]', padding: 'p-3', iconSize: 20, textSize: 'text-sm', rows }
     }
-    return { colsClass: 'grid-cols-2', tileMinH: 'min-h-[100px]', padding: 'p-4', iconSize: 24, textSize: 'text-base' }
+    return { colsClass: 'grid-cols-2', lgColsClass, tileMinH: 'min-h-[100px]', padding: 'p-4', iconSize: 24, textSize: 'text-base', rows }
+}
+
+// Fisher-Yates, not .sort(() => Math.random() - 0.5) — that's a
+// well-known biased shuffle. Pure function, takes a copy, never
+// mutates its input.
+function shuffleArray<T>(items: T[]): T[] {
+    const copy = [...items]
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[copy[i], copy[j]] = [copy[j], copy[i]]
+    }
+    return copy
+}
+
+// DESKTOP SIZING (2026-09-05): desktop has far more width than the
+// 360-430px mobile viewport this whole grid was originally tuned for,
+// so it doesn't need the same row-count-driven shrinking mobile does
+// — a single row fits comfortably even at 6 options. Returns a
+// literal, Tailwind-scanner-safe class string (a computed template
+// string like `lg:grid-cols-${count}` would never get generated,
+// since Tailwind's JIT scans for literal class names in source).
+function getDesktopColsClass(optionCount: number): string {
+    switch (optionCount) {
+        case 2: return 'lg:grid-cols-2'
+        case 3: return 'lg:grid-cols-3'
+        case 4: return 'lg:grid-cols-4'
+        case 5: return 'lg:grid-cols-5'
+        default: return 'lg:grid-cols-6'
+    }
 }
 
 type QueueItem = { activityId: string; questionId: string }
@@ -94,7 +126,8 @@ type QueueItem = { activityId: string; questionId: string }
 type Feedback = {
     isCorrect: boolean
     remediationActivityId: string | null
-    hintText: string | null
+    correctOptionId: string | null
+    correctOptionText: string | null
     questionCorrectStreak: number
 }
 
@@ -143,6 +176,12 @@ export function ActivityRunner({
     const [unlockedNextMission, setUnlockedNextMission] = useState(false)
     const [overrideActivityId, setOverrideActivityId] = useState<string | null>(null)
     const [showPauseMenu, setShowPauseMenu] = useState(false)
+    // TAP-TO-REVEAL HINT (2026-09-05): replaces the old auto-show-
+    // after-2-wrong. Hint text is already available up front in
+    // activeQuestion.hintText — this only tracks whether THIS student
+    // chose to tap it open for THIS question, reset whenever the
+    // active question changes (see the effect below).
+    const [hintRevealed, setHintRevealed] = useState(false)
 
     // Per-QUESTION streak cache — seeded from each question's own
     // initialCorrectStreak, updated locally after every submit so the
@@ -190,6 +229,19 @@ export function ActivityRunner({
     const activeQuestion = active?.question ?? null
     const activeRollup = activeActivity ? activityRollups[activeActivity.id] : null
 
+    // Shuffle is resolved here, client-side, per question — stable
+    // across re-renders of the SAME question (selecting an option,
+    // getting feedback back) via the activeQuestion.id dependency, but
+    // reshuffled fresh the next time this question comes up in the
+    // queue. Safe to shuffle client-side: is_correct is never sent to
+    // the client at all (see get-mission-for-student.ts), so shuffling
+    // here has no security implication, only a display one.
+    const displayOptions = useMemo(() => {
+        if (!activeQuestion) return []
+        return mission.shuffleOptions ? shuffleArray(activeQuestion.options) : activeQuestion.options
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeQuestion?.id, mission.shuffleOptions])
+
     const isReturningQuestion = activeQuestion ? seenThisSessionRef.current.has(activeQuestion.id) : false
 
     function markSeen(questionId: string) {
@@ -211,7 +263,7 @@ export function ActivityRunner({
             activityId: activeActivity.id,
             questionId: activeQuestion.id,
             selectedOptionId,
-            hintWasVisible: Boolean(feedback?.hintText),
+            hintWasVisible: hintRevealed,
         })
 
         setIsSubmitting(false)
@@ -242,7 +294,8 @@ export function ActivityRunner({
         setFeedback({
             isCorrect: result.isCorrect,
             remediationActivityId: result.remediationActivityId,
-            hintText: result.hintText,
+            correctOptionId: result.correctOptionId,
+            correctOptionText: result.correctOptionText,
             questionCorrectStreak: result.questionCorrectStreak,
         })
     }
@@ -293,6 +346,30 @@ export function ActivityRunner({
         router.push(`/student/courses/${courseId}/lessons/${lessonId}`)
         router.refresh()
     }
+
+    // AUTO-ADVANCE (2026-09-05): on a correct answer, move to the next
+    // question automatically after a short delay instead of waiting on
+    // a manual "Continue" tap — removed per explicit request. Cleared
+    // on unmount/dependency change so a Pause-tap or Quit mid-delay
+    // can't fire a stale advance after the component's gone. Wrong
+    // answers are NOT auto-advanced — the Try again/remediation choice
+    // stays manual, since that's a real branching decision (detour
+    // into a remediation activity or not), not just "move on".
+    // Reset the hint reveal per question — a hint tapped open on
+    // question A must not still be showing when the queue moves to
+    // question B.
+    useEffect(() => {
+        setHintRevealed(false)
+    }, [activeQuestion?.id])
+
+    useEffect(() => {
+        if (!feedback?.isCorrect) return
+        const timer = setTimeout(() => {
+            handleContinueAfterCorrect()
+        }, 3000)
+        return () => clearTimeout(timer)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [feedback])
 
     if (queue.length === 0) {
         return (
@@ -363,14 +440,6 @@ export function ActivityRunner({
                 answers) gets the space instead. ─────────────────────── */}
             <div className="px-4 sm:px-8 pt-3 pb-2 space-y-2">
                 <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => setShowPauseMenu(true)}
-                        aria-label="Pause mission"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors"
-                    >
-                        <Pause size={18} aria-hidden="true" />
-                    </button>
                     <div className="flex-1 h-3 rounded-pill bg-hairline overflow-hidden">
                         <div
                             className="h-full bg-brand rounded-pill transition-[width] duration-300"
@@ -386,17 +455,35 @@ export function ActivityRunner({
                         />
                         <span className="font-sans text-body-emphasis text-ink">{correctStreak}</span>
                     </div>
-                    {/* Hint indicator only — still triggered by the existing
-                        auto-after-2-wrong logic, just relocated up here for
-                        visual hierarchy. Not yet a tap-to-reveal control. */}
-                    {feedback?.hintText && (
-                        <span
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-info-soft text-info"
-                            aria-hidden="true"
+                    {/* TAP-TO-REVEAL HINT (2026-09-05): a real button now,
+                        not a passive indicator. Only rendered when this
+                        question actually has hint text — nothing to tap
+                        otherwise. Tapping just flips local state; the
+                        actual hint_uses log happens server-side on the
+                        next answer submit via hintWasVisible above. */}
+                    {activeQuestion.hintText && !feedback && (
+                        <button
+                            type="button"
+                            onClick={() => setHintRevealed(true)}
+                            aria-label="Show hint"
+                            aria-pressed={hintRevealed}
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-pill transition-colors ${
+                                hintRevealed
+                                    ? 'bg-info text-white'
+                                    : 'bg-info-soft text-info hover:bg-info/20'
+                            }`}
                         >
-                            <Lightbulb size={18} />
-                        </span>
+                            <Lightbulb size={18} aria-hidden="true" />
+                        </button>
                     )}
+                    <button
+                        type="button"
+                        onClick={() => setShowPauseMenu(true)}
+                        aria-label="Pause mission"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors"
+                    >
+                        <Pause size={18} aria-hidden="true" />
+                    </button>
                 </div>
 
                 {(activeRollup && activeRollup.totalCount > 1) || overrideActivityId || (isReturningQuestion && !overrideActivityId) ? (
@@ -421,92 +508,125 @@ export function ActivityRunner({
                 ) : null}
             </div>
 
-            {/* ── Question + answers: generous breathing room here is the
-                whole point of shrinking the header above. ─────────────── */}
-            <div className="flex-1 flex flex-col justify-center gap-8 sm:gap-10 px-4 sm:px-8 py-6 max-w-2xl mx-auto w-full">
-                <p className="text-center font-heading text-mission md:text-[1.75rem] text-ink">
+            {/* ── Question: floats centered in whatever space is left
+                above the answer block, same "middle of screen" feel
+                as before. Larger + roomier on desktop only. ────────── */}
+            <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-4 max-w-2xl lg:max-w-4xl mx-auto w-full">
+                <p className="text-center font-heading text-mission md:text-[1.75rem] lg:text-4xl text-ink">
                     {activeQuestion.prompt}
                 </p>
-
-                <div className="space-y-6">
-                    <div className={`grid ${gridLayout.colsClass} gap-3`}>
-                        {activeQuestion.options.map((option, i) => {
-                            const style = TILE_STYLES[i % TILE_STYLES.length] ?? TILE_STYLES[0]!
-                            const Icon = style.icon
-                            const isSelected = selectedOptionId === option.id
-                            const isCorrectAnswer = feedback && feedback.isCorrect && isSelected
-                            const isWrongAnswer = feedback && !feedback.isCorrect && isSelected
-                            const isLast = i === activeQuestion.options.length - 1
-                            // Odd option count in a 2-column grid leaves the
-                            // last tile alone in the left column with a dead
-                            // gap on the right — span it full-width instead.
-                            const spanFull =
-                                gridLayout.colsClass === 'grid-cols-2' &&
-                                activeQuestion.options.length % 2 === 1 &&
-                                isLast
-                            return (
-                                <button
-                                    key={option.id}
-                                    type="button"
-                                    disabled={Boolean(feedback)}
-                                    onClick={() => handleSelectOption(option.id)}
-                                    className={[
-                                        `flex ${gridLayout.tileMinH} w-full items-center gap-3 rounded-md ${gridLayout.padding} text-left font-sans font-bold ${gridLayout.textSize} text-on-ink shadow-card transition-opacity`,
-                                        style.bg,
-                                        spanFull ? 'col-span-2' : '',
-                                        isSelected ? `ring-4 ${style.ring} ring-offset-2` : '',
-                                        isCorrectAnswer ? 'ring-4 ring-success ring-offset-2' : '',
-                                        isWrongAnswer ? 'opacity-50' : '',
-                                        feedback && !isSelected ? 'opacity-50' : '',
-                                    ].join(' ')}
-                                >
-                                    <Icon size={gridLayout.iconSize} aria-hidden="true" />
-                                    <span>{option.optionText}</span>
-                                </button>
-                            )
-                        })}
-                    </div>
-
-                    {feedback?.isCorrect && (
-                        <p className="text-center font-sans text-body-emphasis text-success">
-                            {feedback.questionCorrectStreak} in a row!
-                        </p>
-                    )}
-
-                    {feedback?.hintText && (
-                        <p className="flex items-start gap-2 font-sans text-body-md text-info bg-info-soft rounded-md px-4 py-3 font-medium">
-                            <Lightbulb size={20} className="shrink-0 mt-0.5" aria-hidden="true" />
-                            <span>Hint: {feedback.hintText}</span>
-                        </p>
-                    )}
-
-                    {error && (
-                        <p className="font-sans text-caption text-error text-center" role="alert">
-                            {error}
-                        </p>
-                    )}
-                </div>
             </div>
 
-            <div className="px-4 sm:px-8 pb-6 sm:pb-8 max-w-2xl mx-auto w-full space-y-3">
+            {/* ── Answer grid + Check/feedback buttons: kept together as
+                ONE block anchored near the bottom of the screen, so the
+                tiles a student just tapped are right next to the button
+                they need next — no reach back up the screen. For 5-6
+                options (3 rows) the grid is taller, so this block gets
+                a bit more top padding to keep it from feeling jammed
+                right under the question. DESKTOP (2026-09-05): mobile
+                sizing below is untouched — every lg: class here is a
+                pure addition on top of it, never a replacement, so
+                nothing about the phone layout changes. ───────────────── */}
+            <div
+                className={`px-4 sm:px-8 pb-6 sm:pb-8 lg:pb-12 max-w-2xl lg:max-w-4xl mx-auto w-full space-y-4 lg:space-y-8 ${
+                    gridLayout.rows >= 3 ? 'pt-8 sm:pt-10' : 'pt-2'
+                } lg:pt-6`}
+            >
+                <div className={`grid ${gridLayout.colsClass} ${gridLayout.lgColsClass} gap-3 lg:gap-4`}>
+                    {displayOptions.map((option, i) => {
+                        const style = TILE_STYLES[i % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                        const Icon = style.icon
+                        const isSelected = selectedOptionId === option.id
+                        const isCorrectAnswer = feedback && feedback.isCorrect && isSelected
+                        const isWrongAnswer = feedback && !feedback.isCorrect && isSelected
+                        // TILE-HIGHLIGHT REVEAL (2026-09-05): replaces the
+                        // old text banner entirely — the correct answer is
+                        // now shown by ringing the actual tile, not a
+                        // separate sentence. Only true when this mission's
+                        // reveal_correct_answer is on (feedback.correctOptionId
+                        // is null otherwise, same gating as before).
+                        const isRevealedCorrect =
+                            feedback && !feedback.isCorrect && feedback.correctOptionId === option.id
+                        const isLast = i === displayOptions.length - 1
+                        // Odd option count in a 2-column grid leaves the
+                        // last tile alone in the left column with a dead
+                        // gap on the right — span it full-width instead.
+                        const spanFull =
+                            gridLayout.colsClass === 'grid-cols-2' &&
+                            displayOptions.length % 2 === 1 &&
+                            isLast
+                        return (
+                            <button
+                                key={option.id}
+                                type="button"
+                                disabled={Boolean(feedback)}
+                                onClick={() => handleSelectOption(option.id)}
+                                className={[
+                                    `flex ${gridLayout.tileMinH} lg:min-h-[140px] w-full items-center gap-3 lg:gap-4 rounded-md ${gridLayout.padding} lg:p-6 text-left font-sans font-bold ${gridLayout.textSize} lg:text-xl text-on-ink shadow-card transition-opacity`,
+                                    style.bg,
+                                    spanFull ? 'col-span-2' : '',
+                                    isSelected ? `ring-4 ${style.ring} ring-offset-2` : '',
+                                    isCorrectAnswer ? 'ring-4 ring-success ring-offset-2' : '',
+                                    isRevealedCorrect ? 'ring-4 ring-success ring-offset-2' : '',
+                                    isWrongAnswer ? 'opacity-50' : '',
+                                    feedback && !isSelected && !isRevealedCorrect ? 'opacity-50' : '',
+                                ].join(' ')}
+                            >
+                                <Icon size={gridLayout.iconSize} className="lg:hidden shrink-0" aria-hidden="true" />
+                                <Icon size={32} className="hidden lg:block shrink-0" aria-hidden="true" />
+                                <span>{option.optionText}</span>
+                            </button>
+                        )
+                    })}
+                </div>
+
+                {/* Desktop-only extra breathing room before the Check
+                    button — mobile keeps its existing space-y-4 gap. */}
+                <div className="hidden lg:block h-2" />
+
+                {/* AUTO-ADVANCE CELEBRATION (2026-09-05): replaces the old
+                    manual "Correct! Continue ->" button — the useEffect
+                    above already advances the queue after 3s, this is
+                    just the visual filler so it doesn't look like nothing
+                    is happening while that timer runs. */}
+                {feedback?.isCorrect && (
+                    <div className="flex flex-col items-center gap-2 py-2">
+                        <div className="flex items-center gap-2 text-success animate-bounce">
+                            <Sparkles size={24} aria-hidden="true" />
+                            <span className="font-heading text-lg lg:text-2xl uppercase tracking-wide">Nice job!</span>
+                            <Sparkles size={24} aria-hidden="true" />
+                        </div>
+                        <p className="font-sans text-body-emphasis text-success">
+                            {feedback.questionCorrectStreak} in a row!
+                        </p>
+                    </div>
+                )}
+
+                {/* TAP-TO-REVEAL HINT (2026-09-05): shown whenever the
+                    student has tapped the hint button, independent of
+                    whether they've answered yet — replaces the old
+                    auto-after-2-wrong banner tied to feedback state. */}
+                {hintRevealed && activeQuestion.hintText && (
+                    <p className="flex items-start gap-2 font-sans text-body-md lg:text-lg text-info bg-info-soft rounded-md px-4 py-3 font-medium">
+                        <Lightbulb size={20} className="shrink-0 mt-0.5" aria-hidden="true" />
+                        <span>Hint: {activeQuestion.hintText}</span>
+                    </p>
+                )}
+
+                {error && (
+                    <p className="font-sans text-caption text-error text-center" role="alert">
+                        {error}
+                    </p>
+                )}
+
                 {!feedback && (
                     <button
                         type="button"
                         onClick={handleCheck}
                         disabled={!selectedOptionId || isSubmitting}
-                        className="w-full h-14 rounded-2xl bg-gamified-green hover:bg-gamified-green-dark text-white font-heading text-lg uppercase tracking-wide shadow-card border-b-4 border-gamified-green-dark active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:active:translate-y-0 disabled:active:border-b-4 transition-all flex items-center justify-center"
+                        className="w-full h-14 lg:h-20 rounded-2xl bg-gamified-green hover:bg-gamified-green-dark text-white font-heading text-lg lg:text-2xl uppercase tracking-wide shadow-card border-b-4 lg:border-b-8 border-gamified-green-dark active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:active:translate-y-0 disabled:active:border-b-4 transition-all flex items-center justify-center"
                     >
                         {isSubmitting ? 'Checking…' : 'Check answer'}
-                    </button>
-                )}
-
-                {feedback?.isCorrect && (
-                    <button
-                        type="button"
-                        onClick={handleContinueAfterCorrect}
-                        className="w-full h-14 rounded-2xl bg-brand hover:bg-brand-hover text-white font-heading text-lg uppercase tracking-wide shadow-card border-b-4 border-brand-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
-                    >
-                        Correct! Continue →
                     </button>
                 )}
 
@@ -514,7 +634,7 @@ export function ActivityRunner({
                     <button
                         type="button"
                         onClick={handleGoToRemediation}
-                        className="w-full h-14 rounded-2xl bg-brand hover:bg-brand-hover text-white font-heading text-lg uppercase tracking-wide shadow-card border-b-4 border-brand-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
+                        className="w-full h-14 lg:h-20 rounded-2xl bg-brand hover:bg-brand-hover text-white font-heading text-lg lg:text-2xl uppercase tracking-wide shadow-card border-b-4 lg:border-b-8 border-brand-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
                     >
                         Try a related question first
                     </button>
@@ -524,7 +644,7 @@ export function ActivityRunner({
                     <button
                         type="button"
                         onClick={handleTryAgain}
-                        className="w-full h-14 rounded-2xl bg-error hover:opacity-90 text-white font-heading text-lg uppercase tracking-wide shadow-card border-b-4 border-error-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
+                        className="w-full h-14 lg:h-20 rounded-2xl bg-error hover:opacity-90 text-white font-heading text-lg lg:text-2xl uppercase tracking-wide shadow-card border-b-4 lg:border-b-8 border-error-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
                     >
                         Keep going →
                     </button>

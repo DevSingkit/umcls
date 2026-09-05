@@ -3,8 +3,13 @@
 // controls anywhere in this file — audit_logs is immutable by design.
 //
 // DESIGN-LMS 2.1 migration: filter controls (search, actor, action,
-// date range) bumped h-11 -> h-12 (48px secondary floor). Everything
-// else already matched real 2.1 tokens.
+// date range) bumped h-11 -> h-12 (48px secondary floor).
+//
+// DESIGN-LMS 2.1 bugfix pass: the results table previously relied on
+// overflow-x-auto with no visible affordance that it scrolled (§1.5
+// bans silent horizontal scroll on mobile). Below sm, this now renders
+// as a stacked card list instead; the real <table> is preserved for
+// sm and up where the columns fit comfortably.
 import { useEffect, useState, useTransition, useCallback } from 'react'
 import { getAuditLogs, type AuditLogRow } from '@/features/admin/actions/audit-logs'
 
@@ -125,8 +130,38 @@ export function AuditLogViewer({
                 </div>
             </div>
 
-            <div className="bg-surface rounded-md shadow-card overflow-x-auto">
-                <table className="w-full text-left min-w-[640px]">
+            <div className="bg-surface rounded-md shadow-card overflow-hidden">
+                {/* Mobile: stacked card list (no horizontal scroll, §1.5) */}
+                <div className="sm:hidden divide-y divide-hairline">
+                    {visibleRows.length === 0 ? (
+                        <p className="p-8 text-center text-body-md text-text-secondary">
+                            No audit log entries match these filters.
+                        </p>
+                    ) : (
+                        visibleRows.map((row) => {
+                            const { date, time } = formatWhen(row.created_at)
+                            return (
+                                <div key={row.id} className="p-4 flex flex-col gap-1">
+                                    <p className="text-caption text-text-secondary">
+                                        {date} <span className="text-text-muted">·</span> {time}
+                                    </p>
+                                    <p className="text-body-emphasis text-ink">
+                                        {toSentenceCase(row.action)}
+                                    </p>
+                                    <p className="text-caption text-text-secondary">
+                                        {row.actor_name ?? toSentenceCase(row.actor_role ?? 'system')}
+                                        {row.actor_name && row.actor_role && (
+                                            <> ({toSentenceCase(row.actor_role)})</>
+                                        )}
+                                    </p>
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+
+                {/* sm and up: full table */}
+                <table className="hidden sm:table w-full text-left">
                     <thead>
                         <tr className="border-b border-hairline">
                             <th className="p-4 text-label text-text-secondary">When</th>

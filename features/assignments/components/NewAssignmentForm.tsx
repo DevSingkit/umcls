@@ -1,7 +1,7 @@
 'use client'
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { X } from 'lucide-react'
+import { X, Plus, FileText } from 'lucide-react'
 import { createAssignment } from '@/features/assignments/actions/assignments'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 
@@ -125,9 +125,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                    text-body-md text-ink font-medium hover:border-brand hover:bg-surface-sunken
                                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                            <path d="M12 4v16m-8-8h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
+                        <Plus size={18} aria-hidden="true" className="shrink-0" />
                         Attach files
                     </button>
 
@@ -145,14 +143,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                         className={`flex items-center gap-3 h-11 px-3 rounded-md border-2 bg-surface-sunken
                                                     ${tooLarge ? 'border-error' : 'border-hairline'}`}
                                     >
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0 text-text-secondary">
-                                            <path
-                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                                                stroke="currentColor"
-                                                strokeWidth="1.5"
-                                            />
-                                            <path d="M14 2v6h6" stroke="currentColor" strokeWidth="1.5" />
-                                        </svg>
+                                        <FileText size={16} aria-hidden="true" className="shrink-0 text-text-secondary" />
 
                                         <span className="text-caption text-ink truncate flex-1" title={file.name}>
                                             {file.name}
@@ -172,9 +163,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                             aria-label={`Remove ${file.name}`}
                                             className="text-text-secondary hover:text-error shrink-0"
                                         >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                                            </svg>
+                                            <X size={16} aria-hidden="true" />
                                         </button>
                                     </li>
                                 )
@@ -293,7 +282,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-12 rounded-md bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                className="w-full h-14 rounded-md bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover disabled:opacity-60 transition-colors"
             >
                 {isPending ? 'Creating…' : 'Create assignment'}
             </button>

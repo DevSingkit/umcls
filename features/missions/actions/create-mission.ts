@@ -81,6 +81,18 @@ const createMissionSchema = z.object({
     title: z.string().min(2, 'Give this mission a name (at least 2 characters).'),
     description: z.string().optional(),
     masteryThreshold: z.string().optional(),
+    // NEW (migration 099): teacher-controlled — whether a wrong answer
+    // reveals the correct one afterward. Sent as an explicit 'true'/
+    // 'false' string by the form, same optional-with-safe-default
+    // pattern as masteryThreshold above; missing/anything other than
+    // the literal string 'false' is treated as true, matching the
+    // column's own DB default.
+    revealCorrectAnswer: z.string().optional(),
+    // NEW (migration 100): unlike revealCorrectAnswer, missing/absent
+    // here means false (no shuffle) — matches the column's own DB
+    // default and preserves every existing mission's current
+    // fixed-order behavior unless a teacher explicitly opts in.
+    shuffleOptions: z.string().optional(),
     // Never write an empty mission — at least one staged activity is
     // required, and (via stagedActivitySchema's own questions field)
     // every one of those activities must have at least one question.
@@ -146,6 +158,8 @@ export async function createMissionWithFirstActivity(formData: FormData): Promis
         masteryThreshold: formData.get('masteryThreshold') ?? undefined,
         activities: parsedActivitiesJson,
         publish: formData.get('publish') ?? undefined,
+        revealCorrectAnswer: formData.get('revealCorrectAnswer') ?? undefined,
+        shuffleOptions: formData.get('shuffleOptions') ?? undefined,
     })
 
     if (!parsed.success) {
@@ -160,6 +174,8 @@ export async function createMissionWithFirstActivity(formData: FormData): Promis
     }
 
     const publish = parsed.data.publish === 'true'
+    const revealCorrectAnswer = parsed.data.revealCorrectAnswer !== 'false'
+    const shuffleOptions = parsed.data.shuffleOptions === 'true'
 
     // Validate EVERY staged activity's EVERY question's options BEFORE
     // creating anything — same order/reasoning as the original
@@ -206,6 +222,8 @@ export async function createMissionWithFirstActivity(formData: FormData): Promis
             description: description && description.trim() !== '' ? description.trim() : null,
             order_index: count ?? 0,
             mastery_threshold: masteryThreshold,
+            reveal_correct_answer: revealCorrectAnswer,
+            shuffle_options: shuffleOptions,
             is_published: publish,
             created_by: user.id,
         })
@@ -346,7 +364,7 @@ export async function getMissionForTeacher(missionId: string) {
     const { data: mission } = await supabase
         .from('missions')
         .select(
-            'id, title, description, lesson_id, is_published, mastery_threshold, order_index, lessons!inner(title, course_id, courses!inner(teacher_id, title))'
+            'id, title, description, lesson_id, is_published, mastery_threshold, reveal_correct_answer, shuffle_options, order_index, lessons!inner(title, course_id, courses!inner(teacher_id, title))'
         )
         .eq('id', missionId)
         .single()
@@ -442,6 +460,8 @@ const updateMissionSettingsSchema = z.object({
     title: z.string().min(2, 'Title is too short'),
     description: z.string().optional(),
     masteryThreshold: z.string().optional(),
+    revealCorrectAnswer: z.string().optional(),
+    shuffleOptions: z.string().optional(),
     publish: z.string().optional(),
 })
 
@@ -471,6 +491,8 @@ export async function updateMissionSettings(formData: FormData): Promise<UpdateM
         title: formData.get('title'),
         description: formData.get('description') ?? undefined,
         masteryThreshold: formData.get('masteryThreshold') ?? undefined,
+        revealCorrectAnswer: formData.get('revealCorrectAnswer') ?? undefined,
+        shuffleOptions: formData.get('shuffleOptions') ?? undefined,
         publish: formData.get('publish') ?? undefined,
     })
 
@@ -484,6 +506,9 @@ export async function updateMissionSettings(formData: FormData): Promise<UpdateM
     if (!Number.isInteger(masteryThreshold) || masteryThreshold < 1) {
         return { ok: false, error: 'Mastery threshold must be at least 1.' }
     }
+
+    const revealCorrectAnswer = parsed.data.revealCorrectAnswer !== 'false'
+    const shuffleOptions = parsed.data.shuffleOptions === 'true'
 
     const { data: mission } = await supabase
         .from('missions')
@@ -504,6 +529,8 @@ export async function updateMissionSettings(formData: FormData): Promise<UpdateM
             title,
             description: description && description.trim() !== '' ? description.trim() : null,
             mastery_threshold: masteryThreshold,
+            reveal_correct_answer: revealCorrectAnswer,
+            shuffle_options: shuffleOptions,
             is_published: publish,
         })
         .eq('id', missionId)

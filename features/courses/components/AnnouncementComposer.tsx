@@ -9,6 +9,14 @@
 // actual pattern (a one-line prompt that grows into a full compose box
 // on focus/click) rather than always showing a full textarea taking up
 // space above the stream.
+//
+// DESIGN-LMS 2.1 REDESIGN (2026-09-06): pure visual fix, no logic
+// touched — postAnnouncement call, useTransition/router.refresh flow,
+// and expand/collapse state unchanged. The expanded textarea used
+// `border-[1.5px] border-hairline-strong`, a one-off pattern that
+// didn't match the standard form-input convention used everywhere
+// else (InquiryForm, New Course form): `border-2 border-hairline`.
+// Aligned to that standard.
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -59,7 +67,7 @@ export function AnnouncementComposer({ courseId }: { courseId: string }) {
                 rows={3}
                 maxLength={5000}
                 placeholder="Share something with your class..."
-                className="w-full px-4 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                className="w-full px-4 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
             />
             {error && (
                 <p className="text-caption text-error" role="alert">

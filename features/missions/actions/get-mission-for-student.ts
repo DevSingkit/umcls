@@ -195,6 +195,14 @@ export type MissionPreviewForStudent = {
     title: string
     description: string | null
     masteryThreshold: number
+    // NEW (migration 100): teacher-controlled — when true, the client
+    // (ActivityRunner.tsx) shuffles each question's options before
+    // display. Resolved client-side, not here, since option order has
+    // no security implication (is_correct is never sent to the
+    // client at all, per this file's is_correct-omitted guarantee) —
+    // shuffling server-side would only add a query-time cost with no
+    // real benefit.
+    shuffleOptions: boolean
     activities: ActivityPreviewForStudent[]
 }
 
@@ -218,7 +226,7 @@ export async function getMissionPreviewForStudent(missionId: string): Promise<Mi
 
     const { data: mission, error: missionError } = await supabase
         .from('missions')
-        .select('id, title, description, mastery_threshold')
+        .select('id, title, description, mastery_threshold, shuffle_options')
         .eq('id', missionId)
         .eq('is_published', true)
         .single()
@@ -355,6 +363,7 @@ export async function getMissionPreviewForStudent(missionId: string): Promise<Mi
         title: mission.title,
         description: mission.description,
         masteryThreshold: mission.mastery_threshold,
+        shuffleOptions: mission.shuffle_options,
         activities: activitiesWithQuestions,
     }
 }

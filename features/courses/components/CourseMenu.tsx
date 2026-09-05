@@ -5,6 +5,15 @@
 // competing with CreateMenu's "+ Create" (DESIGN-LMS.md §8.1/§10 —
 // one button-primary per screen; this replaces the old
 // CoursePublishToggle button that used to sit in the header).
+//
+// DESIGN-LMS 2.1 bugfix pass (2026-09-06): `text-red` / `bg-red-soft` /
+// `border-red` / `bg-red` are dead tokens — only `error` / `error.soft`
+// / `error.border` exist in tailwind.config.ts, so all destructive-
+// action styling (Delete/Unpublish confirm) was silently rendering
+// unstyled. Fixed to the real `error` token family. Also aligned the
+// Cancel buttons' one-off `border-[1.5px] border-hairline-strong` to
+// the standard `border-2 border-hairline` convention used everywhere
+// else in this cluster.
 import { useRef, useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -109,7 +118,7 @@ export function CourseMenu({
                     <button
                         role="menuitem"
                         onClick={() => setConfirmingDelete(true)}
-                        className="flex h-12 w-full items-center gap-3 px-4 text-left text-body-md text-red hover:bg-red-soft"
+                        className="flex h-12 w-full items-center gap-3 px-4 text-left text-body-md text-error hover:bg-error-soft"
                     >
                         <Trash2 size={18} aria-hidden="true" />
                         Delete course
@@ -127,14 +136,14 @@ export function CourseMenu({
                     <div className="mt-3 flex justify-end gap-2">
                         <button
                             onClick={() => setConfirmingUnpublish(false)}
-                            className="h-12 rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md text-ink hover:bg-surface-sunken"
+                            className="h-12 rounded-md border-2 border-hairline px-4 text-body-md text-ink hover:bg-surface-sunken"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={runToggle}
                             disabled={isPending}
-                            className="h-12 rounded-md border-[1.5px] border-red px-4 text-body-md font-semibold text-red hover:bg-red-soft disabled:opacity-60"
+                            className="h-12 rounded-md border-2 border-error px-4 text-body-md font-semibold text-error hover:bg-error-soft disabled:opacity-60"
                         >
                             Unpublish
                         </button>
@@ -149,19 +158,19 @@ export function CourseMenu({
                         This removes it and everything in it from view immediately. This can&apos;t
                         be undone from here.
                     </p>
-                    {deleteError && <p className="mt-2 text-caption text-red">{deleteError}</p>}
+                    {deleteError && <p className="mt-2 text-caption text-error">{deleteError}</p>}
                     <div className="mt-3 flex justify-end gap-2">
                         <button
                             onClick={() => setConfirmingDelete(false)}
                             disabled={isPending}
-                            className="h-12 rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md text-ink hover:bg-surface-sunken disabled:opacity-60"
+                            className="h-12 rounded-md border-2 border-hairline px-4 text-body-md text-ink hover:bg-surface-sunken disabled:opacity-60"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleDelete}
                             disabled={isPending}
-                            className="h-12 rounded-md bg-red px-4 text-body-md font-semibold text-on-ink hover:opacity-90 disabled:opacity-60"
+                            className="h-12 rounded-md bg-error px-4 text-body-md font-semibold text-on-ink hover:opacity-90 disabled:opacity-60"
                         >
                             {isPending ? 'Deleting…' : 'Delete'}
                         </button>

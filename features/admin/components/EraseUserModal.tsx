@@ -5,6 +5,12 @@
 // DESIGN-LMS 2.1 migration: bg-red -> bg-error, h-11 -> h-12 (48px
 // secondary floor), border -> border-2 border-hairline-strong,
 // bg-black/40 -> bg-ink/40 (established overlay token).
+//
+// DESIGN-LMS 2.1 bugfix pass: Cancel button's border-hairline-strong
+// didn't match the confirm-modal pattern used everywhere else
+// (AdminCourseList, UserList's deactivate modal both use border-hairline
+// for Cancel) — fixed. Both buttons were also missing the standard
+// focus-visible ring every other button in the app carries; added.
 import { useState } from 'react'
 import { eraseUser } from '@/features/admin/actions/erase-user'
 
@@ -44,27 +50,42 @@ export function EraseUserModal({
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4">
-            <div className="bg-surface rounded-md shadow-modal p-6 max-w-md w-full">
-                <p className="text-body-emphasis text-ink mb-2">Erase User Data for {fullName}?</p>
+        <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="erase-user-title"
+            className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4"
+            onClick={handleClose}
+        >
+            <div
+                className="bg-surface rounded-md shadow-modal p-6 max-w-md w-full"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <p id="erase-user-title" className="text-body-emphasis text-ink mb-2">
+                    Erase User Data for {fullName}?
+                </p>
                 <p className="text-body-md text-text-secondary mb-4">
                     This removes {fullName} from the main users list and signs them out. Their
                     name, email, login, and academic history all stay intact — nothing is
                     deleted. You can find and restore this account any time from{' '}
                     <span className="font-medium text-ink">Archives</span>.
                 </p>
-                {error && <p className="text-body-md text-error mb-4">{error}</p>}
+                {error && (
+                    <p className="text-body-md text-error mb-4" role="alert">
+                        {error}
+                    </p>
+                )}
                 <div className="flex gap-3 justify-end">
                     <button
                         onClick={handleClose}
-                        className="h-12 px-6 flex items-center rounded-md border-2 border-hairline-strong font-medium"
+                        className="h-12 px-6 flex items-center rounded-md border-2 border-hairline bg-surface text-ink font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleErase}
                         disabled={isSubmitting}
-                        className="h-12 px-6 flex items-center rounded-md bg-error text-on-ink font-medium disabled:opacity-40"
+                        className="h-12 px-6 flex items-center rounded-md bg-error text-on-ink font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
                     >
                         {isSubmitting ? 'Erasing…' : 'Erase User Data'}
                     </button>

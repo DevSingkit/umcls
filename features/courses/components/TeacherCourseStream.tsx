@@ -55,6 +55,12 @@ function editHref(courseId: string, item: TeacherStreamContentItem) {
     }
 }
 
+// DESIGN-LMS 2.1 pass (2026-09-06): removed literal "+" glyph prefix
+// from the empty-state "Create Lesson" CTA, replaced with lucide-react's
+// Plus icon (already imported for the empty-state badge above it) for
+// consistent SVG iconography per §1.3. Bumped from h-12 to h-14 to
+// match the app-wide h-14 primary-CTA standard used elsewhere in this
+// cluster.
 export async function TeacherCourseStream({
     courseId,
     items,
@@ -73,9 +79,10 @@ export async function TeacherCourseStream({
                 </p>
                 <Link
                     href={`/teacher/courses/${courseId}/lessons/new`}
-                    className="flex h-12 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
+                    className="flex h-14 items-center gap-2 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
                 >
-                    + Create Lesson
+                    <Plus size={18} aria-hidden="true" />
+                    Create Lesson
                 </Link>
             </div>
         )

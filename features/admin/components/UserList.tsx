@@ -18,6 +18,16 @@
 // Deactivate/Erase modal buttons bumped h-10 -> h-12. Destructive
 // action modal stays inlined here (not extracted to match
 // EraseUserModal's pattern) — deliberate, confirmed with user.
+//
+// DESIGN-LMS 2.1 bugfix pass: the three filter controls (search, role,
+// status) were still on the old h-11/border-hairline-strong pattern —
+// h-11 (44px) sits below the 48px secondary-row floor, and
+// border-hairline-strong + focus:border-2 doesn't match every other
+// input in the app (border-2 border-hairline focus:border-brand, see
+// CreateUserForm/SearchableSelect/AuditLogViewer). Both fixed here.
+// Deactivate-confirm modal's Cancel button also switched from
+// border-hairline-strong to border-hairline to match AdminCourseList's
+// confirm-modal pattern, the same dialog shape used elsewhere.
 import { useEffect, useState, useTransition, useCallback, useRef } from 'react'
 import { MoreVertical, AlertTriangle } from 'lucide-react'
 import {
@@ -209,12 +219,12 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by name or email…"
-                    className="flex-1 h-11 px-5 rounded-md border border-hairline-strong bg-surface focus:border-2 focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="flex-1 h-12 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 />
                 <select
                     value={role}
                     onChange={(e) => setRole(e.target.value as typeof role)}
-                    className="h-11 px-4 rounded-md border border-hairline-strong bg-surface outline-none focus:border-2 focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-12 px-4 rounded-md border-2 border-hairline bg-surface outline-none focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     <option value="all">All roles</option>
                     <option value="admin">Admin</option>
@@ -224,7 +234,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                 <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as typeof status)}
-                    className="h-11 px-4 rounded-md border border-hairline-strong bg-surface outline-none focus:border-2 focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-12 px-4 rounded-md border-2 border-hairline bg-surface outline-none focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     <option value="all">All statuses</option>
                     <option value="active">Active</option>
@@ -521,7 +531,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                         <div className="mt-6 flex justify-end gap-2">
                             <button
                                 onClick={() => setDeactivateConfirmUser(null)}
-                                className="h-12 px-4 rounded-md border-2 border-hairline-strong bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                             >
                                 Cancel
                             </button>

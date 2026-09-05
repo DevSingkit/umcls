@@ -11,14 +11,14 @@
 // pretending this works, so it's not mistaken for a working feature
 // during testing.
 //
-// DESIGN-LMS 2.1 (2026-08-31): removed font-heading (Fredoka) from all
-// headings on this page — global default is now Roboto (font-document)
-// via globals.css's base h1-h6 rule.
-//
-// DESIGN-LMS 2.1 bugfix pass (2026-08-31, continued): `pb-xl`/`pt-lg`
-// on the hero section weren't real Tailwind spacing keys — same dead-
-// token bug as the amber/text-heading-lg finds elsewhere. Fixed to
-// real values, matching the other public pages' identical hero fix.
+// DESIGN-LMS 2.1 fact-correction pass (2026-09-06): phone, email,
+// street address, office hours, and the map query on this page were
+// all placeholder/made-up values from an earlier pass, not verified
+// school info. Replaced with:
+//   0994 584 9446 / umcls20educ@gmail.com /
+//   847 Sampaguita Street, Tala, Caloocan City, Metro Manila /
+//   Mon–Fri 8:00 AM–4:00 PM, closed weekends & holidays.
+// Map iframe query updated to match the corrected street address.
 
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import Link from "next/link";
@@ -56,27 +56,29 @@ export default function ContactPage() {
               <li className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-brand" strokeWidth={1.5} aria-hidden="true" />
                 <span className="text-body-md text-ink-soft">
-                  847 Sampaguita, Barrio San Jose,
+                  847 Sampaguita Street, Tala,
                   <br />
                   Caloocan City, Metro Manila, Philippines
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 shrink-0 text-brand" strokeWidth={1.5} aria-hidden="true" />
-                <Link href="tel:+63284231373" className="text-body-md text-ink-soft hover:underline">
-                  +63 2 8423 1373
+                <Link href="tel:+639945849446" className="text-body-md text-ink-soft hover:underline">
+                  0994 584 9446
                 </Link>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 shrink-0 text-brand" strokeWidth={1.5} aria-hidden="true" />
-                <Link href="mailto:info@umcls.edu.ph" className="text-body-md text-ink-soft hover:underline">
-                  info@umcls.edu.ph
+                <Link href="mailto:umcls20educ@gmail.com" className="text-body-md text-ink-soft hover:underline">
+                  umcls20educ@gmail.com
                 </Link>
               </li>
-              <li className="flex items-center gap-3">
-                <Clock className="h-5 w-5 shrink-0 text-brand" strokeWidth={1.5} aria-hidden="true" />
+              <li className="flex items-start gap-3">
+                <Clock className="mt-0.5 h-5 w-5 shrink-0 text-brand" strokeWidth={1.5} aria-hidden="true" />
                 <span className="text-body-md text-ink-soft">
-                  Monday&ndash;Friday, 7:30 AM&ndash;4:30 PM
+                  Monday&ndash;Friday, 8:00 AM&ndash;4:00 PM
+                  <br />
+                  Closed weekends and holidays
                 </span>
               </li>
             </ul>
@@ -87,7 +89,7 @@ export default function ContactPage() {
                 title="UMCLSI campus location"
                 className="h-full w-full border-0"
                 loading="lazy"
-                src="https://www.google.com/maps?q=847+Sampaguita+Barrio+San+Jose+Caloocan+City&output=embed"
+                src="https://www.google.com/maps?q=847+Sampaguita+Street+Tala+Caloocan+City&output=embed"
               />
             </div>
           </div>

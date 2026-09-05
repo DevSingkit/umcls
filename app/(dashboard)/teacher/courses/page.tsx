@@ -4,6 +4,14 @@ import { getMyCourses } from '@/features/courses/actions/courses'
 
 // Shows every course the logged in teacher owns. If they have none yet,
 // shows a simple message and a button to create the first one.
+//
+// DESIGN-LMS 2.1 pass (2026-09-06): removed literal "+" glyph prefixes
+// from both "New class" CTAs, replaced with lucide-react's Plus icon
+// (already imported for the empty-state badge) for consistent SVG
+// iconography per §1.3. Both buttons bumped from h-12 to h-14 to match
+// the app-wide h-14 primary-CTA standard used everywhere else in this
+// cluster (NewCoursePage "Create class", AnnouncementComposer trigger,
+// EditCourseForm "Save changes", EnrollStudentForm "Enroll student").
 export default async function TeacherCoursesPage() {
     const courses = await getMyCourses()
 
@@ -13,9 +21,10 @@ export default async function TeacherCoursesPage() {
                 <h1 className="text-h1 text-ink">My classes</h1>
                 <Link
                     href="/teacher/courses/new"
-                    className="flex h-12 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
+                    className="flex h-14 items-center gap-2 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
                 >
-                    + New class
+                    <Plus size={18} aria-hidden="true" />
+                    New class
                 </Link>
             </div>
 
@@ -29,9 +38,10 @@ export default async function TeacherCoursesPage() {
                     </p>
                     <Link
                         href="/teacher/courses/new"
-                        className="flex h-12 items-center rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
+                        className="flex h-14 items-center gap-2 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
                     >
-                        + Create your first class
+                        <Plus size={18} aria-hidden="true" />
+                        Create your first class
                     </Link>
                 </div>
             ) : (

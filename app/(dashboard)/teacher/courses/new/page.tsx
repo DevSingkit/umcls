@@ -8,7 +8,28 @@
 // now-retired purpose (AI Simplify targeting) — checked CourseCard.tsx
 // and AdminCourseList.tsx, neither references it. User confirmed
 // removing the column AND this field, not just backend cleanup.
-
+//
+// DESIGN-LMS 2.1 REDESIGN (2026-09-06): pure visual pass, no logic
+// touched — useActionState wiring and createCourse call unchanged.
+// Three fixes:
+//   1. `text-red` on the error message isn't a real token (only
+//      `error` / `error.soft` / `error.border` exist in
+//      tailwind.config.ts) — same dead-token bug class caught
+//      elsewhere in this track. Fixed to `text-error`, and given a
+//      `bg-error-soft` container so it reads as an alert rather than
+//      plain text, matching how errors are surfaced on other forms.
+//   2. Inputs used `border-[1.5px] border-hairline-strong` with no
+//      focus ring — a one-off pattern that didn't match the standard
+//      form-input convention used everywhere else (e.g. the public
+//      InquiryForm): `border-2 border-hairline`, `focus:border-brand`,
+//      `focus:ring-2 focus:ring-brand/30`. Aligned to that standard.
+//      Height stays h-11 (44px) — Classroom Mode inputs are
+//      deliberately not bumped to the touch-target floor, per that
+//      same standing convention.
+//   3. The submit button was h-12 (48px), but this is the page's one
+//      PRIMARY action (Create class) — every other primary CTA in the
+//      app (CoursesPreview's "Create class", admissions' "Start an
+//      inquiry") sits at the 56px primary floor. Bumped to h-14.
 import { useActionState } from 'react'
 import { createCourse, type CreateCourseResult } from '@/features/courses/actions/courses'
 
@@ -35,7 +56,7 @@ export default function NewCoursePage() {
                         name="title"
                         type="text"
                         required
-                        className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand"
+                        className="h-11 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                         placeholder="e.g. Grade 1 - Matthew"
                     />
                 </div>
@@ -48,7 +69,7 @@ export default function NewCoursePage() {
                         id="subject"
                         name="subject"
                         type="text"
-                        className="h-11 w-full rounded-md border-[1.5px] border-hairline-strong px-4 text-body-md outline-none focus:border-brand"
+                        className="h-11 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                         placeholder="e.g. English"
                     />
                 </div>
@@ -61,13 +82,16 @@ export default function NewCoursePage() {
                         id="description"
                         name="description"
                         rows={4}
-                        className="w-full rounded-md border-[1.5px] border-hairline-strong px-4 py-3 text-body-md outline-none focus:border-brand"
+                        className="w-full rounded-md border-2 border-hairline bg-surface px-4 py-3 text-body-md text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                         placeholder="e.g. MWF 10:00 AM - 11:00 AM"
                     />
                 </div>
 
                 {!state.ok && state.error && (
-                    <p className="text-caption text-red" role="alert">
+                    <p
+                        className="rounded-md bg-error-soft px-4 py-3 text-caption font-semibold text-error"
+                        role="alert"
+                    >
                         {state.error}
                     </p>
                 )}
@@ -75,7 +99,7 @@ export default function NewCoursePage() {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="h-12 w-full rounded-md bg-brand text-body-md font-semibold text-on-ink hover:bg-brand-hover disabled:opacity-60"
+                    className="h-14 w-full rounded-md bg-brand text-body-md font-semibold text-on-ink transition-colors hover:bg-brand-hover disabled:opacity-60"
                 >
                     {isPending ? 'Creating class…' : 'Create class'}
                 </button>

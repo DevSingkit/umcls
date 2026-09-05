@@ -2,6 +2,14 @@
 //
 // Same footer as app/page.tsx, pulled out so every marketing page
 // shares one copy instead of five duplicates.
+//
+// DESIGN-LMS 2.1 fact-correction pass (2026-09-06): the phone number,
+// email, and street address here were placeholder/made-up values from
+// an earlier pass, not verified school info. Replaced with the
+// school's actual contact details:
+//   0994 584 9446 / umcls20educ@gmail.com /
+//   847 Sampaguita Street, Tala, Caloocan City, Metro Manila
+// Only one verified social channel exists (Facebook) — left as-is.
 
 import Image from "next/image";
 import Link from "next/link";
@@ -33,22 +41,26 @@ export function SiteFooter() {
               <li className="flex items-start gap-2 text-caption text-on-ink/70">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
                 <span>
-                  847 Sampaguita Street, San Jose,
+                  847 Sampaguita Street, Tala,
                   <br />
-                  Tala, Caloocan City, Metro Manila 1437
+                  Caloocan City, Metro Manila
                 </span>
               </li>
               <li className="flex items-center gap-2 text-caption text-on-ink/70">
                 <Phone className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                +63 975 152 1284
+                <a href="tel:+639945849446" className="hover:underline">
+                  0994 584 9446
+                </a>
               </li>
               <li className="flex items-center gap-2 text-caption text-on-ink/70">
                 <Mail className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                info@umcls.edu.ph
+                <a href="mailto:umcls20educ@gmail.com" className="hover:underline">
+                  umcls20educ@gmail.com
+                </a>
               </li>
               <li className="flex items-center gap-2 text-caption text-on-ink/70">
                 <Clock className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                Mon&ndash;Fri, 7:30 AM&ndash;4:30 PM
+                Mon&ndash;Fri, 8:00 AM&ndash;4:00 PM
               </li>
               <li className="flex items-center gap-2 text-caption">
                 <Link
@@ -68,6 +80,7 @@ export function SiteFooter() {
             <p className="text-label text-on-ink">Government recognition</p>
             <ul className="mt-3 space-y-2 text-caption text-on-ink/70">
               <li>DepEd NCR Region</li>
+              <li>Nursery through Elementary Grade 6</li>
             </ul>
           </div>
         </div>

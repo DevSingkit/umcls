@@ -1,52 +1,54 @@
 // app/admissions/page.tsx
 //
-// Admissions & Enrollment. The application steps are a genuine ordered
-// sequence, so a numbered list is appropriate here (unlike a decorative
-// 01/02/03 card grid).
+// Admissions & Enrollment.
 //
-// DESIGN-LMS 2.1 (2026-08-31): removed font-heading (Fredoka) from all
-// headings on this page — global default is now Roboto (font-document)
-// via globals.css's base h1-h6 rule.
-//
-// DESIGN-LMS 2.1 bugfix pass (2026-08-31, continued): `pb-xl`/`pt-lg`
-// on the hero section weren't real Tailwind spacing keys — same dead-
-// token bug as the amber/text-heading-lg finds elsewhere. Fixed to
-// real values, matching the other public pages' identical hero fix.
-//
-// DESIGN-LMS 2.1 bugfix pass (2026-08-31, continued again): both CTAs
-// on this page were missed in the first pass. "Start an inquiry" was
-// h-11 (44px, below the 56px primary floor) and used an arbitrary
-// hover:bg-brand/90 instead of the standard hover:bg-brand-hover token
-// every other primary button uses. "Ask about fees" was h-11 (44px,
-// below the 48px secondary floor). Both fixed.
+// DESIGN-LMS 2.1 content pass (2026-09-06): requirements were a single
+// merged list; the brief distinguishes New Students/Kindergarten
+// (PSA birth cert, baptismal cert if applicable, 2x2 photos) from
+// Transferees Grades 1-6 (Form 138, Good Moral cert, PSA birth cert,
+// LRN) — split into two lists. Steps reordered/renamed to match the
+// brief's five-step sequence exactly: Inquiry & Application →
+// Document Submission → Assessment/Interview → Assessment of Fees &
+// Payment → Official Enrollment (with LMS credential issuance named
+// explicitly, which the previous copy omitted).
 
 import Link from "next/link";
 import { SiteNav } from "@/components/layout/SiteNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
-const requirements = [
-  "PSA birth certificate",
-  "Report card (Form 138)",
-  "Good Moral Certificate",
+const newStudentRequirements = [
+  "PSA birth certificate (original & photocopy)",
+  "Baptismal certificate (if applicable)",
   "Two 2x2 ID photos",
+];
+
+const transfereeRequirements = [
+  "Form 138 (original report card from previous school)",
+  "Certificate of Good Moral Character",
+  "PSA birth certificate",
+  "Learner Reference Number (LRN)",
 ];
 
 const steps = [
   {
-    title: "Submit an application",
-    description: "Fill out the online application, or visit the registrar in person.",
+    title: "Inquiry & application",
+    description: "Submit the initial application form online or on-campus.",
   },
   {
-    title: "Student assessment or interview",
-    description: "A short assessment or interview to help us place your child in the right section.",
+    title: "Document submission",
+    description: "Submit the required academic and civil documents for your child's grade level.",
   },
   {
-    title: "Submit credentials and pay enrolment fee",
-    description: "Bring the required documents and settle the enrolment fee to confirm the slot.",
+    title: "Assessment or interview",
+    description: "A brief student evaluation and parent orientation to help place your child in the right section.",
   },
   {
-    title: "Orientation and section assignment",
-    description: "Attend orientation, meet the teacher, and receive your child's section assignment.",
+    title: "Assessment of fees & payment",
+    description: "Settle tuition and miscellaneous fees at the finance desk.",
+  },
+  {
+    title: "Official enrollment",
+    description: "Receive your child's class schedule and LMS portal credentials.",
   },
 ];
 
@@ -63,8 +65,10 @@ export default function AdmissionsPage() {
             Admissions and enrollment
           </h1>
           <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
-            Here&apos;s what you&apos;ll need, and what the process looks
-            like from application to your child&apos;s first day.
+            Open for Preschool (Nursery, Kindergarten 1 &amp; 2) and
+            Elementary (Grades 1&ndash;6). Here&apos;s what you&apos;ll need,
+            and what the process looks like from inquiry to your
+            child&apos;s first day.
           </p>
           <Link
             href="/contact"
@@ -79,16 +83,39 @@ export default function AdmissionsPage() {
       <section className="px-4 py-16 sm:px-6 md:py-20">
         <div className="mx-auto max-w-[1200px]">
           <h2 className="text-h2 text-ink">What to bring</h2>
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-            {requirements.map((item) => (
-              <li
-                key={item}
-                className="rounded-md bg-surface p-5 text-body-md text-ink-soft shadow-card"
-              >
-                {item}
-              </li>
-            ))}
-          </ul>
+
+          <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-16">
+            <div>
+              <p className="text-label text-text-secondary">
+                New students &amp; Kindergarten
+              </p>
+              <ul className="mt-4 space-y-3">
+                {newStudentRequirements.map((item) => (
+                  <li
+                    key={item}
+                    className="rounded-md bg-surface p-5 text-body-md text-ink-soft shadow-card"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-label text-text-secondary">
+                Transferees (Grades 1&ndash;6)
+              </p>
+              <ul className="mt-4 space-y-3">
+                {transfereeRequirements.map((item) => (
+                  <li
+                    key={item}
+                    className="rounded-md bg-surface p-5 text-body-md text-ink-soft shadow-card"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -117,10 +144,10 @@ export default function AdmissionsPage() {
         <div className="mx-auto max-w-[1200px]">
           <h2 className="text-h2 text-ink">Tuition and payment</h2>
           <p className="mt-4 max-w-xl text-body-md text-text-secondary">
-            Installment plans are available, and payment can be made through
-            GCash, bank transfer, or directly at the registrar. Reach out to
-            the registrar for a full fee breakdown for your child&apos;s
-            grade level.
+            Consult the administration desk for the latest tuition fee
+            breakdown, available payment schemes, and discounts (such as
+            early bird or sibling discounts) for your child&apos;s grade
+            level.
           </p>
           <Link
             href="/contact"

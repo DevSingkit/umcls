@@ -60,7 +60,10 @@ export function CourseActivityAccordion({ courses }: { courses: AdminCourseActiv
                             className="flex w-full items-center gap-4 p-4 text-left"
                             aria-expanded={isExpanded}
                         >
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-brand-soft text-brand">
+                            {/* DESIGN-LMS 2.1 touch-target fix: h-11/w-11 (44px) was
+                                below the 48px secondary floor (§1.4). Bumped to
+                                h-12/w-12. */}
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-brand-soft text-brand">
                                 <BookOpen size={20} aria-hidden="true" />
                             </div>
                             <div className="min-w-0 flex-1">

@@ -1,19 +1,14 @@
 // app/our-story/page.tsx
 //
-// Our Story. The timeline is a genuine sequence (founding → expansion →
-// digital era) so a numbered/ordered treatment is appropriate here,
-// unlike a generic 01/02/03 card grid used just for decoration.
+// Our Story.
 //
-// DESIGN-LMS 2.1 (2026-08-31): removed font-heading (Fredoka) from all
-// headings on this page — global default is now Roboto (font-document)
-// via globals.css's base h1-h6 rule. Fredoka is reserved for Mission
-// Mode only (lesson reading, mission gameplay, mission results), which
-// this public marketing page is not part of.
-//
-// DESIGN-LMS 2.1 bugfix pass (2026-08-31, continued): `pb-xl`/`pt-lg`
-// on the hero section weren't real Tailwind spacing keys — same dead-
-// token bug as the amber/text-heading-lg finds elsewhere. Fixed to
-// real values, matching the other public pages' identical hero fix.
+// DESIGN-LMS 2.1 content pass (2026-09-06): the timeline's "Digital
+// era" entry was vague ("interactive learning tools were added") and
+// the brief's two specific milestones — SEC registration formalizing
+// the institution as "United Methodist Cooperative Learning System,
+// Inc.", and the implementation of an online LMS — weren't named
+// explicitly. Split into two distinct timeline entries so both
+// milestones are stated directly.
 
 import { SiteNav } from "@/components/layout/SiteNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -25,14 +20,14 @@ const timeline = [
       "UMCLSI began as a church preschool ministry, started by the United Methodist Church to give local families in Caloocan access to values-rich early education.",
   },
   {
-    era: "Expansion era",
+    era: "Expansion & formal registration",
     description:
-      "The school earned DepEd recognition and grew into a full elementary program, with the campus and facilities expanding alongside it.",
+      "The school earned DepEd recognition and grew into a full elementary program, and was formally registered with the SEC as United Methodist Cooperative Learning System, Inc.",
   },
   {
     era: "Digital era",
     description:
-      "Interactive learning tools were added alongside traditional instruction, giving teachers another way to reach students who learn differently.",
+      "An online Learning Management System was implemented to complement traditional classroom teaching, giving teachers another way to reach students who learn differently.",
   },
 ];
 
@@ -98,9 +93,11 @@ export default function OurStoryPage() {
             Church and community impact
           </h2>
           <p className="mt-4 max-w-xl text-body-md text-text-secondary">
-            Students, teachers, and church leadership take part in outreach
-            programs, spiritual retreats, and community service throughout
-            the year, carrying the school&apos;s values outside its walls.
+            Generations of young learners in Tala have received their
+            foundational primary education through UMCLSI. Students,
+            teachers, and church leadership take part in outreach programs,
+            spiritual retreats, and community service throughout the year,
+            carrying the school&apos;s values outside its walls.
           </p>
         </div>
       </section>

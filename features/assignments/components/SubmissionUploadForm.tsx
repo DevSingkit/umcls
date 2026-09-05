@@ -257,8 +257,8 @@ export function SubmissionUploadForm({
                         <button
                             type="submit"
                             disabled={isPending}
-                            className={`h-12 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 ${
-                                compact ? 'w-full' : ''
+                            className={`px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 ${
+                                compact ? 'h-12 w-full' : 'h-14'
                             }`}
                         >
                             {isPending ? 'Submitting…' : existing ? 'Resubmit' : 'Submit'}

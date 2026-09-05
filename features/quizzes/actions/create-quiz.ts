@@ -504,6 +504,225 @@ export async function createQuizWithFirstQuestion(
     return { ok: true, quizId: quiz.id }
 }
 
+const quizQuestionDraftSchema = z.object({
+    questionText: z.string().min(2, 'Question is too short'),
+    questionType: z.enum(['multiple_choice_single', 'true_false', 'checklist', 'short_answer']),
+    options: z.string().optional(),
+    correctAnswer: z.string().min(1, 'Enter the correct answer'),
+})
+
+const createQuizWithQuestionsSchema = z.object({
+    courseId: z.string().uuid(),
+    title: z.string().min(2, 'Give this quiz a name (at least 2 characters).'),
+    // JSON-encoded array of quizQuestionDraftSchema, built client-side
+    // by NewQuizForm.tsx — one entry per question card the teacher
+    // stacked up before submitting. Encoded as a single JSON string
+    // (rather than repeated formData keys) since the number of
+    // questions, and the number of options within each, is dynamic.
+    questions: z.string(),
+    timeLimitMinutes: z.string().optional(),
+    maxAttempts: z.string().optional(),
+    resultsVisibility: z.enum(['submission', 'grading', 'never']).optional(),
+    availableUntil: z.string().optional(),
+    allowLate: z.string().optional(),
+    publish: z.string().optional(),
+})
+
+export type CreateQuizWithQuestionsResult =
+    | { ok: true; quizId: string }
+    | { ok: false; error: string }
+
+// Sibling to createQuizWithFirstQuestion, not a replacement for it —
+// that function is left exactly as-is (same "don't remove exported
+// functions from a shared actions file" reasoning as createDraftQuiz
+// above). This one exists because NewQuizForm.tsx was redesigned to
+// let a teacher stack up multiple question cards — same as
+// AddQuestionForm/QuestionCard already let them do on the edit page —
+// before the quiz is ever created, instead of being limited to
+// exactly one question up front.
+//
+// Same "never leave an orphaned empty/partial quiz behind" guarantee
+// as createQuizWithFirstQuestion: the quiz row is only inserted after
+// every question draft has been validated, and if any single
+// question's insert (or its options) fails partway through, the whole
+// quiz row is deleted before returning an error — never a quiz left
+// behind with only some of its questions saved.
+export async function createQuizWithQuestions(
+    formData: FormData
+): Promise<CreateQuizWithQuestionsResult> {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+
+    const parsed = createQuizWithQuestionsSchema.safeParse({
+        courseId: formData.get('courseId'),
+        title: formData.get('title'),
+        questions: formData.get('questions'),
+        timeLimitMinutes: formData.get('timeLimitMinutes') ?? undefined,
+        maxAttempts: formData.get('maxAttempts') ?? undefined,
+        resultsVisibility: formData.get('resultsVisibility') ?? undefined,
+        availableUntil: formData.get('availableUntil') ?? undefined,
+        allowLate: formData.get('allowLate') ?? undefined,
+        publish: formData.get('publish') ?? undefined,
+    })
+
+    if (!parsed.success) {
+        return { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form.' }
+    }
+
+    const { courseId, title } = parsed.data
+
+    let questionDrafts: z.infer<typeof quizQuestionDraftSchema>[]
+    try {
+        const rawQuestions = JSON.parse(parsed.data.questions)
+        const parsedQuestions = z.array(quizQuestionDraftSchema).min(1, 'Add at least one question.').safeParse(rawQuestions)
+        if (!parsedQuestions.success) {
+            return { ok: false, error: parsedQuestions.error.issues[0]?.message ?? 'Please check your questions.' }
+        }
+        questionDrafts = parsedQuestions.data
+    } catch {
+        return { ok: false, error: 'Could not read the questions. Please try again.' }
+    }
+
+    const timeLimitMinutes =
+        parsed.data.timeLimitMinutes && parsed.data.timeLimitMinutes.trim() !== ''
+            ? Number(parsed.data.timeLimitMinutes)
+            : null
+    if (timeLimitMinutes !== null && (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1)) {
+        return { ok: false, error: 'Time limit must be at least 1 minute, or left blank for no limit.' }
+    }
+
+    const maxAttempts = parsed.data.maxAttempts ? Number(parsed.data.maxAttempts) : 1
+    if (!Number.isInteger(maxAttempts) || maxAttempts < 1) {
+        return { ok: false, error: 'Max attempts must be at least 1.' }
+    }
+
+    const resultsVisibility = parsed.data.resultsVisibility ?? 'submission'
+    const availableUntil =
+        parsed.data.availableUntil && parsed.data.availableUntil.trim() !== '' ? parsed.data.availableUntil : null
+    const allowLate = parsed.data.allowLate === 'true'
+    const publish = parsed.data.publish === 'true'
+
+    const { data: course } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('id', courseId)
+        .eq('teacher_id', user.id)
+        .single()
+
+    if (!course) {
+        return { ok: false, error: 'You do not have access to this course.' }
+    }
+
+    // Validate every question's content BEFORE creating anything —
+    // same checks addQuestion/createQuizWithFirstQuestion apply, done
+    // here first so a bad question never even gets as far as
+    // inserting a quiz row. Errors reference the question's position
+    // (1-based) so the teacher can find the offending card.
+    for (const [i, draft] of questionDrafts.entries()) {
+        if (draft.questionType !== 'short_answer' && draft.questionType !== 'true_false') {
+            const optionTexts = (draft.options ?? '')
+                .split(',')
+                .map((text) => text.trim())
+                .filter(Boolean)
+            if (optionTexts.length < 2) {
+                return { ok: false, error: `Question ${i + 1}: add at least two answer options.` }
+            }
+        }
+    }
+
+    const { data: quiz, error: quizError } = await supabase
+        .from('quizzes')
+        .insert({
+            course_id: courseId,
+            created_by: user.id,
+            title,
+            time_limit_minutes: timeLimitMinutes,
+            max_attempts: maxAttempts,
+            show_results_after: resultsVisibility,
+            available_until: availableUntil,
+            allow_late: allowLate,
+            is_published: publish,
+        })
+        .select('id')
+        .single()
+
+    if (quizError || !quiz) {
+        return { ok: false, error: 'Could not create the quiz. Please try again.' }
+    }
+
+    // Insert every question in order, exactly the same shape as
+    // createQuizWithFirstQuestion/addQuestion build for a single
+    // question — just looped, with order_index following each
+    // question's position in the array.
+    for (const [i, { questionText, questionType, options, correctAnswer }] of questionDrafts.entries()) {
+
+        const { data: question, error: questionError } = await supabase
+            .from('questions')
+            .insert({
+                quiz_id: quiz.id,
+                question_text: questionText,
+                question_type: questionType,
+                points: 1,
+                order_index: i,
+                explanation: questionType === 'short_answer' ? correctAnswer : null,
+            })
+            .select('id')
+            .single()
+
+        if (questionError || !question) {
+            await supabase.from('quizzes').delete().eq('id', quiz.id)
+            return { ok: false, error: `Could not save question ${i + 1}. Please try again.` }
+        }
+
+        if (questionType === 'short_answer') continue
+
+        let optionRows: { question_id: string; option_text: string; is_correct: boolean; order_index: number }[] = []
+
+        if (questionType === 'true_false') {
+            optionRows = [
+                { question_id: question.id, option_text: 'True', is_correct: correctAnswer === 'True', order_index: 0 },
+                { question_id: question.id, option_text: 'False', is_correct: correctAnswer === 'False', order_index: 1 },
+            ]
+        } else {
+            const optionTexts = (options ?? '')
+                .split(',')
+                .map((text) => text.trim())
+                .filter(Boolean)
+
+            if (questionType === 'checklist') {
+                const correctSet = new Set(
+                    correctAnswer
+                        .split(',')
+                        .map((text) => text.trim())
+                        .filter(Boolean)
+                )
+                optionRows = optionTexts.map((text, index) => ({
+                    question_id: question.id,
+                    option_text: text,
+                    is_correct: correctSet.has(text),
+                    order_index: index,
+                }))
+            } else {
+                optionRows = optionTexts.map((text, index) => ({
+                    question_id: question.id,
+                    option_text: text,
+                    is_correct: text === correctAnswer,
+                    order_index: index,
+                }))
+            }
+        }
+
+        const { error: optionsError } = await supabase.from('answer_options').insert(optionRows)
+
+        if (optionsError) {
+            await supabase.from('quizzes').delete().eq('id', quiz.id)
+            return { ok: false, error: `Could not save the answer options for question ${i + 1}. Please try again.` }
+        }
+    }
+
+    return { ok: true, quizId: quiz.id }
+}
+
 const updateQuestionSchema = z.object({
     questionId: z.string().uuid(),
     questionText: z.string().min(2, 'Question is too short'),

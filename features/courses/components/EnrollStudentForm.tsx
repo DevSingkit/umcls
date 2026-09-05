@@ -3,8 +3,20 @@
 // an always-visible section. Meant to sit near the top of the course
 // page (next to CreateMenu/CourseMenu) so it's reachable without
 // scrolling past a long lesson stream.
+//
+// DESIGN-LMS 2.1 pass (2026-09-06): replaced the hand-rolled inline
+// <svg> person-plus icon with lucide-react's UserPlus, matching every
+// sibling component in this cluster (CourseMenu, CreateMenu,
+// TeacherCourseStream) which all source icons from lucide-react rather
+// than one-off inline paths. Submit button bumped from h-12 to h-14 —
+// this is the form's one primary action, matching the app-wide h-14
+// primary-CTA standard (NewCoursePage "Create class",
+// AnnouncementComposer trigger, EditCourseForm "Save changes"). The
+// "Add a student" trigger button itself stays h-12, since it opens a
+// panel rather than submitting the form.
 
 import { useActionState, useEffect, useRef, useState } from 'react'
+import { UserPlus } from 'lucide-react'
 import { enrollStudentIntoOwnCourse, type EnrollResult } from '@/features/courses/actions/enroll-student'
 
 const initialState: EnrollResult = { ok: false, error: '' }
@@ -54,16 +66,7 @@ export function EnrollStudentForm({
                 className="inline-flex h-12 items-center gap-2 px-5 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink font-medium text-body-md
                            hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
             >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                    <path
-                        d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
-                        stroke="currentColor"
-                        strokeWidth="1.75"
-                        strokeLinecap="round"
-                    />
-                    <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.75" />
-                    <path d="M19 8v6M22 11h-6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                </svg>
+                <UserPlus size={18} className="shrink-0" aria-hidden="true" />
                 Add a student
             </button>
 
@@ -111,7 +114,7 @@ export function EnrollStudentForm({
                         <button
                             type="submit"
                             disabled={isPending || students.length === 0}
-                            className="w-full h-12 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
+                            className="w-full h-14 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
                         >
                             {isPending ? 'Enrolling…' : 'Enroll student'}
                         </button>

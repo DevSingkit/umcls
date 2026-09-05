@@ -20,6 +20,13 @@ import { Avatar } from '@/components/ui/Avatar'
 // bg-amber, bg-role-student, bg-role-admin — that were silent no-ops,
 // meaning 3/5 of course cards previously rendered with no band
 // background at all).
+//
+// DESIGN-LMS 2.1 REDESIGN (2026-09-06): pure visual fix, no logic
+// touched. The Draft badge used `rounded-full`, which renders
+// identically to `rounded-pill` in this config but is the one
+// inconsistent outlier — every other status pill in the app (course
+// list's Published/Draft badges, the course header's Unpublished
+// badge) uses `rounded-pill`. Normalized to match.
 const BAND_COLORS = [
     'bg-sidebar',          // Deep Raspberry Pink (#8F1349)
     'bg-sidebar-active',   // Bright Raspberry Pink (#C21A5D)
@@ -80,7 +87,7 @@ export function CourseCard({
                                 {subject || title}
                             </p>
                             {!isPublished && (
-                                <span className="shrink-0 inline-flex items-center rounded-full bg-warning-soft px-2 py-0.5 text-caption font-semibold text-warning">
+                                <span className="shrink-0 inline-flex items-center rounded-pill bg-warning-soft px-2 py-0.5 text-caption font-semibold text-warning">
                                     Draft
                                 </span>
                             )}

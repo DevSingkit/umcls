@@ -56,7 +56,6 @@ import { requireRole } from '@/lib/auth/get-current-user'
 import { getMissionsForStudent } from './get-mission-for-student'
 
 const QUESTION_MASTERY_STREAK_TARGET = 3
-const HINT_AFTER_ATTEMPTS = 2
 const REMEDIATION_AFTER_ATTEMPTS = 3
 
 type SubmitQuestionAttemptInput = {
@@ -71,7 +70,13 @@ export type SubmitQuestionAttemptResult =
           ok: true
           isCorrect: boolean
           attemptsOnThisQuestion: number
-          hintText: string | null
+          // NEW (migration 099): only populated when !isCorrect AND the
+          // mission's reveal_correct_answer is true. null in every other
+          // case — including when isCorrect is true, since there's
+          // nothing to reveal, and when the teacher has turned the
+          // setting off.
+          correctOptionId: string | null
+          correctOptionText: string | null
           remediationActivityId: string | null
           // Mission-wide (Phase 0, unchanged concept).
           correctStreak: number
@@ -103,7 +108,7 @@ export async function submitQuestionAttempt(
     const { data: question, error: questionError } = await supabase
         .from('activity_questions')
         .select(
-            'id, activity_id, hint_text, activities!inner(id, mission_id, remediates_activity_id, missions!inner(id, lesson_id, is_published, mastery_threshold, order_index))'
+            'id, activity_id, hint_text, activities!inner(id, mission_id, remediates_activity_id, missions!inner(id, lesson_id, is_published, mastery_threshold, reveal_correct_answer, order_index))'
         )
         .eq('id', input.questionId)
         .eq('activity_id', input.activityId)
@@ -139,7 +144,7 @@ export async function submitQuestionAttempt(
     // to the student client, only resolved here server-side).
     const { data: options, error: optionsError } = await supabaseAdmin
         .from('activity_question_options')
-        .select('id, is_correct')
+        .select('id, option_text, is_correct')
         .eq('question_id', input.questionId)
 
     if (optionsError || !options) {
@@ -186,13 +191,20 @@ export async function submitQuestionAttempt(
         attempt_number: (priorAttemptCount ?? 0) + 1,
     })
 
-    let hintText: string | null = null
     let remediationActivityId: string | null = null
+    let correctOptionId: string | null = null
+    let correctOptionText: string | null = null
 
+    // TAP-TO-REVEAL HINT (2026-09-05): hintText used to be computed
+    // here and only sent back after 2+ wrong attempts. Removed — hint
+    // text is already sent to the client up front in
+    // get-mission-for-student.ts's QuestionPreviewForStudent, so there
+    // is nothing left for THIS response to add. Whether the student
+    // had the hint open at the time of THIS submit is tracked via
+    // input.hintWasVisible below, which resolveQuestionMastery already
+    // uses to increment question_mastery.hint_uses — no new write path
+    // needed, that upsert already existed and already did exactly this.
     if (!isCorrect) {
-        if (attemptsOnThisQuestion >= HINT_AFTER_ATTEMPTS) {
-            hintText = question.hint_text
-        }
         if (attemptsOnThisQuestion >= REMEDIATION_AFTER_ATTEMPTS) {
             // Same activity-level lookup as before: does some OTHER
             // activity name this one as the thing it remediates?
@@ -203,6 +215,16 @@ export async function submitQuestionAttempt(
                 .limit(1)
                 .maybeSingle()
             remediationActivityId = remediationActivity?.id ?? null
+        }
+        // NEW (migration 099): only reveal which option was correct if
+        // the teacher has this mission's reveal_correct_answer on.
+        // `options` here is the same admin-client, is_correct-included
+        // read already used to grade this attempt above — no extra
+        // query needed, just gating what we hand back to the client.
+        if (mission.reveal_correct_answer) {
+            const correctOption = options.find((o) => o.is_correct)
+            correctOptionId = correctOption?.id ?? null
+            correctOptionText = correctOption?.option_text ?? null
         }
     }
 
@@ -226,7 +248,8 @@ export async function submitQuestionAttempt(
             ok: true,
             isCorrect,
             attemptsOnThisQuestion,
-            hintText,
+            correctOptionId,
+            correctOptionText,
             remediationActivityId,
             correctStreak: missionState.correctStreak,
             masteryThreshold: mission.mastery_threshold,
@@ -241,7 +264,9 @@ export async function submitQuestionAttempt(
     }
 
     const newStreak = isCorrect ? missionState.correctStreak + 1 : 0
-    const justMastered = isCorrect && newStreak >= mission.mastery_threshold
+    // See hasMasteredEveryQuestion's header comment — mastery no longer
+    // depends on newStreak reaching mission.mastery_threshold.
+    const justMastered = isCorrect && (await hasMasteredEveryQuestion(supabaseAdmin, user.id, mission.id))
 
     await supabaseAdmin.from('mission_progress').upsert(
         {
@@ -270,7 +295,8 @@ export async function submitQuestionAttempt(
         ok: true,
         isCorrect,
         attemptsOnThisQuestion,
-        hintText,
+        correctOptionId,
+        correctOptionText,
         remediationActivityId,
         correctStreak: newStreak,
         masteryThreshold: mission.mastery_threshold,
@@ -398,6 +424,51 @@ async function resolveActivityMasteryRollup(
     )
 
     return { masteredCount, totalCount, state }
+}
+
+/**
+ * PHASE E MASTERY FIX (2026-09-05): mission mastery used to fire off
+ * an arbitrary mission-wide N-in-a-row streak (mission.mastery_threshold),
+ * completely blind to whether the student had actually mastered every
+ * question — 3 correct anywhere (even the same easy question answered
+ * three times) popped "Mission Mastered" even with half the mission's
+ * questions never answered right once. Confirmed live by the user.
+ * Redefined here: mission mastery now means every question in every
+ * activity of this mission has state === 'mastered' in question_mastery
+ * (the real 3-in-a-row-per-question rule), full stop.
+ * mission.mastery_threshold is no longer read for this decision — left
+ * in the schema/UI as-is since removing the column is a separate call,
+ * but it no longer drives the mastery popup. (It still gets returned
+ * in the API result and still drives ActivityRunner.tsx's progress bar
+ * — that bar no longer maps to real mastery until that's revisited
+ * separately, flagged, not fixed here.)
+ */
+async function hasMasteredEveryQuestion(
+    supabaseAdmin: ReturnType<typeof createAdminClient>,
+    studentId: string,
+    missionId: string
+): Promise<boolean> {
+    const { data: activities } = await supabaseAdmin.from('activities').select('id').eq('mission_id', missionId)
+    const activityIds = (activities ?? []).map((a) => a.id)
+    if (activityIds.length === 0) return false
+
+    const { data: questions } = await supabaseAdmin
+        .from('activity_questions')
+        .select('id')
+        .in('activity_id', activityIds)
+    const questionIds = (questions ?? []).map((q) => q.id)
+    if (questionIds.length === 0) return false
+
+    const { data: masteryRows } = await supabaseAdmin
+        .from('question_mastery')
+        .select('question_id, state')
+        .eq('student_id', studentId)
+        .in('question_id', questionIds)
+
+    const masteredIds = new Set(
+        (masteryRows ?? []).filter((m) => m.state === 'mastered').map((m) => m.question_id)
+    )
+    return questionIds.every((id) => masteredIds.has(id))
 }
 
 /**

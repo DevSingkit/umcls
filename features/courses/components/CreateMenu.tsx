@@ -12,9 +12,16 @@
 // the course stream with zero content. The new /quizzes/new page
 // collects a title and first question before anything is written to
 // the database at all (see create-quiz.ts's createQuizWithFirstQuestion).
+//
+// DESIGN-LMS 2.1 pass (2026-09-06): removed literal "+" glyph prefix
+// from the trigger button, replaced with lucide-react's Plus icon for
+// consistent SVG iconography per §1.3. Bumped from h-12 to h-14 to
+// match the app-wide h-14 primary-CTA standard (this is the course
+// header's primary create action, parallel to "+ New class" on the
+// courses list page).
 import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ChevronDown, FileText, HelpCircle, ClipboardList } from 'lucide-react'
+import { ChevronDown, FileText, HelpCircle, ClipboardList, Plus } from 'lucide-react'
 
 export function CreateMenu({ courseId }: { courseId: string }) {
     const [isOpen, setIsOpen] = useState(false)
@@ -36,9 +43,10 @@ export function CreateMenu({ courseId }: { courseId: string }) {
                 onClick={() => setIsOpen((prev) => !prev)}
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
-                className="flex h-12 items-center gap-1.5 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="flex h-14 items-center gap-1.5 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
-                + Create
+                <Plus size={18} aria-hidden="true" />
+                Create
                 <ChevronDown size={16} aria-hidden="true" />
             </button>
 

@@ -66,7 +66,7 @@ export function PostAssignmentButton({
                 <button
                     onClick={() => handleToggle(true)}
                     disabled={isPending}
-                    className="h-12 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
+                    className="h-14 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
                 >
                     {isPending ? 'Posting…' : 'Post'}
                 </button>

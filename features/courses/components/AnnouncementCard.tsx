@@ -14,7 +14,23 @@
 // Comments are already fully loaded via props (listAnnouncementsForCourse
 // fetches them eagerly server-side), so expand/collapse here is a pure
 // client-side visibility toggle, no fetch-on-click.
-
+//
+// DESIGN-LMS 2.1 REDESIGN (2026-09-06): pure visual pass, no logic
+// touched — editAnnouncement/postAnnouncementComment/
+// deleteAnnouncementComment calls and all state machines unchanged.
+// Three fixes:
+//   1. The edit textarea and the comment input both used the one-off
+//      `border-[1.5px] border-hairline-strong` — aligned to the
+//      standard `border-2 border-hairline` convention used everywhere
+//      else (InquiryForm, New Course, AnnouncementComposer).
+//   2. The inline edit form's Save/Cancel buttons were h-9 (36px),
+//      under §1.4's 48px secondary floor — bumped to h-12.
+//   3. The comment "Post" button was h-11 (44px), also under the
+//      floor — bumped to h-12. Added `items-center` to that row's flex
+//      container so the now-taller button still aligns cleanly against
+//      the paired h-11 comment input (Classroom Mode inputs
+//      deliberately stay at 44px, not bumped) instead of stretching to
+//      match it.
 import { useState, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Megaphone, MessageCircle } from 'lucide-react'
@@ -124,7 +140,7 @@ export function AnnouncementCard({
                                 rows={3}
                                 maxLength={5000}
                                 defaultValue={announcement.body}
-                                className="w-full px-4 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="w-full px-4 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                             />
                             {editError && <p className="text-caption text-error">{editError}</p>}
                             <div className="flex justify-end gap-3">
@@ -134,14 +150,14 @@ export function AnnouncementCard({
                                         setEditError(null)
                                         setIsEditing(false)
                                     }}
-                                    className="h-9 px-4 rounded-md text-caption font-semibold text-text-secondary hover:bg-surface-sunken transition-colors"
+                                    className="h-12 px-5 rounded-md text-body-md font-semibold text-text-secondary hover:bg-surface-sunken transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isPending}
-                                    className="h-9 px-4 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-caption transition-colors disabled:opacity-60"
+                                    className="h-12 px-5 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
                                 >
                                     {isPending ? 'Saving…' : 'Save'}
                                 </button>
@@ -165,20 +181,20 @@ export function AnnouncementCard({
 
             {isExpanded && (
                 <div className="mt-4 pl-14 grid gap-4">
-                    <form ref={formRef} action={handlePostComment} className="flex gap-3">
+                    <form ref={formRef} action={handlePostComment} className="flex items-center gap-3">
                         <input
                             type="text"
                             name="body"
                             placeholder="Add a class comment..."
                             required
                             maxLength={2000}
-                            className="h-11 px-4 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink flex-1
+                            className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1
                                        focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                         />
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                            className="h-12 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 transition-colors"
                         >
                             Post
                         </button>

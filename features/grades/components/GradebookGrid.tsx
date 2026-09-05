@@ -14,6 +14,13 @@
 // before — this table can get wide with many columns, and needs an
 // ancestor that's allowed to size to content for overflow-x-auto to
 // actually clip it instead of pushing the whole page wider.
+//
+// DESIGN-LMS 2.1 bugfix pass: overflow-x-auto with no visible
+// affordance is a silent horizontal scroll on mobile, which §1.5 bans.
+// Below sm, this now renders as one card per student with each
+// column's score listed as a labeled row inside — no scrolling needed
+// to read any score. The real table is preserved for sm and up, where
+// grids with a handful of columns fit comfortably.
 
 import Link from 'next/link'
 
@@ -59,7 +66,48 @@ export function GradebookGrid({
 
     return (
         <div className="min-w-0 bg-surface rounded-md border border-hairline shadow-card overflow-hidden">
-            <div className="min-w-0 overflow-x-auto">
+            {/* Mobile: one card per student, columns listed as labeled rows */}
+            <div className="sm:hidden divide-y divide-hairline">
+                {students.length === 0 ? (
+                    <p className="px-4 py-6 text-center text-body-md text-text-secondary">
+                        No students enrolled yet.
+                    </p>
+                ) : (
+                    students.map((student) => (
+                        <div key={student.studentId} className="p-4">
+                            <p className="text-body-emphasis text-ink mb-3">{student.studentName}</p>
+                            <div className="flex flex-col gap-2">
+                                {columns.map((column) => {
+                                    const score = scoreByPair.get(`${column.id}:${student.studentId}`)
+                                    return (
+                                        <div
+                                            key={column.id}
+                                            className="flex items-center justify-between gap-3 rounded-md bg-surface-sunken px-3 py-2.5"
+                                        >
+                                            <Link
+                                                href={columnHref(column)}
+                                                className="min-w-0 flex-1 text-caption text-ink hover:text-brand hover:underline truncate"
+                                            >
+                                                {column.title}
+                                            </Link>
+                                            <span className="shrink-0 text-caption text-text-secondary">
+                                                {score === undefined || score === null ? (
+                                                    <span className="text-text-muted">—</span>
+                                                ) : (
+                                                    `${score}/${column.maxScore}`
+                                                )}
+                                            </span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* sm and up: full grid table */}
+            <div className="hidden sm:block min-w-0 overflow-x-auto">
                 <table className="w-full border-collapse text-body-md">
                     <thead>
                         <tr className="border-b border-hairline-strong bg-surface-sunken">

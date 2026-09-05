@@ -4,6 +4,23 @@
 // row, not standalone buttons cluttering the card. Publish/unpublish
 // no longer exists for these item types — they're visible the moment
 // they're created (DB column default, see migration 047).
+//
+// DESIGN-LMS 2.1 REDESIGN (2026-09-06): pure visual pass, no logic
+// touched — deleteStreamItem call, click-outside handling, and
+// confirm-delete state machine unchanged. Three fixes:
+//   1. `text-red` / `bg-red-soft` / `border-red` aren't real tokens
+//      (only `error` / `error.soft` / `error.border` exist in
+//      tailwind.config.ts) — same dead-token bug class caught
+//      elsewhere in this track. Fixed to `text-error` / `bg-error-soft`
+//      / `border-error`.
+//   2. The menu trigger (h-9/36px), menu items (h-10/40px), and the
+//      delete-confirm Cancel/Delete buttons (h-9/36px) were all under
+//      §1.4's 48px secondary touch-target floor — bumped to h-12
+//      throughout, same standing fix applied elsewhere on sight.
+//   3. The confirm dialog's Cancel button used the one-off
+//      `border-[1.5px] border-hairline-strong` — aligned to the
+//      standard `border-2 border-hairline` convention used everywhere
+//      else.
 import { useRef, useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
@@ -58,7 +75,7 @@ export function StreamItemMenu({
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
                 aria-label={`Options for ${itemTitle}`}
-                className="flex h-9 w-9 items-center justify-center rounded-md text-text-secondary hover:bg-surface-sunken transition-colors"
+                className="flex h-12 w-12 items-center justify-center rounded-md text-text-secondary hover:bg-surface-sunken transition-colors"
             >
                 <MoreVertical size={18} aria-hidden="true" />
             </button>
@@ -71,7 +88,7 @@ export function StreamItemMenu({
                     <a
                         href={editHref}
                         role="menuitem"
-                        className="flex h-10 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
+                        className="flex h-12 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
                     >
                         <Pencil size={16} aria-hidden="true" className="text-text-secondary" />
                         Edit
@@ -79,7 +96,7 @@ export function StreamItemMenu({
                     <button
                         role="menuitem"
                         onClick={() => setConfirmingDelete(true)}
-                        className="flex h-10 w-full items-center gap-3 px-4 text-left text-body-md text-red hover:bg-red-soft"
+                        className="flex h-12 w-full items-center gap-3 px-4 text-left text-body-md text-error hover:bg-error-soft"
                     >
                         <Trash2 size={16} aria-hidden="true" />
                         Delete
@@ -93,19 +110,19 @@ export function StreamItemMenu({
                     <p className="mt-1 text-caption text-text-secondary">
                         Students will lose access immediately. This can&apos;t be undone from here.
                     </p>
-                    {error && <p className="mt-2 text-caption text-red">{error}</p>}
+                    {error && <p className="mt-2 text-caption text-error">{error}</p>}
                     <div className="mt-3 flex justify-end gap-2">
                         <button
                             onClick={() => setConfirmingDelete(false)}
                             disabled={isPending}
-                            className="h-9 rounded-md border-[1.5px] border-hairline-strong px-3 text-caption text-ink hover:bg-surface-sunken disabled:opacity-60"
+                            className="h-12 rounded-md border-2 border-hairline px-4 text-caption text-ink hover:bg-surface-sunken disabled:opacity-60"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleDelete}
                             disabled={isPending}
-                            className="h-9 rounded-md border-[1.5px] border-red px-3 text-caption font-semibold text-red hover:bg-red-soft disabled:opacity-60"
+                            className="h-12 rounded-md border-2 border-error px-4 text-caption font-semibold text-error hover:bg-error-soft disabled:opacity-60"
                         >
                             {isPending ? 'Deleting…' : 'Delete'}
                         </button>

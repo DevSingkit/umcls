@@ -46,6 +46,11 @@
 // one; the "match the create page" ask was specifically about this
 // count phrasing, not about adding/removing a preview.
 
+// REVEAL-CORRECT-ANSWER WIRING (migration 099, 2026-09-05): getMissionForTeacher's
+// select now includes reveal_correct_answer — threaded into
+// MissionSettingsForm's currentRevealCorrectAnswer prop below so the
+// toggle reflects real saved state instead of always defaulting to on.
+
 import { notFound } from 'next/navigation'
 import { getMissionForTeacher, getMissionProgressForTeacher } from '@/features/missions/actions/create-mission'
 import { MissionSettingsForm } from '@/features/missions/components/MissionSettingsForm'
@@ -100,6 +105,8 @@ export default async function EditMissionPage({
                 currentTitle={m.title}
                 currentDescription={m.description}
                 currentMasteryThreshold={m.mastery_threshold}
+                currentRevealCorrectAnswer={m.reveal_correct_answer}
+                currentShuffleOptions={m.shuffle_options}
                 totalActivities={activities.length}
                 isPublished={m.is_published}
             />

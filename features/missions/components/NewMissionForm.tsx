@@ -107,6 +107,8 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
     const [isPending, setIsPending] = useState(false)
 
     const [masteryThreshold, setMasteryThreshold] = useState(3)
+    const [revealCorrectAnswer, setRevealCorrectAnswer] = useState(true)
+    const [shuffleOptions, setShuffleOptions] = useState(false)
     const [publishNow, setPublishNow] = useState(false)
 
     function updateQuestion(activityKey: string, questionKey: string, patch: Partial<QuestionDraft>) {
@@ -265,6 +267,8 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
         formData.set('title', title.trim())
         if (description.trim()) formData.set('description', description.trim())
         formData.set('masteryThreshold', String(masteryThreshold))
+        formData.set('revealCorrectAnswer', String(revealCorrectAnswer))
+        formData.set('shuffleOptions', String(shuffleOptions))
         formData.set('publish', String(publishNow))
         formData.set('activities', JSON.stringify(activitiesPayload))
 
@@ -335,6 +339,47 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                             className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                         />
                     </div>
+                </div>
+
+                <div>
+                    <label htmlFor="newMissionRevealCorrectAnswer" className="flex items-start gap-3 cursor-pointer">
+                        <input
+                            id="newMissionRevealCorrectAnswer"
+                            type="checkbox"
+                            checked={revealCorrectAnswer}
+                            onChange={(e) => setRevealCorrectAnswer(e.target.checked)}
+                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                        />
+                        <span>
+                            <span className="text-label text-ink-soft block">
+                                Show the correct answer after a wrong attempt
+                            </span>
+                            <span className="text-caption text-text-secondary">
+                                When off, students only see whether they were right or wrong — not what the
+                                correct answer was.
+                            </span>
+                        </span>
+                    </label>
+                </div>
+
+                <div>
+                    <label htmlFor="newMissionShuffleOptions" className="flex items-start gap-3 cursor-pointer">
+                        <input
+                            id="newMissionShuffleOptions"
+                            type="checkbox"
+                            checked={shuffleOptions}
+                            onChange={(e) => setShuffleOptions(e.target.checked)}
+                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                        />
+                        <span>
+                            <span className="text-label text-ink-soft block">
+                                Shuffle answer order for each student
+                            </span>
+                            <span className="text-caption text-text-secondary">
+                                When off, options always appear in the order you added them.
+                            </span>
+                        </span>
+                    </label>
                 </div>
             </div>
 
