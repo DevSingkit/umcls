@@ -333,7 +333,7 @@ async function resolveQuestionMastery(
 ): Promise<{ correctStreak: number; state: 'new' | 'learning' | 'mastered' }> {
     const { data: existing } = await supabaseAdmin
         .from('question_mastery')
-        .select('correct_streak, wrong_count, hint_uses, state')
+        .select('correct_streak, wrong_count, hint_uses, state, last_seen_at')
         .eq('student_id', studentId)
         .eq('question_id', questionId)
         .maybeSingle()
