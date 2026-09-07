@@ -4,10 +4,11 @@
 // clickable action must look like one at rest, never plain text that
 // only changes on hover"). Given a real button-ghost treatment
 // instead. No save/upload/delete logic touched.
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateLesson } from '@/features/lessons/actions/lessons'
 import { uploadMaterial, addMaterialLink, deleteMaterial, listMaterials } from '@/features/materials/actions/materials'
+import { MaterialList } from '@/features/materials/components/MaterialList'
 
 type Material = Awaited<ReturnType<typeof listMaterials>>[number]
 
@@ -30,8 +31,23 @@ export function EditLessonForm({
     const [uploadError, setUploadError] = useState<string | null>(null)
     const [isSaving, startSaving] = useTransition()
     const [isUploading, startUploading] = useTransition()
+    const [deletingMaterialId, setDeletingMaterialId] = useState<string | null>(null)
     const fileFormRef = useRef<HTMLFormElement>(null)
     const linkFormRef = useRef<HTMLFormElement>(null)
+
+    // Lesson content grows with its content instead of scrolling
+    // internally — same treatment as NewAssignmentForm's Instructions
+    // field.
+    const contentRef = useRef<HTMLTextAreaElement>(null)
+    function resizeContent() {
+        const el = contentRef.current
+        if (!el) return
+        el.style.height = 'auto'
+        el.style.height = `${el.scrollHeight}px`
+    }
+    useEffect(() => {
+        resizeContent()
+    }, [])
 
     async function refreshMaterials() {
         const all = await listMaterials(courseId, { type: 'lesson', lessonId })
@@ -77,8 +93,10 @@ export function EditLessonForm({
     }
 
     async function handleDeleteMaterial(materialId: string) {
+        setDeletingMaterialId(materialId)
         await deleteMaterial(materialId)
         await refreshMaterials()
+        setDeletingMaterialId(null)
     }
 
     return (
@@ -110,11 +128,13 @@ export function EditLessonForm({
                     <textarea
                         id="content"
                         name="content"
+                        ref={contentRef}
                         rows={10}
                         required
                         defaultValue={initialContent}
+                        onInput={resizeContent}
                         className="w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink leading-relaxed
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none overflow-hidden"
                     />
                 </div>
 
@@ -136,7 +156,12 @@ export function EditLessonForm({
 
             <h2 className="text-h3 text-ink mb-4">Materials</h2>
 
-            <div className="bg-surface rounded-md shadow-card p-6 space-y-4 mb-4">
+            {/* Single card holding upload controls + the material list
+                together — was two stacked cards (controls card, then
+                MaterialList's own cards below with a gap between).
+                Matches NewLessonForm's one-card-holds-everything feel
+                instead of looking like separate sections. */}
+            <div className="bg-surface rounded-md shadow-card p-6 space-y-4">
                 <form
                     ref={fileFormRef}
                     action={handleFileUpload}
@@ -191,44 +216,22 @@ export function EditLessonForm({
                 </form>
 
                 {uploadError && <p className="text-caption text-error">{uploadError}</p>}
+
+                {materials.length > 0 ? (
+                    <div className="border-t border-hairline pt-4 space-y-2">
+                        <MaterialList
+                            materials={materials}
+                            canDelete
+                            onDelete={handleDeleteMaterial}
+                            deletingId={deletingMaterialId}
+                        />
+                    </div>
+                ) : (
+                    <p className="border-t border-hairline pt-4 text-caption text-text-secondary">
+                        No materials attached yet.
+                    </p>
+                )}
             </div>
-
-            <MaterialListWithDelete materials={materials} onDelete={handleDeleteMaterial} />
-        </div>
-    )
-}
-
-function MaterialListWithDelete({
-    materials,
-    onDelete,
-}: {
-    materials: Material[]
-    onDelete: (id: string) => void
-}) {
-    if (materials.length === 0) {
-        return (
-            <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                <p className="text-body-md text-text-secondary">No materials attached yet.</p>
-            </div>
-        )
-    }
-
-    return (
-        <div className="grid gap-2">
-            {materials.map((material) => (
-                <div
-                    key={material.id}
-                    className="bg-surface rounded-md shadow-card p-4 flex items-center justify-between gap-4"
-                >
-                    <span className="text-body-emphasis text-ink truncate">{material.file_name}</span>
-                    <button
-                        onClick={() => onDelete(material.id)}
-                        className="h-9 px-4 rounded-md border-2 border-error text-error text-caption font-medium hover:bg-error-soft shrink-0"
-                    >
-                        Remove
-                    </button>
-                </div>
-            ))}
         </div>
     )
 }

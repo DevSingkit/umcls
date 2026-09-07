@@ -52,6 +52,17 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
         null
     )
 
+    // Lesson content grows with its content instead of scrolling
+    // internally — same treatment as NewAssignmentForm's Instructions
+    // field.
+    const contentRef = useRef<HTMLTextAreaElement>(null)
+    function resizeContent() {
+        const el = contentRef.current
+        if (!el) return
+        el.style.height = 'auto'
+        el.style.height = `${el.scrollHeight}px`
+    }
+
     function openPreview(file: File) {
         const key = fileKey(file)
         const cached = previewUrls[key]
@@ -168,11 +179,13 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                     <textarea
                         id="content"
                         name="content"
+                        ref={contentRef}
                         rows={10}
                         required
                         placeholder="Write the lesson here"
+                        onInput={resizeContent}
                         className="w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink leading-relaxed
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none overflow-hidden"
                     />
                 </div>
 
@@ -218,7 +231,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                 return (
                                     <li
                                         key={`${file.name}-${file.size}-${index}`}
-                                        className={`flex items-center gap-3 h-11 px-3 rounded-md border-2 bg-surface-sunken
+                                        className={`flex items-center gap-3 h-11 px-3 rounded-md border bg-surface shadow-card
                                                     ${tooLarge ? 'border-error' : 'border-hairline'}`}
                                     >
                                         <button
@@ -251,17 +264,16 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                             {tooLarge ? `Too large (${formatFileSize(file.size)})` : formatFileSize(file.size)}
                                         </span>
 
-                                        {/* DESIGN-LMS 2.1: hitbox extended from ~32px
-                                            (-inset-2) to the established 44px minimum
-                                            (-inset-3.5, 14px/side around a 16px icon =
-                                            44px total). Custom X SVG -> lucide X. */}
+                                        {/* Matches MaterialList's Remove button (used on
+                                            the edit-lesson page) for visual consistency —
+                                            a labeled "Remove" action instead of a bare X
+                                            icon. */}
                                         <button
                                             type="button"
                                             onClick={() => removeFile(index)}
-                                            aria-label={`Remove ${file.name}`}
-                                            className="relative text-text-secondary hover:text-error shrink-0 before:absolute before:-inset-3.5 before:content-['']"
+                                            className="shrink-0 text-caption font-medium text-error hover:underline"
                                         >
-                                            <X size={16} aria-hidden="true" />
+                                            Remove
                                         </button>
                                     </li>
                                 )
@@ -295,17 +307,14 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                         />
                                         <input type="hidden" name="linkLabel" value={label} />
                                         <input type="hidden" name="linkUrl" value={link.url} />
-                                        {/* DESIGN-LMS 2.1: was a bare text link with no
-                                            defined touch target. Converted to an icon
-                                            button with the same 44px hitbox-extension
-                                            technique as the file remove button above. */}
+                                        {/* Matches MaterialList's Remove button for
+                                            visual consistency across create/edit. */}
                                         <button
                                             type="button"
                                             onClick={() => removeLinkRow(link.id)}
-                                            aria-label="Remove link"
-                                            className="relative text-text-secondary hover:text-error shrink-0 before:absolute before:-inset-3.5 before:content-['']"
+                                            className="shrink-0 text-caption font-medium text-error hover:underline"
                                         >
-                                            <X size={16} aria-hidden="true" />
+                                            Remove
                                         </button>
                                     </div>
 
@@ -314,7 +323,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                             <button
                                                 type="button"
                                                 onClick={() => setViewingYoutubeId(videoId)}
-                                                className="flex items-center gap-3 h-11 px-3 rounded-md border-2 border-hairline bg-surface-sunken w-full text-left hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
+                                                className="flex items-center gap-3 h-11 px-3 rounded-md border border-hairline bg-surface shadow-card w-full text-left hover:border-brand hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
                                             >
                                                 <span className="relative shrink-0 h-8 w-11 rounded-sm overflow-hidden bg-surface">
                                                     {/* eslint-disable-next-line @next/next/no-img-element -- external YouTube thumbnail URL, plain <img> is simplest, no next/image domain config needed */}
@@ -336,9 +345,9 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center gap-3 h-11 px-3 rounded-md border-2 border-hairline bg-surface-sunken hover:border-brand transition-colors"
+                                                className="flex items-center gap-3 h-11 px-3 rounded-md border border-hairline bg-surface shadow-card hover:border-brand hover:shadow-card-hover transition-colors"
                                             >
-                                                <span className="shrink-0 flex h-8 w-8 items-center justify-center rounded-sm bg-surface text-text-secondary">
+                                                <span className="shrink-0 flex h-8 w-8 items-center justify-center rounded-sm bg-surface-sunken text-text-secondary">
                                                     <Link2 size={16} aria-hidden="true" />
                                                 </span>
                                                 <span className="text-caption text-ink truncate flex-1 hover:underline">
@@ -388,38 +397,28 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                     role="dialog"
                     aria-modal="true"
                     aria-label="YouTube video preview"
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 p-4"
                     onClick={() => setViewingYoutubeId(null)}
                 >
+                    <button
+                        type="button"
+                        onClick={() => setViewingYoutubeId(null)}
+                        aria-label="Close preview"
+                        className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-ink shadow-card hover:bg-surface-sunken"
+                    >
+                        <X size={20} aria-hidden="true" />
+                    </button>
                     <div
-                        className="w-full max-w-3xl overflow-hidden rounded-md bg-surface shadow-modal"
+                        className="w-full max-w-3xl aspect-video rounded-md overflow-hidden shadow-modal"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-3">
-                            <p className="text-body-emphasis text-ink">YouTube video</p>
-                            {/* Already at the established 44px hitbox
-                                (h-9 w-9 = 36px + before:-inset-1 = 4px/side
-                                -> 44px total) — matches DESIGN-LMS 2.1
-                                already, no size change needed. Custom X
-                                SVG -> lucide X. */}
-                            <button
-                                type="button"
-                                onClick={() => setViewingYoutubeId(null)}
-                                aria-label="Close preview"
-                                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-secondary hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand before:absolute before:-inset-1 before:content-['']"
-                            >
-                                <X size={18} aria-hidden="true" />
-                            </button>
-                        </div>
-                        <div className="aspect-video">
-                            <iframe
-                                src={toYoutubeEmbedUrl(viewingYoutubeId)}
-                                title="YouTube video preview"
-                                className="h-full w-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                            />
-                        </div>
+                        <iframe
+                            src={toYoutubeEmbedUrl(viewingYoutubeId)}
+                            title="YouTube video preview"
+                            className="h-full w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        />
                     </div>
                 </div>
             )}
@@ -429,73 +428,82 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                     role="dialog"
                     aria-modal="true"
                     aria-label={`Preview of ${viewingFile.name}`}
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 p-4"
                     onClick={closePreview}
                 >
-                    <div
-                        className="w-full max-w-3xl max-h-[90vh] overflow-auto rounded-md bg-surface shadow-modal"
-                        onClick={(e) => e.stopPropagation()}
+                    <button
+                        type="button"
+                        onClick={closePreview}
+                        aria-label="Close preview"
+                        className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-ink shadow-card hover:bg-surface-sunken"
                     >
-                        <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-3">
-                            <p className="text-body-emphasis text-ink truncate" title={viewingFile.name}>
+                        <X size={20} aria-hidden="true" />
+                    </button>
+
+                    {viewingFile.type.startsWith('image/') && (
+                        /* eslint-disable-next-line @next/next/no-img-element -- local blob URL, plain <img> is simplest */
+                        <img
+                            src={viewingFile.url}
+                            alt=""
+                            onClick={(e) => e.stopPropagation()}
+                            className="max-h-[85vh] max-w-[90vw] w-auto h-auto rounded-md object-contain shadow-modal"
+                        />
+                    )}
+
+                    {viewingFile.type.startsWith('video/') && (
+                        <video
+                            src={viewingFile.url}
+                            controls
+                            onClick={(e) => e.stopPropagation()}
+                            className="max-h-[85vh] max-w-[90vw] w-auto rounded-md shadow-modal"
+                        />
+                    )}
+
+                    {viewingFile.type.startsWith('audio/') && (
+                        <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full max-w-lg rounded-md bg-surface p-6 shadow-modal"
+                        >
+                            <p className="text-body-emphasis text-ink truncate mb-3" title={viewingFile.name}>
                                 {viewingFile.name}
                             </p>
-                            <button
-                                type="button"
-                                onClick={closePreview}
-                                aria-label="Close preview"
-                                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-secondary hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand before:absolute before:-inset-1 before:content-['']"
+                            <audio src={viewingFile.url} controls className="w-full" />
+                        </div>
+                    )}
+
+                    {viewingFile.type === 'application/pdf' && (
+                        <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full max-w-3xl h-[85vh] rounded-md overflow-hidden shadow-modal"
+                        >
+                            <iframe src={viewingFile.url} title={viewingFile.name} className="h-full w-full" />
+                        </div>
+                    )}
+
+                    {!viewingFile.type.startsWith('image/') &&
+                        !viewingFile.type.startsWith('video/') &&
+                        !viewingFile.type.startsWith('audio/') &&
+                        viewingFile.type !== 'application/pdf' && (
+                            <div
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full max-w-md rounded-md bg-surface p-8 shadow-modal flex flex-col items-center gap-3 text-center"
                             >
-                                <X size={18} aria-hidden="true" />
-                            </button>
-                        </div>
-
-                        <div className="p-5">
-                            {viewingFile.type.startsWith('image/') && (
-                                /* eslint-disable-next-line @next/next/no-img-element -- local blob URL, plain <img> is simplest */
-                                <img
-                                    src={viewingFile.url}
-                                    alt=""
-                                    className="max-h-[70vh] w-full rounded-md object-contain"
-                                />
-                            )}
-
-                            {viewingFile.type.startsWith('video/') && (
-                                <video src={viewingFile.url} controls className="max-h-[70vh] w-full rounded-md" />
-                            )}
-
-                            {viewingFile.type.startsWith('audio/') && (
-                                <audio src={viewingFile.url} controls className="w-full" />
-                            )}
-
-                            {viewingFile.type === 'application/pdf' && (
-                                <iframe
-                                    src={viewingFile.url}
-                                    title={viewingFile.name}
-                                    className="h-[70vh] w-full rounded-md border border-hairline"
-                                />
-                            )}
-
-                            {!viewingFile.type.startsWith('image/') &&
-                                !viewingFile.type.startsWith('video/') &&
-                                !viewingFile.type.startsWith('audio/') &&
-                                viewingFile.type !== 'application/pdf' && (
-                                    <div className="flex flex-col items-center gap-3 py-10 text-center">
-                                        <p className="text-body-md text-text-secondary">
-                                            This file type can&apos;t be previewed here.
-                                        </p>
-                                        <a
-                                            href={viewingFile.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-body-md text-brand font-semibold hover:underline"
-                                        >
-                                            Open in a new tab instead
-                                        </a>
-                                    </div>
-                                )}
-                        </div>
-                    </div>
+                                <p className="text-body-emphasis text-ink truncate w-full" title={viewingFile.name}>
+                                    {viewingFile.name}
+                                </p>
+                                <p className="text-body-md text-text-secondary">
+                                    This file type can&apos;t be previewed here.
+                                </p>
+                                <a
+                                    href={viewingFile.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-body-md text-brand font-semibold hover:underline"
+                                >
+                                    Open in a new tab instead
+                                </a>
+                            </div>
+                        )}
                 </div>
             )}
         </div>

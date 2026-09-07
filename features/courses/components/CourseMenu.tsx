@@ -113,7 +113,7 @@ export function CourseMenu({
                         className="flex h-12 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
                     >
                         <Pencil size={18} aria-hidden="true" className="text-text-secondary" />
-                        Edit course
+                        Edit class
                     </Link>
                     <button
                         role="menuitem"
@@ -121,7 +121,7 @@ export function CourseMenu({
                         className="flex h-12 w-full items-center gap-3 px-4 text-left text-body-md text-error hover:bg-error-soft"
                     >
                         <Trash2 size={18} aria-hidden="true" />
-                        Delete course
+                        Delete class
                     </button>
                 </div>
             )}

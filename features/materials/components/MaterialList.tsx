@@ -29,6 +29,8 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteMaterial, getMaterialDownloadUrl } from '@/features/materials/actions/materials'
 import { AttachmentPreview, type AttachmentKind } from '@/components/ui/AttachmentPreview'
+import { toYoutubeEmbedUrl } from '@/lib/utils/youtube'
+import { X } from 'lucide-react'
 
 type Material = {
     id: string
@@ -49,7 +51,12 @@ function formatSize(bytes: number | null) {
 // short links, capturing the 11-character video id.
 const YOUTUBE_RE = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]{11})/
 
-function classify(material: Material): { kind: AttachmentKind; sourceLabel: string; thumbnailUrl: string | null } {
+function classify(material: Material): {
+    kind: AttachmentKind
+    sourceLabel: string
+    thumbnailUrl: string | null
+    videoId: string | null
+} {
     if (material.external_url) {
         const match = material.external_url.match(YOUTUBE_RE)
         if (match) {
@@ -57,6 +64,7 @@ function classify(material: Material): { kind: AttachmentKind; sourceLabel: stri
                 kind: 'youtube',
                 sourceLabel: 'youtube.com',
                 thumbnailUrl: `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`,
+                videoId: match[1] ?? null,
             }
         }
         let domain = material.external_url
@@ -66,26 +74,40 @@ function classify(material: Material): { kind: AttachmentKind; sourceLabel: stri
             // Not a parseable absolute URL — fall back to showing it raw
             // rather than throwing.
         }
-        return { kind: 'link', sourceLabel: domain, thumbnailUrl: null }
+        return { kind: 'link', sourceLabel: domain, thumbnailUrl: null, videoId: null }
     }
 
     if (material.file_type?.startsWith('image/')) {
-        return { kind: 'image', sourceLabel: 'Image', thumbnailUrl: null }
+        return { kind: 'image', sourceLabel: 'Image', thumbnailUrl: null, videoId: null }
     }
 
-    return { kind: 'file', sourceLabel: formatSize(material.file_size_bytes), thumbnailUrl: null }
+    return { kind: 'file', sourceLabel: formatSize(material.file_size_bytes), thumbnailUrl: null, videoId: null }
 }
 
 export function MaterialList({
     materials,
     canDelete = false,
+    onDelete,
+    deletingId,
 }: {
     materials: Material[]
     canDelete?: boolean
+    // Lets a caller (e.g. EditLessonForm, which manages its own
+    // optimistic material list via listMaterials/refresh rather than
+    // router.refresh) supply its own delete flow instead of this
+    // component's built-in deleteMaterial+router.refresh. When
+    // omitted, behavior is unchanged from before.
+    onDelete?: (materialId: string) => void
+    deletingId?: string | null
 }) {
     const [pendingId, setPendingId] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
+    // Inline preview overlay — replaces window.open() for images and
+    // YouTube links so they show on THIS page, not a new tab. Links and
+    // generic files still open via getMaterialDownloadUrl in a new tab,
+    // since those aren't things a lightbox makes sense for.
+    const [preview, setPreview] = useState<{ kind: 'image'; url: string } | { kind: 'youtube'; videoId: string } | null>(null)
 
     async function handleDownload(materialId: string) {
         const url = await getMaterialDownloadUrl(materialId)
@@ -94,7 +116,24 @@ export function MaterialList({
         }
     }
 
+    async function handlePreviewClick(material: Material, kind: AttachmentKind, videoId: string | null) {
+        if (kind === 'youtube' && videoId) {
+            setPreview({ kind: 'youtube', videoId })
+            return
+        }
+        if (kind === 'image') {
+            const url = await getMaterialDownloadUrl(material.id)
+            if (url) setPreview({ kind: 'image', url })
+            return
+        }
+        await handleDownload(material.id)
+    }
+
     function handleDelete(materialId: string) {
+        if (onDelete) {
+            onDelete(materialId)
+            return
+        }
         setPendingId(materialId)
         startTransition(async () => {
             const result = await deleteMaterial(materialId)
@@ -116,7 +155,8 @@ export function MaterialList({
     return (
         <div className="grid gap-2">
             {materials.map((material) => {
-                const { kind, sourceLabel, thumbnailUrl } = classify(material)
+                const { kind, sourceLabel, thumbnailUrl, videoId } = classify(material)
+                const isRemoving = onDelete ? deletingId === material.id : isPending && pendingId === material.id
                 return (
                     <AttachmentPreview
                         key={material.id}
@@ -124,7 +164,7 @@ export function MaterialList({
                         sourceLabel={sourceLabel}
                         kind={kind}
                         thumbnailUrl={thumbnailUrl}
-                        onClick={() => handleDownload(material.id)}
+                        onClick={() => handlePreviewClick(material, kind, videoId)}
                         trailing={
                             canDelete ? (
                                 <button
@@ -133,16 +173,55 @@ export function MaterialList({
                                         e.stopPropagation()
                                         handleDelete(material.id)
                                     }}
-                                    disabled={isPending && pendingId === material.id}
+                                    disabled={isRemoving}
                                     className="shrink-0 text-caption font-medium text-error hover:underline disabled:opacity-60"
                                 >
-                                    {isPending && pendingId === material.id ? 'Removing…' : 'Remove'}
+                                    {isRemoving ? 'Removing…' : 'Remove'}
                                 </button>
                             ) : undefined
                         }
                     />
                 )
             })}
+
+            {preview && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 p-4"
+                    onClick={() => setPreview(null)}
+                >
+                    <button
+                        type="button"
+                        onClick={() => setPreview(null)}
+                        aria-label="Close preview"
+                        className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-ink shadow-card hover:bg-surface-sunken"
+                    >
+                        <X size={20} aria-hidden="true" />
+                    </button>
+
+                    {preview.kind === 'image' ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- resolved download URL (may be signed), plain <img> is simplest
+                        <img
+                            src={preview.url}
+                            alt=""
+                            onClick={(e) => e.stopPropagation()}
+                            className="max-h-[85vh] max-w-[90vw] w-auto h-auto rounded-md object-contain shadow-modal"
+                        />
+                    ) : (
+                        <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full max-w-3xl aspect-video rounded-md overflow-hidden shadow-modal"
+                        >
+                            <iframe
+                                src={toYoutubeEmbedUrl(preview.videoId)}
+                                title="Video preview"
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

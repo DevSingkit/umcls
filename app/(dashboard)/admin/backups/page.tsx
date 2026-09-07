@@ -51,7 +51,7 @@ export default async function AdminBackupsPage() {
                     <Download size={20} aria-hidden="true" />
                 </div>
                 <div>
-                    <span className="text-body-emphasis text-ink block mb-1">Grades backup</span>
+                    <span className="text-body-emphasis text-ink block mb-1">Scores backup</span>
                     <span className="text-caption text-text-secondary">
                         Every class&apos;s assignment and quiz scores, one sheet per class.
                     </span>

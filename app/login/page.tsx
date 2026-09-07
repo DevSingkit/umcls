@@ -28,7 +28,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <p className="text-label text-text-secondary">LMS Gateway</p>
           <h1 className="mt-3 text-h2 text-ink">
-            Sign in to your account
+            Login to your account
           </h1>
           <p className="mt-2 text-body-md text-text-secondary">
             Welcome!

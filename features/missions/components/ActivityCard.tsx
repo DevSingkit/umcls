@@ -48,6 +48,17 @@
 // render blocks (view mode's per-question options, edit mode's
 // multiple_choice_single options) changed.
 
+// GREEN BORDER REMOVED (2026-09-06): both view mode and edit mode
+// carried a border-l-4 border-l-brand accent stripe down the left
+// edge — visibly inconsistent with NewMissionForm.tsx's plain
+// bg-surface/border-hairline card (no colored accent at all).
+// Confirmed this was the "old design": the identical border-l-4
+// border-l-brand pattern also exists in the legacy quizzes module's
+// QuestionCard.tsx, which is very likely where this got mirrored from
+// originally. Removed here on both containers; QuestionCard.tsx
+// itself is a separate, untouched module and was NOT modified in this
+// pass pending explicit confirmation that it should be too.
+
 import { useState } from 'react'
 import { X, Plus, Check, Circle, Square, Triangle, Diamond } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -315,7 +326,7 @@ export function ActivityCard({
 
     if (!isEditing) {
         return (
-            <div className="mx-auto w-full max-w-md sm:max-w-lg bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 border-l-4 border-l-brand space-y-5">
+            <div className="mx-auto w-full max-w-md sm:max-w-lg bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 space-y-5">
                 <div className="flex items-center justify-between mb-1 gap-3">
                     <p className="text-caption text-text-secondary">
                         Activity {index + 1} · {activity.questions.length} question
@@ -406,7 +417,7 @@ export function ActivityCard({
     return (
         <form
             onSubmit={handleSave}
-            className="mx-auto w-full max-w-md sm:max-w-lg bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 space-y-6 border-l-4 border-l-brand"
+            className="mx-auto w-full max-w-md sm:max-w-lg bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 space-y-6"
         >
             <h2 className="text-body-emphasis text-ink">Editing activity {index + 1}</h2>
 

@@ -594,6 +594,21 @@ export async function resetMissionProgress(missionId: string): Promise<ResetMiss
 
 export type MissionProgressStatus = 'locked' | 'unlocked' | 'mastered'
 
+// THESIS ML COMPONENT (2026-09-06): one flagged question for the
+// teacher-facing "may need a check-in" surfacing. Sourced from
+// mastery_shakiness_snapshots — see migration 102's header for the
+// full design. Deliberately question-level, not just a count, so a
+// teacher can actually act on WHICH question, not just "something."
+export type FlaggedQuestion = {
+    snapshotId: string
+    questionId: string
+    questionPrompt: string
+    hintUses: number
+    wrongCount: number
+    daysSincePractice: number
+    predictedShakyProbability: number
+}
+
 export type MissionProgressOverrideRow = {
     studentId: string
     studentName: string
@@ -608,6 +623,7 @@ export type MissionProgressOverrideRow = {
     // actually sees. A teacher overriding a "default" row causes the
     // row to be created for the first time via the upsert below.
     hasRealRow: boolean
+    flaggedQuestions: FlaggedQuestion[]
 }
 
 // One row per enrolled student, teacher-facing, for a single mission —
@@ -620,7 +636,11 @@ export type MissionProgressOverrideRow = {
 // EVERY enrolled student from a teacher's own session.
 export async function getMissionProgressForTeacher(
     missionId: string
-): Promise<{ rows: MissionProgressOverrideRow[]; masteryThreshold: number } | null> {
+): Promise<{
+    rows: MissionProgressOverrideRow[]
+    masteryThreshold: number
+    analytics: { totalPendingFlags: number; studentsWithFlags: number; modelTrainingExamples: number }
+} | null> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
@@ -668,8 +688,61 @@ export async function getMissionProgressForTeacher(
 
     const progressByStudent = new Map((progressRows ?? []).map((p) => [p.student_id, p]))
 
+    // THESIS ML COMPONENT (2026-09-06): pending shakiness flags for
+    // every question in this mission, joined with the question's own
+    // prompt text so the teacher sees WHICH question, not just a
+    // count. Reads via the regular client — migration 102's teacher
+    // SELECT policy on mastery_shakiness_snapshots already scopes this
+    // to missions this teacher owns, same ownership chain as
+    // everywhere else in this function.
+    const { data: activitiesForMission } = await supabase
+        .from('activities')
+        .select('id')
+        .eq('mission_id', missionId)
+    const activityIdsForMission = (activitiesForMission ?? []).map((a) => a.id)
+
+    const { data: questionsForMission } = await supabase
+        .from('activity_questions')
+        .select('id, prompt')
+        .in('activity_id', activityIdsForMission)
+    const questionPromptById = new Map((questionsForMission ?? []).map((q) => [q.id, q.prompt]))
+    const questionIdsForMission = (questionsForMission ?? []).map((q) => q.id)
+
+    const { data: pendingSnapshots } = await supabase
+        .from('mastery_shakiness_snapshots')
+        .select('id, student_id, question_id, hint_uses, wrong_count, days_since_practice, predicted_shaky_probability')
+        .in('question_id', questionIdsForMission)
+        .eq('status', 'pending')
+
+    const flaggedByStudent = new Map<string, FlaggedQuestion[]>()
+    for (const snap of pendingSnapshots ?? []) {
+        const list = flaggedByStudent.get(snap.student_id) ?? []
+        list.push({
+            snapshotId: snap.id,
+            questionId: snap.question_id,
+            questionPrompt: questionPromptById.get(snap.question_id) ?? 'Question',
+            hintUses: snap.hint_uses,
+            wrongCount: snap.wrong_count,
+            daysSincePractice: snap.days_since_practice,
+            predictedShakyProbability: snap.predicted_shaky_probability,
+        })
+        flaggedByStudent.set(snap.student_id, list)
+    }
+
+    // Model-wide (NOT mission-scoped) training count, for the simple
+    // analytics summary — mastery_shakiness_model has no SELECT policy
+    // for `authenticated` at all (migration 102: purely an internal
+    // engine table), so this one read needs the admin client.
+    const supabaseAdmin = createAdminClient()
+    const { data: modelRow } = await supabaseAdmin
+        .from('mastery_shakiness_model')
+        .select('training_examples')
+        .eq('id', 1)
+        .single()
+
     const rows: MissionProgressOverrideRow[] = students.map((s) => {
         const existing = progressByStudent.get(s.studentId)
+        const flaggedQuestions = flaggedByStudent.get(s.studentId) ?? []
         if (existing) {
             return {
                 studentId: s.studentId,
@@ -678,6 +751,7 @@ export async function getMissionProgressForTeacher(
                 correctStreak: existing.correct_streak,
                 masteredAt: existing.mastered_at,
                 hasRealRow: true,
+                flaggedQuestions,
             }
         }
         return {
@@ -687,10 +761,144 @@ export async function getMissionProgressForTeacher(
             correctStreak: 0,
             masteredAt: null,
             hasRealRow: false,
+            flaggedQuestions,
         }
     })
 
-    return { rows, masteryThreshold: mission.mastery_threshold }
+    const totalPendingFlags = rows.reduce((sum, r) => sum + r.flaggedQuestions.length, 0)
+    const studentsWithFlags = rows.filter((r) => r.flaggedQuestions.length > 0).length
+
+    return {
+        rows,
+        masteryThreshold: mission.mastery_threshold,
+        analytics: {
+            totalPendingFlags,
+            studentsWithFlags,
+            modelTrainingExamples: modelRow?.training_examples ?? 0,
+        },
+    }
+}
+
+export type ResetQuestionMasteryResult = { ok: true } | { ok: false; error: string }
+
+/**
+ * THESIS ML COMPONENT (2026-09-06): the teacher-facing action behind a
+ * flagged question's "Reset" button. Two things happen, and BOTH are
+ * required for the reset to actually mean anything:
+ *
+ * 1. question_mastery for this (student, question) goes back to
+ *    'learning' with correct_streak 0 — so it genuinely re-enters this
+ *    student's queue and can be re-earned for real.
+ *
+ * 2. mission_progress.status for this (student, mission) — IF it was
+ *    'mastered' — flips back to 'unlocked'. This is NOT optional: per
+ *    the Phase E mastery fix, a mission counts as mastered ONLY when
+ *    every one of its questions is mastered, so a mission with one
+ *    question just un-mastered genuinely isn't "mastered" anymore by
+ *    that same rule — leaving mission_progress.status as 'mastered'
+ *    would be inconsistent with it. It also has a hard functional
+ *    reason: submit-question-attempt.ts treats status === 'mastered'
+ *    as "this is a non-destructive replay," which SKIPS every mastery/
+ *    ML write entirely. Without this flip, the student could answer
+ *    the reset question again and NOTHING would actually be recorded
+ *    — the reset would look real but silently do nothing.
+ *
+ * The matching pending snapshot is marked 'teacher_reset', NOT
+ * 'confirmed_shaky' — this is a human decision, not an observed
+ * student outcome, and must never be trained on as if it were one
+ * (see migration 103's header).
+ */
+export async function resetQuestionMastery(
+    missionId: string,
+    studentId: string,
+    questionId: string
+): Promise<ResetQuestionMasteryResult> {
+    const user = await requireRole(['teacher'])
+    const supabase = await createClient()
+    const supabaseAdmin = createAdminClient()
+
+    const { data: mission } = await supabase
+        .from('missions')
+        .select('id, lessons!inner(course_id, courses!inner(teacher_id))')
+        .eq('id', missionId)
+        .single()
+
+    if (!mission || (mission as any).lessons.courses.teacher_id !== user.id) {
+        return { ok: false, error: 'You do not have access to this mission.' }
+    }
+
+    const courseId = (mission as any).lessons.course_id
+
+    const { data: enrollment } = await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('student_id', studentId)
+        .eq('course_id', courseId)
+        .eq('status', 'active')
+        .maybeSingle()
+
+    if (!enrollment) {
+        return { ok: false, error: 'This student is not enrolled in this course.' }
+    }
+
+    // Defense in depth: confirm this question actually belongs to THIS
+    // mission — never trust a client-supplied questionId without
+    // checking it resolves to something inside the mission this
+    // teacher is actually looking at.
+    const { data: question } = await supabase
+        .from('activity_questions')
+        .select('id, activities!inner(mission_id)')
+        .eq('id', questionId)
+        .single()
+
+    if (!question || (question as any).activities.mission_id !== missionId) {
+        return { ok: false, error: 'This question does not belong to this mission.' }
+    }
+
+    const { error: masteryError } = await supabaseAdmin
+        .from('question_mastery')
+        .update({
+            state: 'learning',
+            correct_streak: 0,
+            mastered_at: null,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('student_id', studentId)
+        .eq('question_id', questionId)
+
+    if (masteryError) {
+        return { ok: false, error: 'Could not reset this question.' }
+    }
+
+    // Only touch mission_progress if it was actually 'mastered' — see
+    // this function's header for why leaving it 'mastered' would
+    // silently defeat the whole point of the reset.
+    const { data: missionProgress } = await supabaseAdmin
+        .from('mission_progress')
+        .select('status')
+        .eq('student_id', studentId)
+        .eq('mission_id', missionId)
+        .maybeSingle()
+
+    if (missionProgress?.status === 'mastered') {
+        await supabaseAdmin
+            .from('mission_progress')
+            .update({ status: 'unlocked', mastered_at: null, updated_at: new Date().toISOString() })
+            .eq('student_id', studentId)
+            .eq('mission_id', missionId)
+    }
+
+    // Clear the flag — 'teacher_reset', never 'confirmed_shaky'. This
+    // is a human decision, not a real observed outcome; it must never
+    // be fed into the model's training.
+    await supabaseAdmin
+        .from('mastery_shakiness_snapshots')
+        .update({ status: 'teacher_reset', resolved_at: new Date().toISOString() })
+        .eq('student_id', studentId)
+        .eq('question_id', questionId)
+        .eq('status', 'pending')
+
+    return { ok: true }
 }
 
 export type OverrideMissionProgressAction = 'unlock' | 'lock' | 'mark_mastered' | 'reset_streak'

@@ -22,12 +22,14 @@ export function SearchableSelect({
     placeholder,
     required,
     disabled,
+    onChange,
 }: {
     name: string
     options: SearchableSelectOption[]
     placeholder: string
     required?: boolean
     disabled?: boolean
+    onChange?: (id: string) => void
 }) {
     const [query, setQuery] = useState('')
     const [selectedId, setSelectedId] = useState('')
@@ -62,13 +64,17 @@ export function SearchableSelect({
         setSelectedId(option.id)
         setQuery(option.label)
         setIsOpen(false)
+        onChange?.(option.id)
     }
 
     function handleInputChange(value: string) {
         setQuery(value)
         setIsOpen(true)
         setHighlightedIndex(0)
-        if (selectedId) setSelectedId('')
+        if (selectedId) {
+            setSelectedId('')
+            onChange?.('')
+        }
     }
 
     function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {

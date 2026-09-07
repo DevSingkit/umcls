@@ -51,8 +51,8 @@ export default async function AdminDashboardPage() {
             href: '/admin/grades',
             icon: GraduationCap,
             iconBg: 'bg-info-soft text-info',
-            title: 'View grades',
-            description: "See every class's gradebook.",
+            title: 'View scores',
+            description: "See every class's scores.",
         },
         {
             href: '/admin/course-activity',

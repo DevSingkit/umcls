@@ -87,7 +87,7 @@ export function CreateUserForm() {
 
             <div>
                 <label htmlFor="temporaryPassword" className="text-label text-text-secondary block mb-2">
-                    Temporary password
+                    Password
                 </label>
                 <input
                     id="temporaryPassword"
@@ -100,9 +100,6 @@ export function CreateUserForm() {
                     className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     placeholder="At least 12 characters, with upper, lower, and a number"
                 />
-                <p className="text-caption text-text-secondary mt-2">
-                    Share this with the new user directly. They can change it after logging in.
-                </p>
             </div>
 
             {!state.ok && state.error && (
@@ -113,7 +110,7 @@ export function CreateUserForm() {
 
             {state.ok && (
                 <p className="text-caption text-success" role="status">
-                    Account created. The person can now log in with the email and temporary password above.
+                    Account created. The person can now log in with the email and password above.
                 </p>
             )}
 

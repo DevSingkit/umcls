@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Plus, FileText } from 'lucide-react'
 import { createAssignment } from '@/features/assignments/actions/assignments'
@@ -26,6 +26,21 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [selectedFiles, setSelectedFiles] = useState<File[]>([])
     const router = useRouter()
+
+    // Instructions textarea grows with its content instead of scrolling
+    // internally — reset to auto first so shrinking (e.g. deleting a
+    // line) is picked up too, not just growth, then snap to the actual
+    // content height.
+    const instructionsRef = useRef<HTMLTextAreaElement>(null)
+    function resizeInstructions() {
+        const el = instructionsRef.current
+        if (!el) return
+        el.style.height = 'auto'
+        el.style.height = `${el.scrollHeight}px`
+    }
+    useEffect(() => {
+        resizeInstructions()
+    }, [])
 
     function handleFilesChosen(e: React.ChangeEvent<HTMLInputElement>) {
         const chosen = Array.from(e.target.files ?? [])
@@ -98,8 +113,10 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                 <textarea
                     id="instructions"
                     name="instructions"
+                    ref={instructionsRef}
                     rows={4}
-                    className="mt-1 w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    onInput={resizeInstructions}
+                    className="mt-1 w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none overflow-hidden"
                 />
             </div>
             <div className="pt-2 border-t border-hairline space-y-6">

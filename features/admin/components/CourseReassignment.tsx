@@ -27,12 +27,12 @@ export function CourseReassignment({
         <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
             <div>
                 <label htmlFor="courseId-search" className="text-label text-text-secondary block mb-2">
-                    Course
+                    Class
                 </label>
                 <SearchableSelect
                     name="courseId"
                     required
-                    placeholder="Search for a course…"
+                    placeholder="Search for a class…"
                     options={courses.map((course) => ({
                         id: course.id,
                         label: course.title,
@@ -64,7 +64,7 @@ export function CourseReassignment({
             )}
             {state.ok && (
                 <p className="text-caption text-success" role="status">
-                    Course reassigned.
+                    Class reassigned.
                 </p>
             )}
 
@@ -73,7 +73,7 @@ export function CourseReassignment({
                 disabled={isPending}
                 className="w-full h-14 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
-                {isPending ? 'Reassigning…' : 'Reassign course'}
+                {isPending ? 'Reassigning…' : 'Reassign Class'}
             </button>
         </form>
     )

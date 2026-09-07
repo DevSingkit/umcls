@@ -12,7 +12,7 @@ export async function listLessonComments(lessonId: string) {
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('lesson_comments')
-        .select('id, body, created_at, author_id, users!lesson_comments_author_id_fkey(full_name, role)')
+        .select('id, body, created_at, author_id, parent_comment_id, users!lesson_comments_author_id_fkey(full_name, role)')
         .eq('lesson_id', lessonId)
         .is('deleted_at', null)
         .order('created_at', { ascending: true })
@@ -26,6 +26,7 @@ export async function listLessonComments(lessonId: string) {
 export async function postLessonComment(lessonId: string, formData: FormData): Promise<PostCommentResult> {
     const user = await requireUser()
     const body = formData.get('body')
+    const parentCommentIdRaw = formData.get('parentCommentId')
 
     if (typeof body !== 'string' || body.trim().length === 0) {
         return { ok: false, error: 'Comment cannot be empty.' }
@@ -34,12 +35,21 @@ export async function postLessonComment(lessonId: string, formData: FormData): P
         return { ok: false, error: 'Comment is too long (max 2000 characters).' }
     }
 
+    // Optional — present only when this is a reply. Single-level only:
+    // this is never itself another reply's parent, enforced in the UI
+    // (reply rows don't get their own Reply button), not re-checked
+    // here since there's no correctness/security reason a second level
+    // would need blocking server-side.
+    const parentCommentId =
+        typeof parentCommentIdRaw === 'string' && parentCommentIdRaw.length > 0 ? parentCommentIdRaw : null
+
     const supabase = await createClient()
 
     const { error } = await supabase.from('lesson_comments').insert({
         lesson_id: lessonId,
         author_id: user.id,
         body: body.trim(),
+        parent_comment_id: parentCommentId,
     })
 
     if (error) {

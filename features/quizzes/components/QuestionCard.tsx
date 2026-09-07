@@ -4,6 +4,13 @@
 // OptionBullet). Clicking Edit swaps in a form that mirrors
 // AddQuestionForm's exact field patterns, pre-filled with this
 // question's current data, so editing feels identical to creating one.
+//
+// GREEN BORDER REMOVED (2026-09-06): cosmetic-only pass, confirmed
+// with user — both view mode and edit mode carried a border-l-4
+// border-l-brand accent stripe, the same pattern that had been
+// mirrored into missions' ActivityCard.tsx and was removed there for
+// visual consistency with NewMissionForm.tsx. Removed here too, for
+// the same reason. No logic touched.
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
@@ -273,7 +280,7 @@ export function QuestionCard({
 
     if (!isEditing) {
         return (
-            <div className="bg-surface rounded-md border border-hairline shadow-card p-6 border-l-4 border-l-brand">
+            <div className="bg-surface rounded-md border border-hairline shadow-card p-6">
                 <div className="flex items-center justify-between mb-3 gap-3">
                     <p className="text-caption text-text-secondary">Question {index + 1}</p>
                     <div className="flex items-center gap-2">
@@ -318,7 +325,7 @@ export function QuestionCard({
     return (
         <form
             onSubmit={handleSave}
-            className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6 border-l-4 border-l-brand"
+            className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-body-emphasis text-ink">Editing question {index + 1}</h2>

@@ -177,7 +177,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
         <form
             ref={formRef}
             onSubmit={handleSubmit}
-            className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6 border-l-4 border-l-brand"
+            className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-6"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-body-emphasis text-ink">Add a question</h2>

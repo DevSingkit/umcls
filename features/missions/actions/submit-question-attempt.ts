@@ -54,6 +54,12 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { getMissionsForStudent } from './get-mission-for-student'
+import {
+    predictShakiness,
+    updateWeights,
+    INITIAL_SHAKINESS_WEIGHTS,
+    type ShakinessWeights,
+} from '@/lib/ml/mastery-shakiness'
 
 const QUESTION_MASTERY_STREAK_TARGET = 3
 const REMEDIATION_AFTER_ATTEMPTS = 3
@@ -363,7 +369,149 @@ async function resolveQuestionMastery(
         { onConflict: 'student_id,question_id' }
     )
 
+    // THESIS ML COMPONENT (2026-09-06): the two moments this model
+    // cares about both happen right here, since resolveQuestionMastery
+    // already computes exactly what's needed for both — no separate
+    // pass over the data required.
+    if (nextState === 'mastered' && !wasAlreadyMastered) {
+        // Moment 1: this question just crossed into mastered. Freeze
+        // the features AS THEY ARE RIGHT NOW (see migration 102's
+        // header for why this can't be re-derived later from
+        // question_mastery, which keeps changing after this point) and
+        // record what the model currently predicts.
+        await createShakinessSnapshot(supabaseAdmin, studentId, questionId, {
+            hintUses: (existing?.hint_uses ?? 0) + (hintWasVisible ? 1 : 0),
+            wrongCount: existing?.wrong_count ?? 0,
+            daysSincePractice: existing?.last_seen_at
+                ? (Date.now() - new Date(existing.last_seen_at).getTime()) / (1000 * 60 * 60 * 24)
+                : 0,
+        })
+    } else if (wasAlreadyMastered && !isCorrect) {
+        // Moment 2: a question that WAS mastered just got answered
+        // wrong — reality just told us that mastery didn't hold. This
+        // is the only outcome v1 trains on (see migration 102's header
+        // on why "confirmed solid" isn't handled yet).
+        await resolveShakinessSnapshot(supabaseAdmin, studentId, questionId)
+    }
+
     return { correctStreak: nextStreak, state: nextState }
+}
+
+/**
+ * Reads the single shared model row (see migration 102 — one global
+ * model, not one per question/student; a small school has nowhere
+ * near enough per-question attempts to support anything finer).
+ */
+async function getShakinessModel(
+    supabaseAdmin: ReturnType<typeof createAdminClient>
+): Promise<{ weights: ShakinessWeights; trainingExamples: number }> {
+    const { data } = await supabaseAdmin
+        .from('mastery_shakiness_model')
+        .select('weight_hint_uses, weight_days_since_practice, weight_wrong_count, intercept, training_examples')
+        .eq('id', 1)
+        .single()
+
+    if (!data) {
+        // Should never happen — migration 102 seeds the singleton row —
+        // but fall back to a fresh untrained model rather than throwing,
+        // since a missing ML row must never block a student's answer
+        // submit from completing.
+        return { weights: INITIAL_SHAKINESS_WEIGHTS, trainingExamples: 0 }
+    }
+
+    return {
+        weights: {
+            weightHintUses: data.weight_hint_uses,
+            weightDaysSincePractice: data.weight_days_since_practice,
+            weightWrongCount: data.weight_wrong_count,
+            intercept: data.intercept,
+        },
+        trainingExamples: data.training_examples,
+    }
+}
+
+/**
+ * Moment 1 from resolveQuestionMastery above: a question just reached
+ * mastered. Records the model's current prediction against the frozen
+ * features, status 'pending' — this is what resolveShakinessSnapshot
+ * looks up later if/when this mastery breaks.
+ */
+async function createShakinessSnapshot(
+    supabaseAdmin: ReturnType<typeof createAdminClient>,
+    studentId: string,
+    questionId: string,
+    features: { hintUses: number; wrongCount: number; daysSincePractice: number }
+): Promise<void> {
+    const { weights } = await getShakinessModel(supabaseAdmin)
+    const predictedShakyProbability = predictShakiness(features, weights)
+
+    await supabaseAdmin.from('mastery_shakiness_snapshots').insert({
+        student_id: studentId,
+        question_id: questionId,
+        hint_uses: features.hintUses,
+        wrong_count: features.wrongCount,
+        days_since_practice: features.daysSincePractice,
+        predicted_shaky_probability: predictedShakyProbability,
+    })
+}
+
+/**
+ * Moment 2 from resolveQuestionMastery above: a previously-mastered
+ * question just got answered wrong. Finds the pending snapshot from
+ * when it was mastered, runs the actual SGD weight update against the
+ * frozen features (this is the only place any weight value in the
+ * whole model ever changes), and marks the snapshot resolved.
+ *
+ * If no pending snapshot exists (shouldn't normally happen, but not
+ * assumed impossible — e.g. a snapshot predating this feature's
+ * rollout), this is a no-op rather than an error: a missing ML
+ * training signal must never block or fail a student's real answer
+ * submit.
+ */
+async function resolveShakinessSnapshot(
+    supabaseAdmin: ReturnType<typeof createAdminClient>,
+    studentId: string,
+    questionId: string
+): Promise<void> {
+    const { data: snapshot } = await supabaseAdmin
+        .from('mastery_shakiness_snapshots')
+        .select('id, hint_uses, wrong_count, days_since_practice')
+        .eq('student_id', studentId)
+        .eq('question_id', questionId)
+        .eq('status', 'pending')
+        .order('mastered_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+    if (!snapshot) return
+
+    const { weights, trainingExamples } = await getShakinessModel(supabaseAdmin)
+    const updatedWeights = updateWeights(
+        {
+            hintUses: snapshot.hint_uses,
+            wrongCount: snapshot.wrong_count,
+            daysSincePractice: snapshot.days_since_practice,
+        },
+        weights,
+        1 // confirmed shaky — the only outcome v1 trains on
+    )
+
+    await supabaseAdmin
+        .from('mastery_shakiness_model')
+        .update({
+            weight_hint_uses: updatedWeights.weightHintUses,
+            weight_days_since_practice: updatedWeights.weightDaysSincePractice,
+            weight_wrong_count: updatedWeights.weightWrongCount,
+            intercept: updatedWeights.intercept,
+            training_examples: trainingExamples + 1,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', 1)
+
+    await supabaseAdmin
+        .from('mastery_shakiness_snapshots')
+        .update({ status: 'confirmed_shaky', resolved_at: new Date().toISOString() })
+        .eq('id', snapshot.id)
 }
 
 /**

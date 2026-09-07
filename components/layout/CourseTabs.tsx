@@ -27,7 +27,7 @@ export function CourseTabs({ courseId, role }: { courseId: string; role: Role })
     const tabs = [
         { label: 'Stream', href: base, isActive: pathname === base },
         { label: 'People', href: `${base}/people`, isActive: pathname.startsWith(`${base}/people`) },
-        { label: 'Grades', href: `${base}/grades`, isActive: pathname.startsWith(`${base}/grades`) },
+        { label: 'Scores', href: `${base}/grades`, isActive: pathname.startsWith(`${base}/grades`) },
     ]
 
     return (

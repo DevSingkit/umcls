@@ -46,17 +46,19 @@
 // one; the "match the create page" ask was specifically about this
 // count phrasing, not about adding/removing a preview.
 
-// REVEAL-CORRECT-ANSWER WIRING (migration 099, 2026-09-05): getMissionForTeacher's
-// select now includes reveal_correct_answer — threaded into
-// MissionSettingsForm's currentRevealCorrectAnswer prop below so the
-// toggle reflects real saved state instead of always defaulting to on.
+// STUDENT PROGRESS MOVED OUT (2026-09-06): the analytics summary +
+// per-student mastery table + reset actions (MissionProgressOverride)
+// used to live at the bottom of this page, requiring a scroll past
+// every activity just to check on students. Moved to its own sibling
+// route, progress/page.tsx, reachable via a direct "Progress" button
+// on the lesson page's mission row (alongside a new "Settings" button
+// pointing back here) — see progress/page.tsx for the moved content.
 
 import { notFound } from 'next/navigation'
-import { getMissionForTeacher, getMissionProgressForTeacher } from '@/features/missions/actions/create-mission'
+import { getMissionForTeacher } from '@/features/missions/actions/create-mission'
 import { MissionSettingsForm } from '@/features/missions/components/MissionSettingsForm'
 import { ActivityCard } from '@/features/missions/components/ActivityCard'
 import { AddActivityForm } from '@/features/missions/components/AddActivityForm'
-import { MissionProgressOverride } from '@/features/missions/components/MissionProgressOverride'
 
 export default async function EditMissionPage({
     params,
@@ -81,13 +83,6 @@ export default async function EditMissionPage({
         (sum: number, a: any) => sum + (a.questions?.length ?? 0),
         0
     )
-
-    // GAP #3: only meaningful once the mission is postable/posted —
-    // same reasoning as the reset-progress control in
-    // MissionSettingsForm.tsx. Fetched here (not inside
-    // MissionProgressOverride itself) since it needs the SAME
-    // ownership-scoped server context as everything else on this page.
-    const progressResult = m.is_published ? await getMissionProgressForTeacher(missionId) : null
 
     return (
         <div className="max-w-2xl mx-auto py-8 px-4 space-y-8">
@@ -134,17 +129,6 @@ export default async function EditMissionPage({
                 <h2 className="text-h3 text-ink mb-3">Add another activity</h2>
                 <AddActivityForm missionId={missionId} existingActivities={activities} />
             </div>
-
-            {progressResult && (
-                <div>
-                    <h2 className="text-h3 text-ink mb-3">Student progress</h2>
-                    <MissionProgressOverride
-                        missionId={missionId}
-                        rows={progressResult.rows}
-                        masteryThreshold={progressResult.masteryThreshold}
-                    />
-                </div>
-            )}
         </div>
     )
 }
