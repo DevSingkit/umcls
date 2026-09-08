@@ -25,43 +25,26 @@
 // has no direct write policy (service-role only, per HANDOFF.md's
 // Day 1 note), so a brand-new student has ZERO rows in that table.
 // Without a bootstrapping rule, every mission would read as its schema
-// default ('locked') and nobody could ever start. The rule applied
-// here: when no mission_progress row exists for a (mission, student)
-// pair, the FIRST published mission in the lesson (by order_index) is
-// treated as 'unlocked'; every other missing row is treated as
-// 'locked'. This is computed here at READ time — nothing is written.
-// Day 4's mastery-check action, which does the actual writing, needs
-// to apply this exact same rule when it creates a student's first-ever
-// mission_progress row, or the read path here and the write path
-// there will disagree about what a fresh student's first mission
-// should be.
+// default ('locked') and nobody could ever start.
 //
-// MULTI-QUESTION REWORK (2026-08-31): "one activity" is no longer one
-// prompt+options pair — it's a container holding MULTIPLE questions
-// (migration 094's activity_questions/activity_question_options),
-// Duolingo/Quizizz-style. This file's TWO exports are affected very
-// differently:
-//
-//   - getMissionsForStudent (the path-view function MissionPath.tsx
-//     renders) is UNCHANGED — confirmed by re-reading it against this
-//     rework's scope, not assumed. It only ever reads `missions` and
-//     `mission_progress`; it never touches activities or their
-//     content at all, so nothing about nested questions affects it.
-//     Kept byte-for-byte identical below.
-//
-//   - getMissionPreviewForStudent changes substantially: it now
-//     fetches each activity's activity_questions (not a flat prompt),
-//     each question's options (from the new
-//     activity_question_options_for_student view — mirrors
-//     activity_options_for_student's exact is_correct-omitted
-//     guarantee, see migration 094), and per-QUESTION mastery from the
-//     new question_mastery table instead of per-activity mastery from
-//     activity_mastery. The "unmastered first" initial sort described
-//     below now operates on activities using a computed "is this
-//     activity's question set fully mastered" rollup (every question
-//     mastered = activity counts as mastered for sort purposes), same
-//     rollup rule submit-question-attempt.ts uses to decide when to
-//     actually write activity_mastery.
+// BOOTSTRAPPING RULE FIXED (2026-09-07): originally, a missing row
+// unlocked ONLY if the mission was literally first in the lesson
+// (index === 0) — every other missing row defaulted locked, full
+// stop. Confirmed bug, not a misunderstanding: `ensureNextMissionUnlocked`
+// in submit-question-attempt.ts DOES insert a real 'unlocked' row for
+// the next mission the moment the current one is mastered — but only
+// for missions that already EXIST at that moment. If a teacher creates
+// Mission 2 AFTER a student has already mastered Mission 1, Mission 2
+// never existed when that unlock fired, so it never got a row, and
+// since it's not literally position 0, it defaulted locked forever —
+// with no way to ever unlock it, since replaying an already-mastered
+// Mission 1 never re-triggers the unlock (non-destructive replay never
+// writes). Fixed here: missions are now walked in order, and a missing
+// row unlocks if the PREVIOUS mission in that order is mastered (a
+// real row, or itself a computed default) — not "is this exactly
+// index 0." This correctly covers both the original case (first
+// mission, no predecessor, always unlocked) and the bug case (a
+// mission created after its predecessor was already mastered).
 
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/get-current-user'
@@ -79,14 +62,6 @@ export type MissionForStudent = {
     masteredAt: string | null
 }
 
-/**
- * Loads every published mission in a lesson, with this student's
- * progress (or the computed bootstrapping default described above)
- * joined in. This is what MissionPath.tsx renders directly.
- *
- * UNCHANGED by the multi-question rework — only reads missions/
- * mission_progress, neither of which the rework touches.
- */
 export async function getMissionsForStudent(lessonId: string): Promise<MissionForStudent[]> {
     const user = await requireRole(['student'])
     const supabase = await createClient()
@@ -117,39 +92,47 @@ export async function getMissionsForStudent(lessonId: string): Promise<MissionFo
 
     const progressByMissionId = new Map((progress ?? []).map((p) => [p.mission_id, p]))
 
-    return missionRows.map((mission, index) => {
+    // Walked sequentially (not .map()) specifically because each
+    // mission's default status now depends on whatever status the
+    // PREVIOUS mission in this same pass just resolved to — a plain
+    // .map() can't see its own prior iteration's output.
+    let previousMastered = true // nothing precedes the first mission — always eligible
+    const result: MissionForStudent[] = []
+    for (const mission of missionRows) {
         const existing = progressByMissionId.get(mission.id)
 
+        let status: MissionStatus
+        let correctStreak: number
+        let masteredAt: string | null
+
         if (existing) {
-            return {
-                id: mission.id,
-                title: mission.title,
-                description: mission.description,
-                orderIndex: mission.order_index,
-                masteryThreshold: mission.mastery_threshold,
-                status: existing.status as MissionStatus,
-                correctStreak: existing.correct_streak,
-                masteredAt: existing.mastered_at,
-            }
+            status = existing.status as MissionStatus
+            correctStreak = existing.correct_streak
+            masteredAt = existing.mastered_at
+        } else {
+            // No row yet — apply the bootstrapping default: unlocked
+            // only if the mission before this one (in order) is
+            // mastered, per this function's header comment above.
+            status = previousMastered ? 'unlocked' : 'locked'
+            correctStreak = 0
+            masteredAt = null
         }
 
-        // No row yet — apply the bootstrapping default documented at
-        // the top of this file. `index` is the position in this
-        // already-published-filtered, already-order_index-sorted
-        // array, not the raw order_index column, since a draft mission
-        // could otherwise occupy order_index 0 while being invisible
-        // to students.
-        return {
+        previousMastered = status === 'mastered'
+
+        result.push({
             id: mission.id,
             title: mission.title,
             description: mission.description,
             orderIndex: mission.order_index,
             masteryThreshold: mission.mastery_threshold,
-            status: index === 0 ? 'unlocked' : 'locked',
-            correctStreak: 0,
-            masteredAt: null,
-        }
-    })
+            status,
+            correctStreak,
+            masteredAt,
+        })
+    }
+
+    return result
 }
 
 // One question within an activity, student-facing — no is_correct

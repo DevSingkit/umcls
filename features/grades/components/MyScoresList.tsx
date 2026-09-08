@@ -19,7 +19,7 @@ export function MyScoresList({ courseId, scores }: { courseId: string; scores: M
     function href(row: MyScoreRow) {
         return row.kind === 'assignment'
             ? `/student/courses/${courseId}/assignments/${row.id}`
-            : `/student/courses/${courseId}/quizzes/${row.id}/results`
+            : `/student/courses/${courseId}/quizzes/${row.id}`
     }
 
     return (

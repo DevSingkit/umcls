@@ -10,12 +10,12 @@
 // {activityId, questionId} pair across every activity in the mission
 // goes into one queue, instead of one entry per activity.
 //
-// UI COPY RULE (confirmed by user, same rule submit-question-
-// attempt.ts's header documents): "streak" language is reserved for
-// QUESTION-level feedback only ("2 in a row!"). Activity-level
-// progress renders as "X/Y Questions Mastered" and must never say
-// streak, even though the underlying DB column is still named
-// correct_streak (that's a storage detail, not a UI word choice).
+// UI COPY RULE, UPDATED 2026-09-07: "streak" language is reserved for
+// QUESTION-level feedback only. The "X/Y Questions Mastered" indicator
+// this rule used to also cover has been REMOVED from the UI entirely
+// (see below) — students should not see how many attempts mastery
+// takes, so there's no longer a rendered mastery-count to word-choice
+// about at all.
 //
 // MISSION-LEVEL UI UNCHANGED: the top progress bar, streak flame
 // counter, and full-screen mastery celebration are all still driven by
@@ -28,6 +28,41 @@
 // activity's FIRST question — a reasonable default since remediation
 // activities aren't guaranteed to correspond 1:1 with the question
 // that triggered them.
+//
+// 2026-09-07 PASS — several changes together, summarized here since
+// they touch overlapping parts of this file:
+//   1. UNLOCK-CHAIN BUG: not fixed here at all — the actual fix lives
+//      in get-mission-for-student.ts (a bootstrapping-logic bug, not
+//      a runtime bug), see that file for detail.
+//   2. REVIEW MODE: `isReviewMode` (true when every question in every
+//      activity is already mastered) now drives an entirely separate,
+//      client-only, visual-only progression layer — see reviewStreaksRef
+//      and the isReviewMode branch inside handleCheck. NOTHING here
+//      writes to the database in review mode; the server already
+//      guaranteed that (submit-question-attempt.ts's
+//      isReviewOfMasteredMission branch), this only makes the CLIENT
+//      stop reflecting the server's frozen real numbers and instead
+//      show a genuine, resettable, session-local progression, ending
+//      in the same mastery celebration screen again once a full
+//      review pass completes.
+//   3/4. Bigger, more prominent "Let's review again!" badge; new
+//      persistent "Review mode" banner while isReviewMode is true.
+//   5. The "X/Y Questions Mastered" pill is gone from the UI entirely.
+//   6. Review mode now has a real stopping point (triggers the mastery
+//      screen again) instead of cycling forever with no signal.
+//   9. Praise message moved from below the tile grid to between the
+//      question and the grid; "N in a row!" text removed, "Nice job!"
+//      is now the only text shown for a correct answer.
+//   10. A plain wrong answer now re-shows the SAME question after a
+//      short pause (see the wrong-answer auto-retry effect) instead of
+//      shuffling into the queue — replaces the old manual "Keep going"
+//      button and its gap-reinsertion path. Remediation (a real,
+//      deliberate fork) still stays a manual button, unaffected.
+//   11. No more "Check answer" button — tapping a tile submits
+//      immediately (handleSelectOption calls handleCheck directly,
+//      passing the tapped option id rather than reading async state).
+//      Mis-taps are accepted as a real answer, per explicit
+//      confirmation — no "confirm before submitting" step was added.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -168,12 +203,30 @@ export function ActivityRunner({
 }) {
     const router = useRouter()
 
+    // REVIEW MODE (2026-09-07): true when EVERY question in EVERY
+    // activity of this mission is already mastered — i.e. this whole
+    // session is a non-destructive replay (see submit-question-
+    // attempt.ts's isReviewOfMasteredMission branch, which never
+    // writes anything for a session like this). Computed once from
+    // data already in the `mission` prop — no new prop or server call
+    // needed. An empty mission (no activities/questions at all) is
+    // never review mode, matching the same "empty ≠ vacuously
+    // mastered" reasoning get-mission-for-student.ts's own rollup
+    // already uses.
+    const isReviewMode =
+        mission.activities.length > 0 &&
+        mission.activities.every((a) => a.questions.length > 0 && a.questions.every((q) => q.isMastered))
+
     const [queue, setQueue] = useState<QueueItem[]>(() => flattenQueue(mission.activities))
     const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
     const [feedback, setFeedback] = useState<Feedback | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [correctStreak, setCorrectStreak] = useState(initialCorrectStreak)
+    // Seeded to 0 in review mode rather than the real (already-maxed)
+    // initialCorrectStreak — see this component's header comment for
+    // why review mode needs its own fully independent, visual-only
+    // progression instead of reflecting the frozen real numbers.
+    const [correctStreak, setCorrectStreak] = useState(isReviewMode ? 0 : initialCorrectStreak)
     const [showMastered, setShowMastered] = useState(false)
     const [unlockedNextMission, setUnlockedNextMission] = useState(false)
     const [overrideActivityId, setOverrideActivityId] = useState<string | null>(null)
@@ -194,10 +247,23 @@ export function ActivityRunner({
             mission.activities.flatMap((a) => a.questions.map((q) => [q.id, q.initialCorrectStreak]))
         )
     )
-    // Per-ACTIVITY rollup cache — same idea, seeded from each
-    // activity's masteredQuestionCount/totalQuestionCount, kept fresh
-    // locally so the "X/Y Questions Mastered" indicator updates
-    // immediately after each submit.
+    // REVIEW MODE (2026-09-07): a SEPARATE streak tracker, used only
+    // when isReviewMode is true, starting empty (every question reads
+    // as 0 via the `?? 0` default wherever this is read). Deliberately
+    // NOT seeded from real data, unlike questionStreaksRef above —
+    // review mode needs to start from a genuine visual zero and climb
+    // purely client-side. Never written to the database; nothing here
+    // ever calls a server action other than the same submitQuestionAttempt
+    // every mode already calls, which itself performs no writes during
+    // a review session (see submit-question-attempt.ts).
+    const reviewStreaksRef = useRef<Record<string, number>>({})
+    // Per-ACTIVITY rollup cache — kept updating internally in real mode
+    // (still useful data), but no longer rendered anywhere (the "X/Y
+    // Questions Mastered" indicator was removed from the UI entirely
+    // on 2026-09-07 — students should not see how many attempts
+    // mastery takes). Left in place rather than stripped out, since
+    // removing it risks missing some other future use of the same
+    // data with more edit churn than leaving inert state costs.
     const [activityRollups, setActivityRollups] = useState<
         Record<string, { masteredCount: number; totalCount: number }>
     >(
@@ -252,19 +318,24 @@ export function ActivityRunner({
     }
 
     function handleSelectOption(optionId: string) {
-        if (feedback) return
+        // CONTINUOUS MODE (2026-09-07): tapping a tile IS the answer —
+        // no separate "Check answer" button anymore. isSubmitting guard
+        // prevents a rapid double-tap from firing two submits for the
+        // same answer.
+        if (feedback || isSubmitting) return
         setSelectedOptionId(optionId)
+        handleCheck(optionId)
     }
 
-    async function handleCheck() {
-        if (!activeQuestion || !activeActivity || !selectedOptionId) return
+    async function handleCheck(optionId: string) {
+        if (!activeQuestion || !activeActivity) return
         setIsSubmitting(true)
         setError(null)
 
         const result = await submitQuestionAttempt({
             activityId: activeActivity.id,
             questionId: activeQuestion.id,
-            selectedOptionId,
+            selectedOptionId: optionId,
             hintWasVisible: hintRevealed,
         })
 
@@ -275,6 +346,55 @@ export function ActivityRunner({
             return
         }
 
+        markSeen(activeQuestion.id)
+
+        if (isReviewMode) {
+            // REVIEW MODE (2026-09-07): the server never writes
+            // anything for this session and always reports this
+            // question's REAL, FROZEN streak (already at target) no
+            // matter what's actually tapped here — see submit-
+            // question-attempt.ts's isReviewOfMasteredMission branch.
+            // Using that frozen number would mean review mode could
+            // never visually reset like a first attempt. So review
+            // mode tracks its own fully independent, client-only
+            // streak (reviewStreaksRef) and mission-wide streak
+            // (correctStreak state) — neither ever reads
+            // result.questionCorrectStreak or result.correctStreak.
+            // Nothing here writes to the database; this is purely a
+            // visual "start fresh" layer over data that never actually
+            // changes underneath it. The ORIGINAL mastery-shakiness
+            // snapshot (captured at the true first-mastery moment,
+            // migration 102) is completely unaffected by any of this.
+            const newLocalStreak = result.isCorrect
+                ? (reviewStreaksRef.current[activeQuestion.id] ?? 0) + 1
+                : 0
+            reviewStreaksRef.current[activeQuestion.id] = newLocalStreak
+            setCorrectStreak((prev) => (result.isCorrect ? prev + 1 : 0))
+
+            const everyQuestionLocallyMastered = mission.activities.every((a) =>
+                a.questions.every((q) => (reviewStreaksRef.current[q.id] ?? 0) >= QUESTION_MASTERY_STREAK_TARGET)
+            )
+
+            if (result.isCorrect && everyQuestionLocallyMastered) {
+                // A full review pass just completed — stop here rather
+                // than refilling the queue and cycling forever. Same
+                // celebration screen as real first mastery, just with
+                // different wording (see the showMastered screen below).
+                setShowMastered(true)
+                return
+            }
+
+            setFeedback({
+                isCorrect: result.isCorrect,
+                remediationActivityId: null, // remediation stays a real-mode-only concept
+                correctOptionId: result.correctOptionId,
+                correctOptionText: result.correctOptionText,
+                questionCorrectStreak: newLocalStreak,
+            })
+            return
+        }
+
+        // Real (non-review) mode — unchanged behavior from before.
         questionStreaksRef.current[activeQuestion.id] = result.questionCorrectStreak
         setActivityRollups((prev) => ({
             ...prev,
@@ -283,7 +403,6 @@ export function ActivityRunner({
                 totalCount: result.activityTotalQuestionCount,
             },
         }))
-        markSeen(activeQuestion.id)
         setCorrectStreak(result.correctStreak)
 
         if (result.unlockedNextMissionId) setUnlockedNextMission(true)
@@ -306,7 +425,10 @@ export function ActivityRunner({
         if (!activeItem) return
         const finishedQuestionId = activeItem.questionId
         const rest = queue.slice(1)
-        const nowMastered = (questionStreaksRef.current[finishedQuestionId] ?? 0) >= QUESTION_MASTERY_STREAK_TARGET
+        // Review mode tracks its own separate streak — see
+        // reviewStreaksRef's declaration above for why.
+        const streakRef = isReviewMode ? reviewStreaksRef : questionStreaksRef
+        const nowMastered = (streakRef.current[finishedQuestionId] ?? 0) >= QUESTION_MASTERY_STREAK_TARGET
 
         let nextQueue: QueueItem[]
         if (nowMastered) {
@@ -340,23 +462,11 @@ export function ActivityRunner({
         setFeedback(null)
     }
 
-    function handleTryAgain() {
-        advanceQueue()
-    }
-
     function exitToLesson() {
         router.push(`/student/courses/${courseId}/lessons/${lessonId}`)
         router.refresh()
     }
 
-    // AUTO-ADVANCE (2026-09-05): on a correct answer, move to the next
-    // question automatically after a short delay instead of waiting on
-    // a manual "Continue" tap — removed per explicit request. Cleared
-    // on unmount/dependency change so a Pause-tap or Quit mid-delay
-    // can't fire a stale advance after the component's gone. Wrong
-    // answers are NOT auto-advanced — the Try again/remediation choice
-    // stays manual, since that's a real branching decision (detour
-    // into a remediation activity or not), not just "move on".
     // Reset the hint reveal per question — a hint tapped open on
     // question A must not still be showing when the queue moves to
     // question B.
@@ -364,11 +474,37 @@ export function ActivityRunner({
         setHintRevealed(false)
     }, [activeQuestion?.id])
 
+    // AUTO-ADVANCE ON CORRECT (2026-09-05): move to the next question
+    // automatically after a short delay instead of waiting on a manual
+    // "Continue" tap. Cleared on unmount/dependency change so a
+    // Pause-tap or Quit mid-delay can't fire a stale advance after the
+    // component's gone.
     useEffect(() => {
         if (!feedback?.isCorrect) return
         const timer = setTimeout(() => {
             handleContinueAfterCorrect()
         }, 3000)
+        return () => clearTimeout(timer)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [feedback])
+
+    // WRONG-ANSWER AUTO-RETRY (2026-09-07): re-shows the SAME question
+    // after a brief pause instead of shuffling to a different one —
+    // replaces the old manual "Keep going" button/gap-reinsertion path
+    // for the ordinary wrong-answer case. Deliberately does NOT
+    // advance the queue at all — activeItem stays exactly where it was,
+    // so the identical question renders again, letting the student try
+    // a different option right where they are. Skipped once
+    // remediation becomes available (feedback.remediationActivityId
+    // set, real mode only) — that's still a deliberate manual fork the
+    // student/teacher should see and choose, not something to silently
+    // skip past.
+    useEffect(() => {
+        if (!feedback || feedback.isCorrect || feedback.remediationActivityId) return
+        const timer = setTimeout(() => {
+            setSelectedOptionId(null)
+            setFeedback(null)
+        }, 1800)
         return () => clearTimeout(timer)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [feedback])
@@ -396,7 +532,9 @@ export function ActivityRunner({
                 </span>
                 <div className="flex items-center justify-center gap-2">
                     <Sparkles size={26} className="text-on-ink" aria-hidden="true" />
-                    <p className="font-heading text-h1 text-on-ink">Mission mastered!</p>
+                    <p className="font-heading text-h1 text-on-ink">
+                        {isReviewMode ? 'Mastered again!' : 'Mission mastered!'}
+                    </p>
                     <Sparkles size={26} className="text-on-ink" aria-hidden="true" />
                 </div>
                 <p className="font-sans text-body-lg text-on-ink/90">
@@ -488,35 +626,58 @@ export function ActivityRunner({
                     </button>
                 </div>
 
-                {(activeRollup && activeRollup.totalCount > 1) || overrideActivityId || (isReturningQuestion && !overrideActivityId) ? (
+                {/* NEW (2026-09-07): the "X/Y Questions Mastered" pill
+                    that used to live here is gone entirely — students
+                    should not see how many attempts mastery takes.
+                    Replaced with a persistent, prominent review-mode
+                    banner instead of a small pill, per explicit
+                    request that this kind of context "is too little to
+                    be noticed." */}
+                {isReviewMode && (
+                    <div className="flex items-center gap-2 rounded-md bg-gamified-purple/10 border-2 border-gamified-purple px-4 py-3">
+                        <RotateCcw size={22} className="text-gamified-purple shrink-0" aria-hidden="true" />
+                        <p className="font-sans text-body-emphasis lg:text-lg font-bold text-gamified-purple">
+                            Review mode — you already mastered this! Just for fun.
+                        </p>
+                    </div>
+                )}
+
+                {(overrideActivityId || (isReturningQuestion && !overrideActivityId)) && (
                     <div className="flex flex-wrap items-center gap-2">
-                        {activeRollup && activeRollup.totalCount > 1 && (
-                            <span className="font-sans text-caption font-semibold text-text-secondary bg-surface-sunken rounded-pill px-3 py-1">
-                                {activeRollup.masteredCount}/{activeRollup.totalCount} Questions Mastered
-                            </span>
-                        )}
                         {overrideActivityId && (
                             <span className="font-sans text-caption font-semibold text-info bg-info-soft rounded-pill px-3 py-1">
                                 Related question
                             </span>
                         )}
                         {isReturningQuestion && !overrideActivityId && (
-                            <span className="inline-flex items-center gap-1.5 font-sans text-caption font-semibold text-warning bg-warning-soft rounded-pill px-3 py-1">
-                                <RotateCcw size={14} aria-hidden="true" />
-                                Let&apos;s review again!
-                            </span>
+                            <div className="flex items-center gap-2 rounded-md bg-warning-soft border-2 border-warning px-4 py-3">
+                                <RotateCcw size={20} className="text-warning shrink-0" aria-hidden="true" />
+                                <p className="font-sans text-body-emphasis lg:text-lg font-bold text-warning">
+                                    Let&apos;s review again!
+                                </p>
+                            </div>
                         )}
                     </div>
-                ) : null}
+                )}
             </div>
 
-            {/* ── Question: floats centered in whatever space is left
-                above the answer block, same "middle of screen" feel
-                as before. Larger + roomier on desktop only. ────────── */}
-            <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-4 max-w-2xl lg:max-w-4xl mx-auto w-full">
+            {/* ── Question + praise: floats centered in whatever space is
+                left above the answer block, same "middle of screen"
+                feel as before. Praise now renders ABOVE the tile grid
+                (moved here from below it, 2026-09-07) and is the ONLY
+                text shown for a correct answer — the streak-count
+                sentence that used to sit alongside it was removed. ── */}
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 sm:px-8 py-4 max-w-2xl lg:max-w-4xl mx-auto w-full">
                 <p className="text-center font-heading text-mission md:text-[1.75rem] lg:text-4xl text-ink">
                     {activeQuestion.prompt}
                 </p>
+                {feedback?.isCorrect && (
+                    <div className="flex items-center gap-2 text-success animate-bounce">
+                        <Sparkles size={24} aria-hidden="true" />
+                        <span className="font-heading text-lg lg:text-2xl uppercase tracking-wide">Nice job!</span>
+                        <Sparkles size={24} aria-hidden="true" />
+                    </div>
+                )}
             </div>
 
             {/* ── Answer grid + Check/feedback buttons: kept together as
@@ -561,7 +722,7 @@ export function ActivityRunner({
                             <button
                                 key={option.id}
                                 type="button"
-                                disabled={Boolean(feedback)}
+                                disabled={Boolean(feedback) || isSubmitting}
                                 onClick={() => handleSelectOption(option.id)}
                                 className={[
                                     `flex ${gridLayout.tileMinH} lg:min-h-[140px] w-full items-center gap-3 lg:gap-4 rounded-md ${gridLayout.padding} lg:p-6 text-left font-sans font-bold ${gridLayout.textSize} lg:text-xl text-on-ink shadow-card transition-opacity`,
@@ -582,27 +743,8 @@ export function ActivityRunner({
                     })}
                 </div>
 
-                {/* Desktop-only extra breathing room before the Check
-                    button — mobile keeps its existing space-y-4 gap. */}
+                {/* Desktop-only extra breathing room. */}
                 <div className="hidden lg:block h-2" />
-
-                {/* AUTO-ADVANCE CELEBRATION (2026-09-05): replaces the old
-                    manual "Correct! Continue ->" button — the useEffect
-                    above already advances the queue after 3s, this is
-                    just the visual filler so it doesn't look like nothing
-                    is happening while that timer runs. */}
-                {feedback?.isCorrect && (
-                    <div className="flex flex-col items-center gap-2 py-2">
-                        <div className="flex items-center gap-2 text-success animate-bounce">
-                            <Sparkles size={24} aria-hidden="true" />
-                            <span className="font-heading text-lg lg:text-2xl uppercase tracking-wide">Nice job!</span>
-                            <Sparkles size={24} aria-hidden="true" />
-                        </div>
-                        <p className="font-sans text-body-emphasis text-success">
-                            {feedback.questionCorrectStreak} in a row!
-                        </p>
-                    </div>
-                )}
 
                 {/* TAP-TO-REVEAL HINT (2026-09-05): shown whenever the
                     student has tapped the hint button, independent of
@@ -621,17 +763,14 @@ export function ActivityRunner({
                     </p>
                 )}
 
-                {!feedback && (
-                    <button
-                        type="button"
-                        onClick={handleCheck}
-                        disabled={!selectedOptionId || isSubmitting}
-                        className="w-full h-14 lg:h-20 rounded-2xl bg-gamified-green hover:bg-gamified-green-dark text-white font-heading text-lg lg:text-2xl uppercase tracking-wide shadow-card border-b-4 lg:border-b-8 border-gamified-green-dark active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:active:translate-y-0 disabled:active:border-b-4 transition-all flex items-center justify-center"
-                    >
-                        {isSubmitting ? 'Checking…' : 'Check answer'}
-                    </button>
-                )}
-
+                {/* CONTINUOUS MODE (2026-09-07): no "Check answer" button
+                    anymore — tapping a tile submits immediately (see
+                    handleSelectOption). No "Keep going" button either —
+                    a plain wrong answer auto-retries the SAME question
+                    after a short pause (see the wrong-answer auto-retry
+                    effect above). The ONLY manual button left in this
+                    whole flow is remediation below — a real fork worth
+                    a deliberate choice, not something to auto-skip. */}
                 {feedback && !feedback.isCorrect && feedback.remediationActivityId && (
                     <button
                         type="button"
@@ -639,16 +778,6 @@ export function ActivityRunner({
                         className="w-full h-14 lg:h-20 rounded-2xl bg-brand hover:bg-brand-hover text-white font-heading text-lg lg:text-2xl uppercase tracking-wide shadow-card border-b-4 lg:border-b-8 border-brand-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
                     >
                         Try a related question first
-                    </button>
-                )}
-
-                {feedback && !feedback.isCorrect && !feedback.remediationActivityId && (
-                    <button
-                        type="button"
-                        onClick={handleTryAgain}
-                        className="w-full h-14 lg:h-20 rounded-2xl bg-error hover:opacity-90 text-white font-heading text-lg lg:text-2xl uppercase tracking-wide shadow-card border-b-4 lg:border-b-8 border-error-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
-                    >
-                        Keep going →
                     </button>
                 )}
             </div>

@@ -67,12 +67,7 @@ export default async function QuizEditPage({
             </p>
             {questions.length > 0 && (
                 <div className="flex flex-wrap items-center gap-3 mb-8 bg-surface rounded-md border border-hairline p-4">
-                    <Link
-                        href={`/teacher/courses/${courseId}/quizzes/${quiz.id}/preview`}
-                        className="h-11 px-5 flex items-center rounded-md border-2 border-hairline text-body-md font-semibold text-ink hover:bg-surface-sunken transition-colors"
-                    >
-                        Preview
-                    </Link>
+                    
                     <Link
                         href={`/teacher/courses/${courseId}/quizzes/${quiz.id}/attempts`}
                         className="h-11 px-5 flex items-center rounded-md border-2 border-hairline text-body-md font-semibold text-ink hover:bg-surface-sunken transition-colors"
