@@ -1,10 +1,4 @@
 // components/layout/SiteNav.tsx
-//
-// Shared nav for the public marketing pages (Home, About, Our Story,
-// Contact, Admissions, Academics). Mobile-first: a hamburger menu that
-// opens a full-width panel on small screens, and a plain horizontal
-// link row from md: up. Reuses the same logo treatment already in
-// app/page.tsx's header so all pages look like one site.
 
 "use client";
 
@@ -27,19 +21,23 @@ export function SiteNav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 bg-sidebar px-4 sm:px-6">
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between py-3">
-        <Link href="/" className="inline-flex min-h-[44px] min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-surface">
+    <header className="sticky top-0 z-40 bg-sidebar px-4 sm:px-8 border-b-2 border-black/10 shadow-sm">
+      <div className="mx-auto flex max-w-[1280px] items-center justify-between py-4 sm:py-5">
+        {/* Brand Identity */}
+        <Link 
+          href="/" 
+          className="inline-flex min-h-[56px] min-w-0 items-center gap-4 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
+        >
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-pill bg-surface shadow-sm">
             <Image
               src="/logo.webp"
               alt="UMCLSI LMS"
               width={112}
               height={112}
-              className="h-7 w-7 object-contain"
+              className="h-10 w-10 object-contain"
             />
           </span>
-          <span className="truncate text-body-md font-semibold leading-tight text-on-ink sm:whitespace-normal sm:text-caption sm:font-medium">
+          <span className="truncate text-body-lg font-bold leading-tight text-on-ink sm:whitespace-normal sm:text-body-md sm:font-semibold">
             <span className="sm:hidden">UMCLSI</span>
             <span className="hidden sm:block">
               United Methodist Cooperative Learning System, Inc.
@@ -47,57 +45,57 @@ export function SiteNav() {
           </span>
         </Link>
 
-        {/* Desktop links */}
-        <nav className="hidden items-center gap-6 md:flex">
+        {/* Desktop Links & CTA */}
+        <nav className="hidden items-center gap-8 md:flex">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-body-md font-medium text-on-ink/85 transition-colors hover:text-on-ink"
+              className="text-body-lg font-semibold text-on-ink/90 transition-colors hover:text-on-ink rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
             >
               {link.label}
             </Link>
           ))}
           <Link
             href={loginLink.href}
-            className="inline-flex h-10 items-center rounded-md bg-surface px-5 text-body-md font-semibold text-ink transition-colors hover:bg-surface-sunken"
+            className="inline-flex h-13 items-center justify-center rounded-xl bg-brand px-7 text-body-lg font-bold text-white shadow-sm transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             {loginLink.label}
           </Link>
         </nav>
 
-        {/* Mobile menu button */}
+        {/* Mobile Menu Trigger (56px Touch Target) */}
         <button
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-label={open ? "Close menu" : "Open menu"}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-md text-on-ink md:hidden"
+          className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-white/10 text-on-ink md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
         >
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {open ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
         </button>
       </div>
 
-      {/* Mobile panel */}
+      {/* Mobile Drawer Panel */}
       {open && (
-        <nav className="border-t border-white/10 pb-4 md:hidden">
-          <ul className="mx-auto max-w-[1200px] px-4 pt-2 sm:px-6">
+        <nav className="border-t border-white/10 pb-6 md:hidden">
+          <ul className="mx-auto max-w-[1280px] px-4 pt-3 space-y-1">
             {links.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className="flex min-h-[48px] items-center text-body-md font-medium text-on-ink/90"
+                  className="flex min-h-[52px] items-center text-body-lg font-semibold text-on-ink/90 rounded-xl px-3 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   {link.label}
                 </Link>
               </li>
             ))}
-            <li className="pt-2">
+            <li className="pt-3 border-t border-white/10 mt-2">
               <Link
                 href={loginLink.href}
                 onClick={() => setOpen(false)}
-                className="flex min-h-[48px] items-center justify-center rounded-md bg-surface text-body-md font-semibold text-ink"
+                className="flex min-h-[56px] items-center justify-center rounded-xl bg-brand text-body-lg font-bold text-white shadow-sm transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 {loginLink.label}
               </Link>

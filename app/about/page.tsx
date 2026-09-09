@@ -1,17 +1,18 @@
 // app/about/page.tsx
-//
-// About Us.
-//
-// DESIGN-LMS 2.1 content pass (2026-09-06, continued): Mission and
-// Vision replaced with the school's official statements (previously
-// shorter placeholder copy). Core Values expanded from 4 to the
-// official 5 — Faith, Excellence, Cooperation, Integrity, Service —
-// each with its Filipino term, per the source content. Values grid
-// changed from 2-col to 3-col on desktop to fit 5 items without an
-// awkward orphaned last row at 2-col (5 items in a 2-col grid leaves
-// one alone; 3-col gives a clean 3+2).
 
-import { HandHeart, Sparkles, Users2, HeartHandshake, ShieldCheck, BookOpenCheck, Trees, ScrollText } from "lucide-react";
+import {
+  HandHeart,
+  Sparkles,
+  Users2,
+  HeartHandshake,
+  ScrollText,
+  ShieldCheck,
+  BookOpenCheck,
+  Trees,
+  Award,
+  Landmark,
+  GraduationCap,
+} from "lucide-react";
 import { SiteNav } from "@/components/layout/SiteNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
@@ -62,21 +63,44 @@ const missionPillars = [
   },
 ];
 
+const historyMilestones = [
+  {
+    year: "Church Ministry Roots",
+    title: "Methodist Educational Vision",
+    description: "Established as an educational ministry extension of the United Methodist Church, dedicated to providing accessible, value-centric basic education in Northern Caloocan.",
+  },
+  {
+    year: "DepEd Recognition",
+    title: "Government Accreditation",
+    description: "Secured official recognition from the Department of Education (DepEd) Division of Caloocan City for complete Kindergarten and Elementary levels.",
+  },
+  {
+    year: "Cooperative Model",
+    title: "Peer-Based Learning Paradigm",
+    description: "Adopted a cooperative learning methodology that structures classroom seating and tasks around team problem-solving and peer mentorship.",
+  },
+  {
+    year: "LMS & Modernization",
+    title: "Digital & LMS Integration",
+    description: "Implemented modern digital learning resources and LMS integration while preserving traditional classroom discipline and Christian values.",
+  },
+];
+
 const facilities = [
   {
     icon: ShieldCheck,
-    title: "A safe, secured campus",
-    description: "A controlled, monitored campus environment suited to Nursery through Grade 6 learners.",
+    title: "Secured & Monitored Campus",
+    description: "Controlled single-entry gate with full-time security staff suited for young Nursery to Grade 6 students.",
   },
   {
     icon: BookOpenCheck,
-    title: "Classrooms built for cooperative learning",
-    description: "Grouped seating and shared workspaces designed around group-based, peer-supported lessons.",
+    title: "Cooperative Learning Classrooms",
+    description: "Classrooms configured with group-oriented workspaces that foster peer collaboration and active teacher monitoring.",
   },
   {
     icon: Trees,
-    title: "Rooted in the Tala community",
-    description: "Located at 847 Sampaguita Street, Tala, Caloocan City — serving families in Northern Caloocan.",
+    title: "Community-Centered Location",
+    description: "Conveniently situated at 847 Sampaguita Street, Barangay Tala, Caloocan City — accessible to local neighborhood families.",
   },
 ];
 
@@ -85,134 +109,194 @@ export default function AboutPage() {
     <div className="min-h-screen bg-canvas text-ink antialiased">
       <SiteNav />
 
-      {/* ── Intro ────────────────────────────────────────────────────── */}
-      <section className="px-4 pb-12 pt-10 sm:px-6 md:pb-20 md:pt-16">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">Who we are</p>
-          <h1 className="mt-4 max-w-2xl text-h1 text-ink md:text-[3rem] md:leading-[1.0]">
+      {/* Hero Section */}
+      <section className="px-4 py-12 sm:px-6 md:py-16">
+        <div className="mx-auto max-w-[1280px]">
+          <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+            Who We Are
+          </p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
             United Methodist Cooperative Learning System, Inc.
           </h1>
-
-          <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
-            A recognized private basic education institution operating under
-            the DepEd Division of Caloocan City, and a ministry extension
-            associated with the United Methodist Church (UMC) network in
-            Metro Manila. We serve Nursery through Grade 6 in Tala, Caloocan
-            City, built around cooperative learning: students helping each
-            other grow, not competing against each other.
+          <p className="mt-4 max-w-2xl text-body-md leading-relaxed text-ink-soft">
+            A recognized private basic education institution operating under the DepEd Division of Caloocan City and an educational ministry associated with the United Methodist Church network. We serve Nursery through Grade 6 in Tala, Caloocan City, centered on cooperative learning—where students help each other grow academically, socially, and spiritually.
           </p>
+
+          {/* Quick Institutional Summary */}
+          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-border bg-surface p-6 shadow-sm md:grid-cols-4">
+            <div>
+              <p className="text-caption text-text-secondary">Institution Type</p>
+              <p className="mt-1 text-body-md font-bold text-ink">Private Basic Education</p>
+            </div>
+            <div>
+              <p className="text-caption text-text-secondary">DepEd Division</p>
+              <p className="mt-1 text-body-md font-bold text-ink">Caloocan City</p>
+            </div>
+            <div>
+              <p className="text-caption text-text-secondary">Affiliation</p>
+              <p className="mt-1 text-body-md font-bold text-ink">United Methodist Church</p>
+            </div>
+            <div>
+              <p className="text-caption text-text-secondary">Address</p>
+              <p className="mt-1 text-body-md font-bold text-ink">Tala, Caloocan City</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── Vision ───────────────────────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">Vision</p>
-          <p className="mt-4 max-w-2xl text-body-lg leading-relaxed text-ink-soft">
-            To be a premier Christian basic education institution in Tala,
-            Caloocan City, recognized for nurturing academically competent,
-            faith-filled, and socially responsible lifelong learners who
-            exemplify Christ-like character and collaborative leadership in
-            their communities.
-          </p>
+      {/* Vision & Mission */}
+      <section className="px-4 py-10 sm:px-6 md:py-12">
+        <div className="mx-auto grid max-w-[1280px] gap-8 lg:grid-cols-2">
+          {/* Vision Card */}
+          <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
+            <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+              Vision
+            </p>
+            <h2 className="mt-2 text-xl font-bold text-ink">
+              Our Future Outlook
+            </h2>
+            <p className="mt-4 text-body-md leading-relaxed text-ink-soft">
+              To be a premier Christian basic education institution in Tala, Caloocan City, recognized for nurturing academically competent, faith-filled, and socially responsible lifelong learners who exemplify Christ-like character and collaborative leadership in their communities.
+            </p>
+          </div>
+
+          {/* Mission Card */}
+          <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
+            <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+              Mission
+            </p>
+            <h2 className="mt-2 text-xl font-bold text-ink">
+              Our Educational Purpose
+            </h2>
+            <p className="mt-4 text-body-md leading-relaxed text-ink-soft">
+              United Methodist Cooperative Learning System, Inc. is committed to providing accessible, high-quality Christian education through a learner-centered and cooperative curriculum that develops students intellectually, morally, and spiritually.
+            </p>
+          </div>
         </div>
-      </section>
 
-      {/* ── Mission ──────────────────────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">Mission</p>
-          <p className="mt-4 max-w-2xl text-body-lg leading-relaxed text-ink-soft">
-            United Methodist Cooperative Learning System, Inc. is committed
-            to providing accessible, high-quality Christian education
-            through a learner-centered and cooperative curriculum. We strive
-            to:
-          </p>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-2">
+        {/* Mission Pillars */}
+        <div className="mx-auto mt-8 max-w-[1280px]">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {missionPillars.map((item) => (
               <div
                 key={item.title}
-                className="rounded-md bg-surface p-7 shadow-card transition-shadow hover:shadow-card-hover"
+                className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all hover:shadow-md"
               >
-                <h3 className="text-body-emphasis text-ink">{item.title}</h3>
-                <p className="mt-2 text-caption text-text-secondary">{item.description}</p>
+                <h3 className="text-body-md font-bold text-ink">{item.title}</h3>
+                <p className="mt-2 text-caption leading-relaxed text-text-secondary">{item.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Core values ──────────────────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">What guides us</p>
-          <h2 className="mt-3 text-h2 text-ink">Our core values</h2>
+      {/* Institutional Heritage & Timeline */}
+      <section className="px-4 py-10 sm:px-6 md:py-12">
+        <div className="mx-auto max-w-[1280px]">
+          <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+            Our Foundation
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-ink">Institutional Heritage</h2>
+          <p className="mt-4 max-w-2xl text-body-md text-text-secondary">
+            Built upon Methodist traditions of educational stewardship and community service in Northern Caloocan.
+          </p>
 
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {historyMilestones.map((milestone) => (
+              <div
+                key={milestone.title}
+                className="rounded-xl border border-border bg-surface p-6 shadow-sm"
+              >
+                <span className="text-caption font-semibold uppercase text-brand">
+                  {milestone.year}
+                </span>
+                <h3 className="mt-2 text-body-md font-bold text-ink">{milestone.title}</h3>
+                <p className="mt-2 text-caption leading-relaxed text-text-secondary">
+                  {milestone.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Core Values */}
+      <section className="px-4 py-10 sm:px-6 md:py-12">
+        <div className="mx-auto max-w-[1280px]">
+          <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+            What Guides Us
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-ink">Our Core Values</h2>
+
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {coreValues.map((value) => (
               <div
                 key={value.title}
-                className="rounded-md bg-surface p-7 shadow-card transition-shadow hover:shadow-card-hover"
+                className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all hover:shadow-md"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-brand-soft">
-                  <value.icon className="h-6 w-6 text-brand" strokeWidth={1.5} aria-hidden="true" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
+                  <value.icon className="h-6 w-6 text-brand" strokeWidth={2} aria-hidden="true" />
                 </div>
-                <h3 className="mt-5 text-body-emphasis text-ink">{value.title}</h3>
-                <p className="mt-2 text-caption text-text-secondary">{value.description}</p>
+                <h3 className="mt-4 text-body-md font-bold text-ink">{value.title}</h3>
+                <p className="mt-2 text-caption leading-relaxed text-text-secondary">{value.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Recognition & affiliation ────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">Recognition</p>
-          <h2 className="mt-3 text-h2 text-ink">
-            Recognized by DepEd, rooted in a larger church
+      {/* Recognition & Institutional Standards */}
+      <section className="px-4 py-10 sm:px-6 md:py-12">
+        <div className="mx-auto max-w-[1280px]">
+          <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+            Accreditation & Standards
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-ink">
+            Government Recognition & Church Affiliation
           </h2>
-          <p className="mt-4 max-w-xl text-body-md text-text-secondary">
-            UMCLSI operates under the DepEd Division of Caloocan City, and is
-            affiliated with the United Methodist Church network in Metro
-            Manila as a ministry extension bringing Christian basic
-            education to the Tala community.
+          <p className="mt-4 max-w-2xl text-body-md text-text-secondary">
+            UMCLSI strictly complies with government curriculum mandates while operating under the guidance of United Methodist governance principles.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-2.5">
-            <span className="inline-flex items-center rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
-              DepEd Division of Caloocan City
+          <div className="mt-6 flex flex-wrap gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-4 py-2 text-caption font-semibold text-brand">
+              <Award className="h-4 w-4" />
+              DepEd Division of Caloocan City Recognized
             </span>
-            <span className="inline-flex items-center rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
-              United Methodist Church &ndash; Metro Manila
+            <span className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-4 py-2 text-caption font-semibold text-brand">
+              <Landmark className="h-4 w-4" />
+              United Methodist Church Ministry Partner
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-4 py-2 text-caption font-semibold text-brand">
+              <GraduationCap className="h-4 w-4" />
+              K to 12 Curriculum Compliant
             </span>
           </div>
         </div>
       </section>
 
-      {/* ── Facilities ───────────────────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">Our campus</p>
-          <h2 className="mt-3 text-h2 text-ink">Campus &amp; environment</h2>
-          <p className="mt-4 max-w-xl text-body-md text-text-secondary">
-            A campus sized for an elementary school rather than spread thin
-            across one &mdash; safe, community-facing, and set up for the way
-            we teach.
+      {/* Campus & Facilities */}
+      <section className="px-4 py-10 sm:px-6 md:py-12">
+        <div className="mx-auto max-w-[1280px]">
+          <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+            Our Campus
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-ink">Campus & Environment</h2>
+          <p className="mt-4 max-w-2xl text-body-md text-text-secondary">
+            A dedicated elementary learning environment designed specifically for pre-school and grade school safety and active collaboration.
           </p>
 
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+          <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {facilities.map((item) => (
               <div
                 key={item.title}
-                className="rounded-md bg-surface p-7 shadow-card transition-shadow hover:shadow-card-hover"
+                className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all hover:shadow-md"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-brand-soft">
-                  <item.icon className="h-6 w-6 text-brand" strokeWidth={1.5} aria-hidden="true" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
+                  <item.icon className="h-6 w-6 text-brand" strokeWidth={2} aria-hidden="true" />
                 </div>
-                <h3 className="mt-5 text-body-emphasis text-ink">{item.title}</h3>
-                <p className="mt-2 text-caption text-text-secondary">{item.description}</p>
+                <h3 className="mt-4 text-body-md font-bold text-ink">{item.title}</h3>
+                <p className="mt-2 text-caption leading-relaxed text-text-secondary">{item.description}</p>
               </div>
             ))}
           </div>

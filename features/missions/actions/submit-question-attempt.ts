@@ -187,7 +187,19 @@ export async function submitQuestionAttempt(
         .eq('student_id', user.id)
         .eq('question_id', input.questionId)
 
-    await supabaseAdmin.from('attempt_events').insert({
+    // BUGFIX (2026-09-09): this insert previously had NO responded_at
+    // value at all — a NOT NULL column per schema — and NO error
+    // handling on the result. A live database audit found ZERO rows in
+    // attempt_events despite clear real usage everywhere else
+    // (question_mastery and mastery_shakiness_snapshots both had real
+    // rows from real gameplay), meaning every single insert here had
+    // been silently rejected by the database since this table's
+    // inception, with nothing anywhere ever surfacing it. Fixed by
+    // setting responded_at below; the error is now logged (not thrown)
+    // so a future failure is visible in server logs — but still
+    // deliberately does NOT abort the request, since a logging failure
+    // must never block a student's actual answer from being graded.
+    const { error: attemptEventError } = await supabaseAdmin.from('attempt_events').insert({
         student_id: user.id,
         activity_id: input.activityId,
         question_id: input.questionId,
@@ -195,7 +207,12 @@ export async function submitQuestionAttempt(
         is_correct: isCorrect,
         hint_shown: input.hintWasVisible,
         attempt_number: (priorAttemptCount ?? 0) + 1,
+        responded_at: new Date().toISOString(),
     })
+
+    if (attemptEventError) {
+        console.error('Failed to insert attempt_events row:', attemptEventError)
+    }
 
     let remediationActivityId: string | null = null
     let correctOptionId: string | null = null

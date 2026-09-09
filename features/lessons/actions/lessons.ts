@@ -110,6 +110,7 @@ export async function createLesson(formData: FormData): Promise<CreateLessonResu
         .from('lessons')
         .insert({
             course_id: courseId,
+            created_by: user.id,
             title,
             content: { type: 'text', body: content },
         })

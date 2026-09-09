@@ -1,10 +1,7 @@
-'use client'
-// features/settings/components/ProfileSection.tsx
-// Real file upload with live preview, avatar_url is a public URL
-// (see settings.ts). Name is saved separately via updateProfile.
-
+'use client' 
 import { useRef, useState } from 'react'
 import { updateProfile, uploadAvatar, removeAvatar } from '@/features/settings/actions/settings'
+import { ImageCropperModal } from './ImageCropperModal'
 
 type ProfileSectionProps = {
     initialFullName: string
@@ -20,6 +17,8 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
     const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
     const [avatarStatus, setAvatarStatus] = useState<'idle' | 'uploading' | 'error'>('idle')
     const [avatarError, setAvatarError] = useState<string | null>(null)
+
+    const [cropImageSrc, setCropImageSrc] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const initial = fullName?.trim()?.charAt(0)?.toUpperCase() || '?'
@@ -42,15 +41,31 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
         }
     }
 
-    async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
         if (!file) return
 
+        if (file.size > 20 * 1024 * 1024) {
+            setAvatarError('Photo is too large (max 20 MB). Please pick a smaller image.')
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onload = () => {
+            setCropImageSrc(reader.result as string)
+        }
+        reader.readAsDataURL(file)
+
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+
+    async function handleCropAndCompress(compressedFile: File) {
+        setCropImageSrc(null)
         setAvatarStatus('uploading')
         setAvatarError(null)
 
         const formData = new FormData()
-        formData.set('avatar', file)
+        formData.set('avatar', compressedFile)
 
         const result = await uploadAvatar(formData)
         if (result.ok) {
@@ -60,8 +75,6 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
             setAvatarStatus('error')
             setAvatarError(result.error)
         }
-
-        if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
     async function handleRemove() {
@@ -80,6 +93,14 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
     return (
         <section className="bg-surface rounded-md shadow-card p-6">
             <h2 className="text-h3 text-ink mb-4">Your profile</h2>
+
+            {cropImageSrc && (
+                <ImageCropperModal
+                    imageSrc={cropImageSrc}
+                    onCancel={() => setCropImageSrc(null)}
+                    onCropAndCompress={handleCropAndCompress}
+                />
+            )}
 
             <div className="flex items-center gap-4 mb-6">
                 <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-pill bg-brand-soft text-h3 text-brand overflow-hidden">
@@ -119,7 +140,7 @@ export function ProfileSection({ initialFullName, initialEmail, initialAvatarUrl
                             </button>
                         )}
                     </div>
-                    <p className="text-caption text-text-secondary mt-1">JPEG, PNG, or WEBP. Max 5 MB.</p>
+                    <p className="text-caption text-text-secondary mt-1">upload a photo.</p>
                     {avatarError && <p className="text-caption text-error mt-1">{avatarError}</p>}
                 </div>
             </div>

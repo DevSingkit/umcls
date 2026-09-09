@@ -117,137 +117,124 @@ async function classifyMissionReason({
     return hasAnyWrong ? 'needs_practice' : 'in_progress'
 }
 
+import { unstable_cache } from 'next/cache'
+
 export async function getStudentDashboardData() {
     const user = await requireRole(['student'])
     const supabase = await createClient()
 
-    const { data: enrollments } = await supabase
-        .from('enrollments')
-        .select(
-            'course_id, courses!inner(id, title, subject, description, created_at, users!courses_teacher_id_fkey(full_name, avatar_url))'
-        )
-        .eq('student_id', user.id)
-        .eq('status', 'active')
-        .order('created_at', { referencedTable: 'courses', ascending: false })
+    return unstable_cache(
+        async () => {
+            const { data: enrollments } = await supabase
+                .from('enrollments')
+                .select(
+                    'course_id, courses!inner(id, title, subject, description, created_at, users!courses_teacher_id_fkey(full_name, avatar_url))'
+                )
+                .eq('student_id', user.id)
+                .eq('status', 'active')
+                .order('created_at', { referencedTable: 'courses', ascending: false })
 
-    const courseList = (enrollments ?? []).map((e: any) => e.courses)
-    const courseIds = courseList.map((c: any) => c.id)
+            const courseList = (enrollments ?? []).map((e: any) => e.courses)
+            const courseIds = courseList.map((c: any) => c.id)
 
-    if (courseIds.length === 0) {
-        return {
-            continueLearning: [] as ContinueLearningItem[],
-            coursesPreview: [] as StudentCoursePreview[],
-            courseNameById: new Map<string, string>(),
-        }
-    }
-
-    const courseNameById = new Map(courseList.map((c: any) => [c.id, c.title]))
-
-    const [lessonsResult, completionsResult] = await Promise.all([
-        // All published lessons in the student's courses, ordered so the
-        // first not-completed one per course is easy to pick out below.
-        supabase
-            .from('lessons')
-            .select('id, course_id, title, order_index')
-            .in('course_id', courseIds)
-            .eq('is_published', true)
-            .is('deleted_at', null)
-            .order('order_index', { ascending: true }),
-
-        supabase.from('lesson_completions').select('lesson_id').eq('student_id', user.id),
-    ])
-
-    const completedLessonIds = new Set((completionsResult.data ?? []).map((c) => c.lesson_id))
-    const allLessons = lessonsResult.data ?? []
-    const lessonIds = allLessons.map((l) => l.id)
-
-    // PHASE 3.5: which lessons have mission-based content at all — the
-    // signal that decides, per course, whether to use the new
-    // mission-based targeting or fall back to the old lesson-only
-    // behavior (see top-of-file note).
-    const { data: allMissions } = await supabase
-        .from('missions')
-        .select('id, lesson_id')
-        .in('lesson_id', lessonIds.length > 0 ? lessonIds : ['00000000-0000-0000-0000-000000000000'])
-        .eq('is_published', true)
-        .is('deleted_at', null)
-
-    const lessonIdsWithMissions = new Set((allMissions ?? []).map((m) => m.lesson_id))
-    const coursesWithAnyMission = new Set(
-        allLessons.filter((l) => lessonIdsWithMissions.has(l.id)).map((l) => l.course_id)
-    )
-
-    const continueLearning: ContinueLearningItem[] = []
-
-    for (const courseId of courseIds) {
-        const courseName = courseNameById.get(courseId) ?? 'Course'
-        const lessonsInCourse = allLessons
-            .filter((l) => l.course_id === courseId)
-            .sort((a, b) => a.order_index - b.order_index)
-
-        if (!coursesWithAnyMission.has(courseId)) {
-            // Legacy fallback — byte-identical to the pre-Phase-3.5
-            // logic, for courses with no mission-based content yet.
-            const nextLesson = lessonsInCourse.find((l) => !completedLessonIds.has(l.id))
-            if (nextLesson) {
-                continueLearning.push({
-                    courseId,
-                    courseName,
-                    lessonId: nextLesson.id,
-                    lessonTitle: nextLesson.title,
-                    mission: null,
-                })
+            if (courseIds.length === 0) {
+                return {
+                    continueLearning: [] as ContinueLearningItem[],
+                    coursesPreview: [] as StudentCoursePreview[],
+                    courseNameById: new Map<string, string>(),
+                }
             }
-            continue
-        }
 
-        // Mission-based targeting: walk this course's lessons in order,
-        // and within each lesson that has missions, reuse
-        // getMissionsForStudent (Phase 3's own bootstrapping-default
-        // logic, not re-derived here) to find the earliest 'unlocked'
-        // mission. Stops at the first hit — sequential, not
-        // Promise.all'd, so a course where everything is already
-        // mastered still has to check every lesson to CONFIRM nothing
-        // is unlocked. Acceptable for a dashboard-scale number of
-        // lessons; flagged as a possible future optimization rather
-        // than something worth complicating this code for now.
-        for (const lesson of lessonsInCourse) {
-            if (!lessonIdsWithMissions.has(lesson.id)) continue
+            const courseNameById = new Map(courseList.map((c: any) => [c.id, c.title]))
 
-            const missionsForLesson = await getMissionsForStudent(lesson.id)
-            const target = missionsForLesson.find((m) => m.status === 'unlocked')
+            const [lessonsResult, completionsResult] = await Promise.all([
+                supabase
+                    .from('lessons')
+                    .select('id, course_id, title, order_index')
+                    .in('course_id', courseIds)
+                    .eq('is_published', true)
+                    .is('deleted_at', null)
+                    .order('order_index', { ascending: true }),
 
-            if (target) {
-                const reason = await classifyMissionReason({
-                    supabase,
-                    studentId: user.id,
-                    missionId: target.id,
-                })
+                supabase.from('lesson_completions').select('lesson_id').eq('student_id', user.id),
+            ])
 
-                continueLearning.push({
-                    courseId,
-                    courseName,
-                    lessonId: lesson.id,
-                    lessonTitle: lesson.title,
-                    mission: { id: target.id, title: target.title, reason },
-                })
-                break
+            const completedLessonIds = new Set((completionsResult.data ?? []).map((c) => c.lesson_id))
+            const allLessons = lessonsResult.data ?? []
+            const lessonIds = allLessons.map((l) => l.id)
+
+            const { data: allMissions } = await supabase
+                .from('missions')
+                .select('id, lesson_id')
+                .in('lesson_id', lessonIds.length > 0 ? lessonIds : ['00000000-0000-0000-0000-000000000000'])
+                .eq('is_published', true)
+                .is('deleted_at', null)
+
+            const lessonIdsWithMissions = new Set((allMissions ?? []).map((m) => m.lesson_id))
+            const coursesWithAnyMission = new Set(
+                allLessons.filter((l) => lessonIdsWithMissions.has(l.id)).map((l) => l.course_id)
+            )
+
+            const continueLearning: ContinueLearningItem[] = []
+
+            for (const courseId of courseIds) {
+                const courseName = courseNameById.get(courseId) ?? 'Course'
+                const lessonsInCourse = allLessons
+                    .filter((l) => l.course_id === courseId)
+                    .sort((a, b) => a.order_index - b.order_index)
+
+                if (!coursesWithAnyMission.has(courseId)) {
+                    const nextLesson = lessonsInCourse.find((l) => !completedLessonIds.has(l.id))
+                    if (nextLesson) {
+                        continueLearning.push({
+                            courseId,
+                            courseName,
+                            lessonId: nextLesson.id,
+                            lessonTitle: nextLesson.title,
+                            mission: null,
+                        })
+                    }
+                    continue
+                }
+
+                for (const lesson of lessonsInCourse) {
+                    if (!lessonIdsWithMissions.has(lesson.id)) continue
+
+                    const missionsForLesson = await getMissionsForStudent(lesson.id)
+                    const target = missionsForLesson.find((m) => m.status === 'unlocked')
+
+                    if (target) {
+                        const reason = await classifyMissionReason({
+                            supabase,
+                            studentId: user.id,
+                            missionId: target.id,
+                        })
+
+                        continueLearning.push({
+                            courseId,
+                            courseName,
+                            lessonId: lesson.id,
+                            lessonTitle: lesson.title,
+                            mission: { id: target.id, title: target.title, reason },
+                        })
+                        break
+                    }
+                }
             }
-        }
-        // No 'unlocked' mission found anywhere in the course after
-        // checking every lesson — every reachable mission is mastered.
-        // Nothing pushed for this course, matching the "all mastered,
-        // omit" case.
-    }
 
-    const coursesPreview: StudentCoursePreview[] = courseList.slice(0, 4).map((c: any) => ({
-        id: c.id,
-        title: c.title,
-        subject: c.subject,
-        description: c.description,
-        teacherName: c.users?.full_name ?? null,
-        teacherAvatarUrl: c.users?.avatar_url ?? null,
-    }))
+            const coursesPreview: StudentCoursePreview[] = courseList.slice(0, 4).map((c: any) => ({
+                id: c.id,
+                title: c.title,
+                subject: c.subject,
+                description: c.description,
+                teacherName: c.users?.full_name ?? null,
+                teacherAvatarUrl: c.users?.avatar_url ?? null,
+            }))
 
-    return { continueLearning, coursesPreview, courseNameById }
+            return { continueLearning, coursesPreview, courseNameById }
+        },
+        ['student-dashboard-data', user.id],
+        { revalidate: 60, tags: [`student-dashboard-${user.id}`] }
+    )()
 }
+

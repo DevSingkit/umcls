@@ -32,6 +32,7 @@
 // redundant/explanatory UI copy) targets. Removed. (2) "Back to sign
 // in" was h-11 (44px) — bumped to h-12 (48px), the standing minimum
 // for any clickable target.
+// app/(auth)/forgot-password/page.tsx
 
 import Link from "next/link";
 import { UserCog } from "lucide-react";
@@ -39,42 +40,44 @@ import { SiteNav } from "@/components/layout/SiteNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export default function ForgotPasswordPage() {
-    return (
-        <div className="flex min-h-screen flex-col bg-canvas text-ink antialiased">
-            <SiteNav />
+  return (
+    <div className="flex min-h-screen flex-col bg-canvas text-ink antialiased">
+      <SiteNav />
 
-            <main
-                id="main-content"
-                className="flex flex-1 items-center justify-center px-6 py-16"
-            >
-                <div className="w-full max-w-sm">
-                    {/* Card */}
-                    <div className="rounded-md bg-surface p-8 text-center shadow-modal sm:p-10">
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-pill bg-canvas">
-                            <UserCog className="h-6 w-6 text-ink" strokeWidth={1.5} />
-                        </div>
+      <main
+        id="main-content"
+        className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 md:py-16"
+      >
+        <div className="w-full max-w-md">
+          {/* Card */}
+          <div className="rounded-xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-canvas text-ink">
+              <UserCog className="h-6 w-6" strokeWidth={1.5} />
+            </div>
 
-                        <h1 className="mt-5 text-h3 text-ink">
-                            Contact your school admin
-                        </h1>
+            <h1 className="mt-4 text-xl font-bold tracking-tight text-ink sm:text-2xl">
+              Contact your school admin
+            </h1>
 
-                        <p className="mt-3 text-body-md text-text-secondary">
-                            For your account&apos;s security, password resets are
-                            handled by your school admin. Reach out to them directly
-                            and they&apos;ll set a new password for your account.
-                        </p>
+            <p className="mt-2 text-caption text-text-secondary leading-relaxed">
+              For your account&apos;s security, password resets are handled
+              by your school admin. Reach out to them directly and they&apos;ll
+              set a new password for your account.
+            </p>
 
-                        <Link
-                            href="/login"
-                            className="mt-8 inline-flex h-12 items-center justify-center text-body-md text-brand hover:underline"
-                        >
-                            Back to sign in
-                        </Link>
-                    </div>
-                </div>
-            </main>
-
-            <SiteFooter />
+            <div className="mt-6">
+              <Link
+                href="/login"
+                className="inline-flex h-12 items-center justify-center text-caption font-semibold text-brand hover:underline"
+              >
+                Back to sign in
+              </Link>
+            </div>
+          </div>
         </div>
-    );
+      </main>
+
+      <SiteFooter />
+    </div>
+  );
 }

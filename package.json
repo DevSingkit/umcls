@@ -7,14 +7,23 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:rls": "vitest run tests/security/rls-audit.test.ts",
     "prepare": "husky"
+  },
+  "pnpm": {
+    "overrides": {
+      "fast-uri": ">=3.1.6",
+      "js-yaml": ">=4.3.2",
+      "sharp": ">=0.35.4"
+    }
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "clsx": "^2.1.1",
-    "detect-secrets": "^1.0.6",
     "exceljs": "^4.4.0",
     "lucide-react": "^1.23.0",
     "next": "^15.5.20",
@@ -37,9 +46,7 @@
     "dotenv": "^17.4.2",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.20",
-    "eslint-plugin-no-restricted-imports": "^0.0.0",
     "husky": "^9.1.7",
-    "only-allow": "^1.2.2",
     "postcss": "^8.5.16",
     "prettier": "^3.9.4",
     "tailwindcss": "^3.4.19",

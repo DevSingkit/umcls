@@ -6,7 +6,7 @@ import { getEnrollableStudents } from '@/features/courses/actions/enroll-student
 import { CourseMenu } from '@/features/courses/components/CourseMenu'
 import { CreateMenu } from '@/features/courses/components/CreateMenu'
 import { EnrollStudentForm } from '@/features/courses/components/EnrollStudentForm'
-import { CourseTabs } from '@/components/layout/CourseTabs'
+import { CourseStreamHeader } from '@/components/layout/CourseStreamHeader'
 
 // Shared chrome for the three "browsing" course tabs — Stream, People,
 // Grades. This is a Next.js route group layout (the `(overview)`
@@ -18,9 +18,11 @@ import { CourseTabs } from '@/components/layout/CourseTabs'
 // tab row only shows on the actual browsing pages, never on a create
 // or edit screen.
 //
-// Previously this header+tabs markup only existed inside the Stream
-// page.tsx — People and Grades had no header/tabs at all (just a bare
-// Back button), which is the bug this layout fixes.
+// Title + tabs now live in the sticky TopNav (UMCLSI > title) via
+// CourseStreamHeader, per design system v3 rule 3 — no standalone h1
+// on the canvas. The "Unpublished" badge and course action buttons
+// (Enroll, Create, course menu) stay here in the page body since
+// they're actions, not title text.
 export default async function TeacherCourseOverviewLayout({
     children,
     params,
@@ -49,18 +51,19 @@ export default async function TeacherCourseOverviewLayout({
 
     return (
         <div className="flex flex-col gap-6">
+            <CourseStreamHeader
+                courseId={courseId}
+                role="teacher"
+                title={course.subject || course.title}
+                subtitle={course.subject ? course.title : undefined}
+            />
+
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-h1 text-ink">{course.subject || course.title}</h1>
-                        {!course.is_published && (
-                            <span className="inline-flex items-center rounded-full bg-warning-soft px-2.5 py-1 text-caption font-semibold text-warning">
-                                Unpublished
-                            </span>
-                        )}
-                    </div>
-                    {course.subject && (
-                        <p className="text-body-md text-text-secondary">{course.title}</p>
+                    {!course.is_published && (
+                        <span className="inline-flex items-center rounded-full bg-warning-soft px-2.5 py-1 text-caption font-semibold text-warning">
+                            Unpublished
+                        </span>
                     )}
                     {course.description && (
                         <p className="text-caption text-text-secondary mt-1">{course.description}</p>
@@ -77,8 +80,6 @@ export default async function TeacherCourseOverviewLayout({
                     <CourseMenu courseId={course.id} isPublished={course.is_published} />
                 </div>
             </div>
-
-            <CourseTabs courseId={courseId} role="teacher" />
 
             {children}
         </div>

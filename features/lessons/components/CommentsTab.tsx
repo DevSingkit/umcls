@@ -1,19 +1,15 @@
 'use client'
-import { useRef, useState, useTransition } from 'react'
+import { useRef, useState, useTransition, useOptimistic } from 'react'
 import { useRouter } from 'next/navigation'
-import { postLessonComment, deleteLessonComment } from '@/features/lessons/actions/lesson-comments'
+import { postLessonComment, deleteLessonComment, type LessonComment } from '@/features/lessons/actions/lesson-comments'
+import { Avatar } from '@/components/ui/Avatar'
 
-type Comment = {
-    id: string
-    body: string
-    created_at: string
-    author_id: string
-    parent_comment_id: string | null
-    users: { full_name: string; role: string } | null
-}
+type Comment = LessonComment
 
-// Relative time, Google-Classroom-style ("2h ago", "3d ago") instead
-// of a full timestamp — keeps the header row compact next to the name.
+type OptimisticCommentAction =
+    | { type: 'add'; comment: Comment }
+    | { type: 'delete'; commentId: string }
+
 function timeAgo(isoDate: string): string {
     const seconds = Math.floor((Date.now() - new Date(isoDate).getTime()) / 1000)
     if (seconds < 60) return 'Just now'
@@ -42,49 +38,95 @@ export function CommentsTab({
     const formRef = useRef<HTMLFormElement>(null)
     const router = useRouter()
 
-    // Tracks which comment's reply box is open.
     const [replyingToId, setReplyingToId] = useState<string | null>(null)
-    const [isReplyPending, startReplyTransition] = useTransition()
+    const [, startReplyTransition] = useTransition()
+
+    const [optimisticComments, setOptimisticComments] = useOptimistic(
+        comments,
+        (state, action: OptimisticCommentAction) => {
+            if (action.type === 'add') {
+                return [...state, action.comment]
+            }
+            if (action.type === 'delete') {
+                return state.filter((c) => c.id !== action.commentId && c.parent_comment_id !== action.commentId)
+            }
+            return state
+        }
+    )
 
     function handleSubmit(formData: FormData) {
         setError(null)
+        const body = (formData.get('body') as string)?.trim()
+        if (!body) return
+
+        const tempComment: Comment = {
+            id: `temp-${Date.now()}`,
+            author_id: currentUserId,
+            parent_comment_id: null,
+            body,
+            created_at: new Date().toISOString(),
+            users: {
+                full_name: 'You',
+                avatar_url: null,
+                role: isTeacher ? 'teacher' : 'student',
+            },
+        }
+
+        formRef.current?.reset()
+
         startTransition(async () => {
+            setOptimisticComments({ type: 'add', comment: tempComment })
             const result = await postLessonComment(lessonId, formData)
             if (!result.ok) {
                 setError(result.error)
                 return
             }
-            formRef.current?.reset()
             router.refresh()
         })
     }
 
     function handleReplySubmit(parentCommentId: string, formData: FormData) {
         formData.set('parentCommentId', parentCommentId)
+        const body = (formData.get('body') as string)?.trim()
+        if (!body) return
+
+        const tempReply: Comment = {
+            id: `temp-${Date.now()}`,
+            author_id: currentUserId,
+            parent_comment_id: parentCommentId,
+            body,
+            created_at: new Date().toISOString(),
+            users: {
+                full_name: 'You',
+                avatar_url: null,
+                role: isTeacher ? 'teacher' : 'student',
+            },
+        }
+
+        setReplyingToId(null)
+
         startReplyTransition(async () => {
+            setOptimisticComments({ type: 'add', comment: tempReply })
             const result = await postLessonComment(lessonId, formData)
             if (!result.ok) {
                 setError(result.error)
                 return
             }
-            setReplyingToId(null)
             router.refresh()
         })
     }
 
     function handleDelete(commentId: string) {
         startTransition(async () => {
+            setOptimisticComments({ type: 'delete', commentId })
             await deleteLessonComment(commentId)
             router.refresh()
         })
     }
 
-    // Single-level threading: top-level comments (parent_comment_id
-    // null) each carry their own replies array, keyed off in one pass
-    // rather than filtering the full list once per comment.
-    const topLevelComments = comments.filter((c) => !c.parent_comment_id)
+    const topLevelComments = optimisticComments.filter((c) => !c.parent_comment_id)
     const repliesByParentId = new Map<string, Comment[]>()
-    for (const comment of comments) {
+    for (const comment of optimisticComments) {
         if (!comment.parent_comment_id) continue
         const existing = repliesByParentId.get(comment.parent_comment_id) ?? []
         existing.push(comment)
@@ -96,13 +138,11 @@ export function CommentsTab({
         const isReplying = replyingToId === comment.id
         return (
             <div key={comment.id} className="flex gap-3">
-                <span
-                    className={`shrink-0 rounded-pill bg-brand-soft text-brand flex items-center justify-center font-bold ${
-                        isReply ? 'w-7 h-7 text-caption' : 'w-9 h-9 text-caption'
-                    }`}
-                >
-                    {(comment.users?.full_name ?? '?').charAt(0).toUpperCase()}
-                </span>
+                <Avatar
+                    fullName={comment.users?.full_name ?? '?'}
+                    avatarUrl={comment.users?.avatar_url ?? null}
+                    size={isReply ? 'sm' : 'md'}
+                />
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-label text-ink">{comment.users?.full_name ?? 'Unknown'}</span>
@@ -113,10 +153,6 @@ export function CommentsTab({
                     </div>
                     <p className="text-body-md text-ink-soft whitespace-pre-wrap mt-0.5">{comment.body}</p>
                     <div className="flex items-center gap-4 mt-1">
-                        {/* Replies don't get their own Reply button —
-                            single-level threading only, same rule
-                            postLessonComment's server-side comment
-                            documents. */}
                         {!isReply && (
                             <button
                                 type="button"
@@ -129,8 +165,7 @@ export function CommentsTab({
                         {canDelete && (
                             <button
                                 onClick={() => handleDelete(comment.id)}
-                                disabled={isPending}
-                                className="text-caption text-error font-medium hover:underline disabled:opacity-60"
+                                className="text-caption text-error font-medium hover:underline"
                             >
                                 Delete
                             </button>
@@ -154,10 +189,9 @@ export function CommentsTab({
                             />
                             <button
                                 type="submit"
-                                disabled={isReplyPending}
-                                className="h-10 px-5 rounded-md bg-brand text-on-ink font-semibold text-caption hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                                className="h-10 px-5 rounded-md bg-brand text-on-ink font-semibold text-caption hover:bg-brand-hover transition-colors"
                             >
-                                {isReplyPending ? 'Posting…' : 'Reply'}
+                                Reply
                             </button>
                         </form>
                     )}
@@ -186,15 +220,14 @@ export function CommentsTab({
                 />
                 <button
                     type="submit"
-                    disabled={isPending}
-                    className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                    className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover transition-colors"
                 >
                     Post
                 </button>
             </form>
             {error && <p className="text-caption text-error">{error}</p>}
 
-            {comments.length === 0 ? (
+            {optimisticComments.length === 0 ? (
                 <p className="text-body-md text-text-secondary">No comments yet.</p>
             ) : (
                 <div className="bg-surface rounded-md shadow-card p-4 space-y-5">

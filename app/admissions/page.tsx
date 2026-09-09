@@ -1,54 +1,45 @@
 // app/admissions/page.tsx
-//
-// Admissions & Enrollment.
-//
-// DESIGN-LMS 2.1 content pass (2026-09-06): requirements were a single
-// merged list; the brief distinguishes New Students/Kindergarten
-// (PSA birth cert, baptismal cert if applicable, 2x2 photos) from
-// Transferees Grades 1-6 (Form 138, Good Moral cert, PSA birth cert,
-// LRN) — split into two lists. Steps reordered/renamed to match the
-// brief's five-step sequence exactly: Inquiry & Application →
-// Document Submission → Assessment/Interview → Assessment of Fees &
-// Payment → Official Enrollment (with LMS credential issuance named
-// explicitly, which the previous copy omitted).
 
 import Link from "next/link";
+import { FileText, CheckCircle2, HelpCircle } from "lucide-react";
 import { SiteNav } from "@/components/layout/SiteNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
 const newStudentRequirements = [
-  "PSA birth certificate (original & photocopy)",
-  "Baptismal certificate (if applicable)",
-  "Two 2x2 ID photos",
+  "PSA Birth Certificate (original & clear photocopy)",
+  "Baptismal Certificate (if applicable)",
+  "Two (2) recent 2x2 ID photos with white background",
+  "Duly accomplished UMCLSI Enrollment Form",
 ];
 
 const transfereeRequirements = [
-  "Form 138 (original report card from previous school)",
-  "Certificate of Good Moral Character",
-  "PSA birth certificate",
-  "Learner Reference Number (LRN)",
+  "Form 138 / Report Card (original with learner status)",
+  "Learner Reference Number (LRN) validation",
+  "Certificate of Good Moral Character from previous school",
+  "PSA Birth Certificate (original & photocopy)",
+  "Two (2) recent 2x2 ID photos with white background",
 ];
 
 const steps = [
   {
-    title: "Inquiry & application",
-    description: "Submit the initial application form online or on-campus.",
+    title: "Inquiry & Application",
+    description: "Submit the initial application form online or directly at the UMCLSI campus administration office.",
   },
   {
-    title: "Document submission",
-    description: "Submit the required academic and civil documents for your child's grade level.",
+    title: "Document Submission",
+    description: "Submit required academic and civil documents tailored to your child's entry level (Pre-School or Elementary Transferee).",
   },
   {
-    title: "Assessment or interview",
-    description: "A brief student evaluation and parent orientation to help place your child in the right section.",
+    title: "Assessment & Interview",
+    description: "Participate in a brief learner assessment and parent orientation to ensure proper grade and section placement.",
   },
   {
-    title: "Assessment of fees & payment",
-    description: "Settle tuition and miscellaneous fees at the finance desk.",
+    title: "Assessment of Fees & Payment",
+    description: "Settle matriculation, miscellaneous, and learning resource fees at the school finance desk under flexible payment plans.",
   },
   {
-    title: "Official enrollment",
-    description: "Receive your child's class schedule and LMS portal credentials.",
+    title: "Official Enrollment & LMS Credentials",
+    description: "Receive your child's official section assignment, class schedule, uniform vouchers, and UMCLSI LMS portal credentials.",
   },
 ];
 
@@ -57,60 +48,89 @@ export default function AdmissionsPage() {
     <div className="min-h-screen bg-canvas text-ink antialiased">
       <SiteNav />
 
-      {/* ── Intro ────────────────────────────────────────────────────── */}
-      <section className="px-4 pb-12 pt-10 sm:px-6 md:pb-20 md:pt-16">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">Join UMCLSI</p>
-          <h1 className="mt-4 max-w-2xl text-h1 text-ink md:text-[3rem] md:leading-[1.1]">
-            Admissions and enrollment
-          </h1>
-          <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
-            Open for Preschool (Nursery, Kindergarten 1 &amp; 2) and
-            Elementary (Grades 1&ndash;6). Here&apos;s what you&apos;ll need,
-            and what the process looks like from inquiry to your
-            child&apos;s first day.
+      {/* Hero Section */}
+      <section className="px-4 py-12 sm:px-6 md:py-16">
+        <div className="mx-auto max-w-[1280px]">
+          <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+            Join UMCLSI
           </p>
-          <Link
-            href="/contact"
-            className="mt-8 inline-flex h-14 items-center gap-2 rounded-md bg-brand px-7 text-body-md font-semibold text-on-ink transition-colors hover:bg-brand-hover"
-          >
-            Start an inquiry
-          </Link>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+            Admissions and Enrollment
+          </h1>
+          <p className="mt-4 max-w-2xl text-body-md leading-relaxed text-ink-soft">
+            Now accepting applications for Early Childhood (Nursery, Kindergarten 1 & 2) and Elementary Education (Grades 1–6). Follow our streamlined 5-step admissions process below.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-4">
+            <Link
+              href="/contact"
+              className="inline-flex items-center rounded-lg bg-brand px-6 py-3 text-caption font-semibold text-white transition-all hover:bg-brand-hover"
+            >
+              Start an Inquiry
+            </Link>
+          </div>
+
+          {/* Enrollment Status Bar */}
+          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-border bg-surface p-6 shadow-sm md:grid-cols-4">
+            <div>
+              <p className="text-caption text-text-secondary">Levels Open</p>
+              <p className="mt-1 text-body-md font-bold text-ink">Nursery to Grade 6</p>
+            </div>
+            <div>
+              <p className="text-caption text-text-secondary">Governance</p>
+              <p className="mt-1 text-body-md font-bold text-ink">DepEd Division Caloocan</p>
+            </div>
+            <div>
+              <p className="text-caption text-text-secondary">Payment Options</p>
+              <p className="mt-1 text-body-md font-bold text-ink">Annual / Term Schemes</p>
+            </div>
+            <div>
+              <p className="text-caption text-text-secondary">Office Hours</p>
+              <p className="mt-1 text-body-md font-bold text-ink">Mon–Fri (8:00 AM–4:00 PM)</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── Requirements ─────────────────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <h2 className="text-h2 text-ink">What to bring</h2>
+      {/* Admission Requirements */}
+      <section className="px-4 py-10 sm:px-6 md:py-12">
+        <div className="mx-auto max-w-[1280px]">
+          <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+            Documentation
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-ink">Required Documents for Admission</h2>
 
-          <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-16">
-            <div>
-              <p className="text-label text-text-secondary">
-                New students &amp; Kindergarten
-              </p>
+          <div className="mt-8 grid gap-8 md:grid-cols-2">
+            {/* New Students & Kindergarten */}
+            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+              <div className="flex items-center gap-2 text-brand">
+                <FileText className="h-5 w-5" />
+                <span className="text-caption font-semibold uppercase tracking-wider">
+                  New Students &amp; Kindergarten
+                </span>
+              </div>
               <ul className="mt-4 space-y-3">
                 {newStudentRequirements.map((item) => (
-                  <li
-                    key={item}
-                    className="rounded-md bg-surface p-5 text-body-md text-ink-soft shadow-card"
-                  >
-                    {item}
+                  <li key={item} className="flex items-start gap-3 text-body-md text-ink-soft">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
-            <div>
-              <p className="text-label text-text-secondary">
-                Transferees (Grades 1&ndash;6)
-              </p>
+
+            {/* Transferees */}
+            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+              <div className="flex items-center gap-2 text-brand">
+                <FileText className="h-5 w-5" />
+                <span className="text-caption font-semibold uppercase tracking-wider">
+                  Transferees (Grades 1–6)
+                </span>
+              </div>
               <ul className="mt-4 space-y-3">
                 {transfereeRequirements.map((item) => (
-                  <li
-                    key={item}
-                    className="rounded-md bg-surface p-5 text-body-md text-ink-soft shadow-card"
-                  >
-                    {item}
+                  <li key={item} className="flex items-start gap-3 text-body-md text-ink-soft">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -119,42 +139,53 @@ export default function AdmissionsPage() {
         </div>
       </section>
 
-      {/* ── Application steps ────────────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <h2 className="text-h2 text-ink">How to apply</h2>
+      {/* Enrollment Sequence */}
+      <section className="px-4 py-10 sm:px-6 md:py-12">
+        <div className="mx-auto max-w-[1280px]">
+          <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+            Step-by-step
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-ink">How to Complete Enrollment</h2>
 
-          <ol className="mt-10 space-y-8 border-l-2 border-hairline-strong pl-6 md:space-y-10 md:pl-8">
+          <div className="mt-8 relative border-l-2 border-border pl-6 space-y-8 md:pl-8 md:space-y-10">
             {steps.map((step, index) => (
-              <li key={step.title}>
-                <p className="text-body-emphasis text-ink">
-                  {index + 1}. {step.title}
-                </p>
-                <p className="mt-2 max-w-xl text-body-md text-text-secondary">
+              <div key={step.title} className="relative">
+                {/* Node badge */}
+                <div className="absolute -left-[31px] md:-left-[39px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-brand bg-surface" />
+                
+                <span className="text-caption font-semibold uppercase tracking-wider text-brand">
+                  Step {index + 1}
+                </span>
+                <h3 className="mt-1 text-body-md font-bold text-ink">{step.title}</h3>
+                <p className="mt-2 max-w-2xl text-caption leading-relaxed text-text-secondary">
                   {step.description}
                 </p>
-              </li>
+              </div>
             ))}
-          </ol>
+          </div>
         </div>
       </section>
 
-      {/* ── Tuition & payment ────────────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <h2 className="text-h2 text-ink">Tuition and payment</h2>
-          <p className="mt-4 max-w-xl text-body-md text-text-secondary">
-            Consult the administration desk for the latest tuition fee
-            breakdown, available payment schemes, and discounts (such as
-            early bird or sibling discounts) for your child&apos;s grade
-            level.
-          </p>
-          <Link
-            href="/contact"
-            className="mt-6 inline-flex h-12 items-center gap-2 rounded-md border-2 border-hairline bg-surface px-7 text-body-md font-semibold text-ink transition-colors hover:bg-surface-sunken"
-          >
-            Ask about fees
-          </Link>
+      {/* Tuition & Financial Support */}
+      <section className="px-4 py-10 sm:px-6 md:py-12">
+        <div className="mx-auto max-w-[1280px]">
+          <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
+            <p className="text-caption font-semibold uppercase tracking-wider text-brand">
+              Financial Information
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-ink">Tuition, Fees & Payment Plans</h2>
+            <p className="mt-4 max-w-2xl text-body-md leading-relaxed text-text-secondary">
+              Tuition schedules and payment plans (annual, semestral, or quarterly) are structured to keep quality Christian basic education accessible to local Tala families. Sibling discounts and early registration incentives are available at the administration desk.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-4">
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3 text-caption font-semibold text-white transition-all hover:bg-brand-hover"
+              >
+                Inquire About Tuition Schedule
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 

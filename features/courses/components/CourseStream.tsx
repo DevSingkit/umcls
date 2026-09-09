@@ -1,35 +1,16 @@
 import Link from 'next/link'
-import { FileText, ClipboardList, HelpCircle } from 'lucide-react'
+import { Play, Star } from 'lucide-react'
 import type { StreamItem } from '@/features/courses/actions/get-course-stream'
 import { AnnouncementCard } from '@/features/courses/components/AnnouncementCard'
+import { MaterialList } from '@/features/materials/components/MaterialList'
+import { LessonStreamComments } from '@/features/lessons/components/LessonStreamComments'
+import { Avatar } from '@/components/ui/Avatar'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 
-// PHASE 3.8: 'announcement' intentionally has no entry in KIND_LABEL/
-// KIND_ICON/KIND_ICON_BG below — those three maps only cover the
-// three kinds that render through the shared icon+title+badge Link
-// card. Announcement items never reach that rendering path at all
-// (see the early-return special case in the component below), so
-// omitting it here is deliberate, not an oversight — TypeScript would
-// flag a genuinely missing case if any of these maps were used
-// against an announcement item.
 const KIND_LABEL: Record<Exclude<StreamItem['kind'], 'announcement'>, string> = {
     lesson: 'Lesson',
     quiz: 'Quiz',
     assignment: 'Assignment',
-}
-
-// Same fixed icon + color mapping as TeacherCourseStream.tsx — one mapping,
-// used everywhere a lesson/quiz/assignment type is shown (DESIGN-LMS.md §8.7a).
-const KIND_ICON: Record<Exclude<StreamItem['kind'], 'announcement'>, typeof FileText> = {
-    lesson: FileText,
-    quiz: HelpCircle,
-    assignment: ClipboardList,
-}
-
-const KIND_ICON_BG: Record<Exclude<StreamItem['kind'], 'announcement'>, string> = {
-    lesson: 'bg-brand-soft text-brand',
-    quiz: 'bg-info-soft text-info',
-    assignment: 'bg-warning-soft text-warning',
 }
 
 function Badge({ tone, children }: { tone: 'success' | 'neutral' | 'info' | 'error'; children: React.ReactNode }) {
@@ -69,8 +50,6 @@ function StatusBadge({ item }: { item: Exclude<StreamItem, { kind: 'announcement
         }
     }
 
-    // assignment — submission status takes priority once it exists;
-    // due date is only shown for a student who hasn't turned it in yet.
     if (item.submissionStatus === 'graded' || item.submissionStatus === 'returned') {
         return <Badge tone="success">Graded</Badge>
     }
@@ -104,6 +83,92 @@ function hrefFor(courseId: string, item: Exclude<StreamItem, { kind: 'announceme
     }
 }
 
+// Lesson cards get an inline preview — description, attachments, and
+// missions progress right in the stream — instead of forcing a click
+// through to the full lesson page just to see what's in it. The title
+// itself stays a Link to that full page (LessonReader.tsx, comments,
+// etc. still only live there); everything below it is a plain div, not
+// nested inside a Link, since MaterialList and the Practice button are
+// themselves clickable and can't sit inside an <a>.
+function LessonCard({
+    courseId,
+    item,
+    currentUserId,
+}: {
+    courseId: string
+    item: Extract<StreamItem, { kind: 'lesson' }>
+    currentUserId: string
+}) {
+    const lessonHref = hrefFor(courseId, item)
+    const hasMissions = item.missions.total > 0
+    const allMissionsMastered = hasMissions && item.missions.practiceMissionId === null
+
+    return (
+        <div className="rounded-md bg-surface p-4 shadow-card hover:shadow-card-hover">
+            <div className="flex items-start gap-4">
+                <Avatar fullName={item.authorName} avatarUrl={item.authorAvatarUrl} size="md" />
+
+                <div className="min-w-0 flex-1">
+                    <p className="text-body-emphasis text-ink truncate">{item.authorName}</p>
+                    <p className="text-caption font-semibold text-text-secondary">
+                        {KIND_LABEL.lesson} ·{' '}
+                        {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </p>
+                    <Link href={lessonHref} className="block truncate text-body-md font-semibold text-ink hover:underline mt-1">
+                        {item.title}
+                    </Link>
+                </div>
+
+                <div className="shrink-0">
+                    <StatusBadge item={item} />
+                </div>
+            </div>
+
+            {item.description && (
+                <p className="text-body-md text-ink-soft whitespace-pre-wrap mt-3 pl-[60px]">
+                    {item.description}
+                </p>
+            )}
+
+            {item.materials.length > 0 && (
+                <div className="mt-3 pl-[60px]">
+                    <MaterialList materials={item.materials} />
+                </div>
+            )}
+
+            {hasMissions && (
+                <div className="mt-3 pl-[60px] flex items-center justify-between gap-3 rounded-md bg-surface-sunken px-4 py-3">
+                    <p className="text-caption font-semibold text-text-secondary">
+                        {item.missions.masteredCount} / {item.missions.total} mission
+                        {item.missions.total === 1 ? '' : 's'} mastered
+                    </p>
+                    {allMissionsMastered ? (
+                        <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-warning">
+                            <Star size={16} fill="currentColor" aria-hidden="true" />
+                            All mastered
+                        </span>
+                    ) : (
+                        <Link
+                            href={`/student/courses/${courseId}/lessons/${item.id}/missions/${item.missions.practiceMissionId}`}
+                            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover transition-colors"
+                        >
+                            <Play size={14} fill="currentColor" aria-hidden="true" />
+                            {item.missions.masteredCount > 0 ? 'Continue' : 'Practice'}
+                        </Link>
+                    )}
+                </div>
+            )}
+
+            <LessonStreamComments
+                lessonId={item.id}
+                comments={item.comments}
+                currentUserId={currentUserId}
+                isTeacher={false}
+            />
+        </div>
+    )
+}
+
 export async function CourseStream({ courseId, items }: { courseId: string; items: StreamItem[] }) {
     if (items.length === 0) {
         return (
@@ -115,23 +180,11 @@ export async function CourseStream({ courseId, items }: { courseId: string; item
         )
     }
 
-    // PHASE 3.8: fetched here rather than added as a new required prop
-    // — this component's existing callers (the student course page)
-    // weren't available to update in this session, so changing the
-    // exported prop signature risked silently breaking that call site.
-    // Fetching internally keeps CourseStream's own public interface
-    // exactly as it was.
     const user = await getCurrentUser()
 
     return (
         <div className="grid gap-3">
             {items.map((item) => {
-                // PHASE 3.8: announcements render as a completely
-                // different card (AnnouncementCard) — no icon+title+
-                // badge Link, no navigation, body text inline with a
-                // comment thread. Confirmed with user this needed a
-                // genuinely different shape, not a new icon/color
-                // added to the existing mapping.
                 if (item.kind === 'announcement') {
                     return (
                         <AnnouncementCard
@@ -143,7 +196,16 @@ export async function CourseStream({ courseId, items }: { courseId: string; item
                     )
                 }
 
-                const Icon = KIND_ICON[item.kind]
+                if (item.kind === 'lesson') {
+                    return (
+                        <LessonCard
+                            key={`lesson-${item.id}`}
+                            courseId={courseId}
+                            item={item}
+                            currentUserId={user?.id ?? ''}
+                        />
+                    )
+                }
 
                 return (
                     <Link
@@ -151,18 +213,18 @@ export async function CourseStream({ courseId, items }: { courseId: string; item
                         href={hrefFor(courseId, item)}
                         className="flex items-start gap-4 rounded-md bg-surface p-4 shadow-card hover:shadow-card-hover"
                     >
-                        <div
-                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${KIND_ICON_BG[item.kind]}`}
-                            aria-hidden="true"
-                        >
-                            <Icon size={20} />
-                        </div>
+                        <Avatar fullName={item.authorName} avatarUrl={item.authorAvatarUrl} size="md" />
 
                         <div className="min-w-0 flex-1">
+                            <p className="text-body-emphasis text-ink truncate">{item.authorName}</p>
                             <p className="text-caption font-semibold text-text-secondary">
-                                {KIND_LABEL[item.kind]}
+                                {KIND_LABEL[item.kind]} ·{' '}
+                                {new Date(item.createdAt).toLocaleDateString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric',
+                                })}
                             </p>
-                            <span className="block truncate text-body-emphasis text-ink">
+                            <span className="block truncate text-body-md text-ink mt-1">
                                 {item.title}
                             </span>
                         </div>

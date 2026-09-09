@@ -1,26 +1,4 @@
 // app/page.tsx
-//
-// Landing page — UMCLSI LMS
-//
-// DESIGN-LMS 2.1 fact-correction pass (2026-09-06):
-// - Removed all DepEd permit numbers (K-0025, E-0024) — these were
-//   unverified and the school asked for them to be dropped entirely
-//   rather than guess at correct permit IDs. Recognition is now
-//   stated generically ("DepEd Recognized") without inventing a
-//   permit number.
-// - Grade levels corrected: the school offers Nursery, Kindergarten 1,
-//   Kindergarten 2, and Elementary Grades 1–6 — NOT "Kindergarten" and
-//   "Elementary (Grades 4 to 6)" as the previous copy claimed.
-// - Enrollment is real but not published as exact headcounts on the
-//   public site per the school's instruction — reflected here only
-//   as qualitative language ("growing community of learners"), never
-//   as numbers.
-// - Contact details corrected to verified info: phone 0994 584 9446,
-//   email umcls20educ@gmail.com, address "847 Sampaguita Street, Tala,
-//   Caloocan City, Metro Manila". Old placeholder phone/email/partial
-//   address removed from the footer.
-// - Only one verified social channel exists (Facebook) — footer link
-//   text/URL left as-is, no other socials implied.
 
 import Image from "next/image";
 import Link from "next/link";
@@ -30,17 +8,16 @@ import {
   BookOpen,
   Users2,
   HandHeart,
-  Phone,
-  Mail,
-  MapPin,
   ArrowUpRight,
   ArrowRight,
   Gamepad2,
   Quote,
   CalendarDays,
   CheckCircle2,
+  MapPin,
 } from "lucide-react";
 import { SiteNav } from "@/components/layout/SiteNav";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -126,287 +103,225 @@ const announcements = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-canvas text-ink antialiased">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] antialiased flex flex-col font-sans">
       <SiteNav />
 
-      <section className="px-4 pb-12 pt-10 sm:px-6 md:pb-24 md:pt-16">
-        <div className="mx-auto grid max-w-[1200px] gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-pill bg-brand-soft px-3.5 py-1 text-caption font-semibold text-brand">
-              <HandHeart className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-              <span>Classroom without walls... Classroom without losers</span>
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="px-6 pb-16 pt-12 md:pb-24 md:pt-20">
+          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#DCFCE7] border border-[#15803D]/20 px-4 py-2 text-base font-bold text-[#15803D]">
+                <HandHeart className="h-5 w-5 shrink-0" strokeWidth={2.5} aria-hidden="true" />
+                <span>Classroom without walls... Classroom without losers</span>
+              </div>
+
+              <h1 className="mt-6 text-3xl font-extrabold text-[#0F172A] sm:text-4xl md:text-5xl md:leading-[1.15]">
+                Nurturing Minds, Building Character, Growing in Faith.
+              </h1>
+
+              <p className="mt-6 max-w-2xl text-lg text-[#334155] leading-relaxed">
+                A private Christian basic education institution serving the
+                community of Tala, Caloocan City — offering Nursery,
+                Kindergarten, and Elementary (Grades 1–6) education paired with
+                interactive learning technology.
+              </p>
+
+              {/* 56px Primary Touch Targets */}
+              <div className="mt-10 flex flex-wrap items-center gap-4">
+                <Link
+                  href="/admissions"
+                  className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-[#15803D] px-8 text-xl font-bold text-white shadow-sm transition-colors hover:bg-[#166534] focus:outline-none focus:ring-2 focus:ring-[#15803D]"
+                >
+                  Admissions
+                  <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-8 text-xl font-bold text-[#0F172A] transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                >
+                  Log in
+                </Link>
+              </div>
+
+              {/* High-Visibility Badges */}
+              <div className="mt-8 flex flex-wrap gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#DCFCE7] border border-[#15803D]/30 px-4 py-2 text-base font-bold text-[#15803D]">
+                  <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                  DepEd Recognized
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-200 border border-slate-300 px-4 py-2 text-base font-bold text-[#334155]">
+                  <MapPin className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                  847 Sampaguita Street, Tala, Caloocan City
+                </span>
+              </div>
             </div>
 
-            <h1 className="mt-4 text-h1 text-ink md:text-[3rem] md:leading-[1.1]">
-              Nurturing Minds, Building Character, Growing in Faith.
-            </h1>
+            {/* Hero visual slot */}
+            <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-200 border-2 border-slate-300 shadow-sm flex items-center justify-center text-[#64748B] font-bold text-lg">
+              Campus Visual Placeholder
+            </div>
+          </div>
+        </section>
 
-            <p className="mt-6 max-w-xl text-body-lg text-ink-soft">
-              A private Christian basic education institution serving the
-              community of Tala, Caloocan City — offering Nursery,
-              Kindergarten, and Elementary (Grades 1–6) education paired with
-              interactive learning technology.
+        {/* ── Trust & credentials bar ─────────────────────────────────────── */}
+        <section className="border-y-2 border-slate-200 bg-white px-6 py-8">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6">
+            <ul className="flex flex-wrap gap-x-10 gap-y-3">
+              {trustStats.map((stat) => (
+                <li key={stat.label} className="text-lg font-bold text-[#334155] flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#15803D]" />
+                  {stat.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* ── Welcome message ──────────────────────────────────────────────── */}
+        <section className="px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-4xl bg-white border-2 border-slate-200 rounded-2xl p-8 md:p-12 shadow-sm">
+            <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">Our Educational Philosophy</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">Welcome to UMCLSI</h2>
+            <p className="mt-6 text-xl leading-relaxed text-[#334155]">
+              Every child who joins our school community enters a space built on cooperative 
+              learning and Christian values. We operate on the principle of a 
+              <strong className="text-[#0F172A]"> &ldquo;Classroom without walls... Classroom without losers&rdquo;</strong> — where 
+              students grow academically by encouraging one another rather than competing against each other.
             </p>
+            <p className="mt-4 text-lg leading-relaxed text-[#334155]">
+              We&apos;re a growing community of learners across Nursery,
+              Kindergarten, and Elementary, and by combining caring instruction
+              with interactive tools like our Mission Engine LMS, we ensure
+              every learner receives focused attention, sound academic
+              guidance, and a strong moral foundation.
+            </p>
+          </div>
+        </section>
 
-            <div className="mt-10 flex flex-wrap items-center gap-4">
+        {/* ── Curriculum & core programs ───────────────────────────────────── */}
+        <section className="px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-7xl">
+            <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">What we offer</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">Curriculum &amp; Grade Levels</h2>
+
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {programs.map((program) => (
+                <div
+                  key={program.title}
+                  className="rounded-2xl bg-white p-8 border-2 border-slate-200 shadow-sm flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#DCFCE7] border border-[#15803D]/20">
+                      <program.icon className="h-7 w-7 text-[#15803D]" strokeWidth={2} aria-hidden="true" />
+                    </div>
+                    <h3 className="mt-6 text-2xl font-bold text-[#0F172A]">{program.title}</h3>
+                    <p className="mt-3 text-lg leading-relaxed text-[#334155]">{program.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── The UMCLS Advantage ──────────────────────────────────────────── */}
+        <section className="px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-7xl">
+            <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">Why choose us</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">The UMCLS Advantage</h2>
+
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {advantages.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl bg-white p-8 border-2 border-slate-200 shadow-sm"
+                >
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#DCFCE7] border border-[#15803D]/20">
+                    <item.icon className="h-7 w-7 text-[#15803D]" strokeWidth={2} aria-hidden="true" />
+                  </div>
+                  <h3 className="mt-6 text-2xl font-bold text-[#0F172A]">{item.title}</h3>
+                  <p className="mt-3 text-lg leading-relaxed text-[#334155]">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Educational Commitments ──────────────────────────────────────── */}
+        <section className="bg-white border-y-2 border-slate-200 px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-7xl">
+            <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">What drives our mission</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">Our Core Commitments</h2>
+
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {corePillars.map((item) => (
+                <div key={item.title} className="rounded-2xl bg-[#F8FAFC] p-8 border-2 border-slate-200 shadow-sm">
+                  <Quote className="h-8 w-8 text-[#15803D]" strokeWidth={2} aria-hidden="true" />
+                  <h3 className="mt-4 text-2xl font-bold text-[#0F172A]">{item.title}</h3>
+                  <p className="mt-3 text-lg leading-relaxed text-[#334155]">{item.quote}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Announcements & LMS portal notice ────────────────────────────── */}
+        <section className="px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">Stay in the loop</span>
+                <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">Latest Announcements</h2>
+              </div>
               <Link
-                href="/admissions"
-                className="inline-flex h-14 items-center gap-2 rounded-md bg-brand px-7 text-body-md font-semibold text-on-ink transition-colors hover:bg-brand-hover"
+                href="/contact"
+                className="inline-flex items-center gap-2 text-xl font-bold text-[#15803D] hover:underline"
               >
-                Admissions
-                <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                Contact us for details
+                <ArrowUpRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
               </Link>
+            </div>
+
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {announcements.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl bg-white p-8 border-2 border-slate-200 shadow-sm"
+                >
+                  <span className="inline-flex items-center gap-2 rounded-full bg-[#DCFCE7] px-4 py-1.5 text-base font-bold text-[#15803D]">
+                    <CalendarDays className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                    {item.date}
+                  </span>
+                  <h3 className="mt-6 text-2xl font-bold text-[#0F172A]">{item.title}</h3>
+                  <p className="mt-3 text-lg leading-relaxed text-[#334155]">{item.description}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Portal Callout Banner */}
+            <div className="mt-12 flex flex-col items-start justify-between gap-6 rounded-2xl bg-[#DCFCE7] border-2 border-[#15803D]/30 p-8 md:p-10 lg:flex-row lg:items-center">
+              <div>
+                <h3 className="text-2xl md:text-3xl font-extrabold text-[#0F172A]">
+                  Students and parents: access the LMS portal
+                </h3>
+                <p className="mt-2 text-lg font-medium text-[#334155]">
+                  Check schedules, coursework, and updates any time.
+                </p>
+              </div>
               <Link
                 href="/login"
-                className="inline-flex h-12 items-center gap-2 rounded-md border-2 border-hairline bg-surface px-7 text-body-md font-semibold text-ink transition-colors hover:bg-surface-sunken"
+                className="inline-flex h-14 shrink-0 items-center justify-center gap-3 rounded-xl bg-[#15803D] px-8 text-xl font-bold text-white shadow-sm transition-colors hover:bg-[#166534] focus:outline-none focus:ring-2 focus:ring-[#15803D]"
               >
-                Log in
+                Go to LMS Portal
+                <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
               </Link>
             </div>
-
-            <div className="mt-8 flex flex-wrap gap-2.5">
-              <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-4 py-1.5 text-caption font-semibold text-brand">
-                <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                DepEd Recognized
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-pill bg-surface-sunken px-4 py-1.5 text-caption font-semibold text-ink-soft">
-                <MapPin className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                847 Sampaguita Street, Tala, Caloocan City
-              </span>
-            </div>
           </div>
+        </section>
+      </main>
 
-          {/* Hero visual slot */}
-          <div className="aspect-[4/3] w-full overflow-hidden rounded-md bg-surface-sunken shadow-card" />
-        </div>
-      </section>
-
-      {/* ── Trust & credentials bar ─────────────────────────────────────── */}
-      <section className="border-y border-hairline bg-surface px-4 py-8 sm:px-6">
-        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-6">
-          <ul className="flex flex-wrap gap-x-8 gap-y-2">
-            {trustStats.map((stat) => (
-              <li key={stat.label} className="text-caption font-semibold text-text-secondary">
-                {stat.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ── Welcome message ──────────────────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[900px]">
-          <p className="text-label text-text-secondary">Our Educational Philosophy</p>
-          <h2 className="mt-3 text-h2 text-ink">Welcome to UMCLSI</h2>
-          <p className="mt-6 text-body-lg leading-relaxed text-ink-soft">
-            Every child who joins our school community enters a space built on cooperative 
-            learning and Christian values. We operate on the principle of a 
-            <em>&ldquo;Classroom without walls... Classroom without losers&rdquo;</em> — where 
-            students grow academically by encouraging one another rather than competing against each other.
-          </p>
-          <p className="mt-4 text-body-md text-text-secondary">
-            We&apos;re a growing community of learners across Nursery,
-            Kindergarten, and Elementary, and by combining caring instruction
-            with interactive tools like our Mission Engine LMS, we ensure
-            every learner receives focused attention, sound academic
-            guidance, and a strong moral foundation.
-          </p>
-        </div>
-      </section>
-
-      {/* ── Curriculum & core programs ───────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">What we offer</p>
-          <h2 className="mt-3 text-h2 text-ink">Curriculum &amp; Grade Levels</h2>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            {programs.map((program) => (
-              <div
-                key={program.title}
-                className="rounded-md bg-surface p-7 shadow-card transition-shadow hover:shadow-card-hover"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-brand-soft">
-                  <program.icon className="h-6 w-6 text-brand" strokeWidth={1.5} aria-hidden="true" />
-                </div>
-                <h3 className="mt-5 text-body-emphasis text-ink">{program.title}</h3>
-                <p className="mt-2 text-caption text-text-secondary">{program.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── The UMCLS Advantage ──────────────────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">Why choose us</p>
-          <h2 className="mt-3 text-h2 text-ink">The UMCLS Advantage</h2>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            {advantages.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-md bg-surface p-7 shadow-card transition-shadow hover:shadow-card-hover"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-brand-soft">
-                  <item.icon className="h-6 w-6 text-brand" strokeWidth={1.5} aria-hidden="true" />
-                </div>
-                <h3 className="mt-5 text-body-emphasis text-ink">{item.title}</h3>
-                <p className="mt-2 text-caption text-text-secondary">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Educational Commitments ──────────────────────────────────────── */}
-      <section className="bg-surface px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="text-label text-text-secondary">What drives our mission</p>
-          <h2 className="mt-3 text-h2 text-ink">Our Core Commitments</h2>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            {corePillars.map((item) => (
-              <div key={item.title} className="rounded-md bg-canvas p-7 border-2 border-hairline">
-                <Quote className="h-5 w-5 text-brand" strokeWidth={1.5} aria-hidden="true" />
-                <h3 className="mt-3 text-body-emphasis text-ink">{item.title}</h3>
-                <p className="mt-2 text-body-md text-ink-soft">{item.quote}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Announcements & LMS portal notice ────────────────────────────── */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-[1200px]">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-label text-text-secondary">Stay in the loop</p>
-              <h2 className="mt-3 text-h2 text-ink">Latest Announcements</h2>
-            </div>
-            <Link
-              href="/contact"
-              className="inline-flex h-12 items-center gap-1 text-body-md font-semibold text-brand hover:underline"
-            >
-              Contact us for details
-              <ArrowUpRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-            </Link>
-          </div>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            {announcements.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-md bg-surface p-7 shadow-card transition-shadow hover:shadow-card-hover"
-              >
-                <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-3 py-1 text-caption font-semibold text-brand">
-                  <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                  {item.date}
-                </span>
-                <h3 className="mt-4 text-body-emphasis text-ink">{item.title}</h3>
-                <p className="mt-2 text-caption text-text-secondary">{item.description}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Portal callout */}
-          <div className="mt-10 flex flex-col items-start justify-between gap-6 rounded-md bg-brand-soft p-8 sm:flex-row sm:items-center">
-            <div>
-              <h3 className="text-body-emphasis text-ink">
-                Students and parents: access the LMS portal
-              </h3>
-              <p className="mt-1 text-body-md text-ink-soft">
-                Check schedules, coursework, and updates any time.
-              </p>
-            </div>
-            <Link
-              href="/login"
-              className="inline-flex h-14 shrink-0 items-center gap-2 rounded-md bg-brand px-7 text-body-md font-semibold text-on-ink transition-colors hover:bg-brand-hover"
-            >
-              Go to LMS Portal
-              <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer className="bg-ink text-on-ink">
-        <div className="mx-auto max-w-[1200px] px-4 py-14 sm:px-6">
-          <div className="grid gap-10 md:grid-cols-3">
-            <div>
-              <Image
-                src="/logo.webp"
-                alt="UMCLSI LMS"
-                width={100}
-                height={30}
-                className="h-8 w-auto object-contain"
-              />
-              <p className="mt-3 text-caption text-on-ink/70">
-                United Methodist Cooperative
-                <br />
-                Learning System, Inc.
-              </p>
-              <p className="mt-2 text-caption text-on-ink/50 italic">
-                &ldquo;Classroom without walls... Classroom without losers&rdquo;
-              </p>
-            </div>
-
-            <div>
-              <p className="text-label text-on-ink">Contact &amp; Location</p>
-              <ul className="mt-3 space-y-2.5">
-                <li className="flex items-start gap-2 text-caption text-on-ink/70">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                  <span>
-                    847 Sampaguita Street, Tala,
-                    <br />
-                    Caloocan City, Metro Manila
-                  </span>
-                </li>
-                <li className="flex items-center gap-2 text-caption text-on-ink/70">
-                  <Phone className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                  <a href="tel:+639945849446" className="hover:underline">
-                    0994 584 9446
-                  </a>
-                </li>
-                <li className="flex items-center gap-2 text-caption text-on-ink/70">
-                  <Mail className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                  <a href="mailto:umcls20educ@gmail.com" className="hover:underline">
-                    umcls20educ@gmail.com
-                  </a>
-                </li>
-                <li className="flex items-center gap-2 text-caption">
-                  <Link
-                    href="https://facebook.com/p/United-Methodist-Cooperative-Learning-System-Inc-61576554814851"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-12 items-center gap-1 text-on-ink hover:underline"
-                  >
-                    Official Facebook Page
-                    <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-label text-on-ink">Government Recognition</p>
-              <ul className="mt-3 space-y-2 text-caption text-on-ink/70">
-                <li>DepEd NCR Region</li>
-                <li>Nursery through Elementary Grade 6</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-10 border-t border-white/10 pt-6 text-center text-caption text-on-ink/70">
-            &copy;&nbsp;{new Date().getFullYear()} United Methodist Cooperative
-            Learning System, Inc. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      {/* Shared Single Source-of-Truth Footer */}
+      <SiteFooter />
     </div>
   );
 }

@@ -26,12 +26,14 @@ export type MySettings = {
         newLessonsEnabled: boolean
     }
     textSize: 'normal' | 'larger'
+    highContrast: boolean
+    reducedMotion: boolean
 }
 
 // Reads everything the Settings page needs in one call: profile fields
 // from users, notification toggles from notification_preferences (may
 // not have a row yet for an existing user — defaults to all-on if so),
-// and the text-size preference, which lives in users.metadata (jsonb).
+// and accessibility preferences, which live in users.metadata (jsonb).
 export async function getMySettings(): Promise<MySettings> {
     const user = await requireUser()
     const supabase = await createClient()
@@ -47,6 +49,8 @@ export async function getMySettings(): Promise<MySettings> {
 
     const metadata = (profile?.metadata as Record<string, unknown>) ?? {}
     const textSize = metadata.text_size === 'larger' ? 'larger' : 'normal'
+    const highContrast = Boolean(metadata.high_contrast)
+    const reducedMotion = Boolean(metadata.reduced_motion)
 
     return {
         fullName: profile?.full_name ?? user.fullName,
@@ -58,6 +62,8 @@ export async function getMySettings(): Promise<MySettings> {
             newLessonsEnabled: prefs?.new_lessons_enabled ?? true,
         },
         textSize,
+        highContrast,
+        reducedMotion,
     }
 }
 
@@ -91,7 +97,7 @@ export async function updateProfile(formData: FormData): Promise<SettingsActionR
     return { ok: true }
 }
 
-const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
+const MAX_AVATAR_SIZE_BYTES = 20 * 1024 * 1024 // 20 MB (compressed on client before send)
 const ALLOWED_AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 export type UploadAvatarResult = { ok: true; avatarUrl: string } | { ok: false; error: string }
@@ -111,7 +117,7 @@ export async function uploadAvatar(formData: FormData): Promise<UploadAvatarResu
         return { ok: false, error: 'That file type is not allowed. Allowed: JPEG, PNG, WEBP.' }
     }
     if (file.size > MAX_AVATAR_SIZE_BYTES) {
-        return { ok: false, error: 'Photo is too large. Max size is 5 MB.' }
+        return { ok: false, error: 'Photo is too large. Max size is 20 MB.' }
     }
 
     const supabase = await createClient()
@@ -277,14 +283,20 @@ export async function updateNotificationPreferences(
     return { ok: true }
 }
 
-const textSizeSchema = z.enum(['normal', 'larger'])
+const accessibilitySchema = z.object({
+    textSize: z.enum(['normal', 'larger']),
+    highContrast: z.boolean(),
+    reducedMotion: z.boolean(),
+})
 
-export async function updateTextSizePreference(textSize: 'normal' | 'larger'): Promise<SettingsActionResult> {
+export type AccessibilityPrefs = z.infer<typeof accessibilitySchema>
+
+export async function updateAccessibilityPreferences(prefs: AccessibilityPrefs): Promise<SettingsActionResult> {
     const user = await requireUser()
 
-    const parsed = textSizeSchema.safeParse(textSize)
+    const parsed = accessibilitySchema.safeParse(prefs)
     if (!parsed.success) {
-        return { ok: false, error: 'Invalid text size.' }
+        return { ok: false, error: 'Invalid accessibility preferences.' }
     }
 
     const supabase = await createClient()
@@ -294,14 +306,29 @@ export async function updateTextSizePreference(textSize: 'normal' | 'larger'): P
 
     const { error } = await supabase
         .from('users')
-        .update({ metadata: { ...existingMetadata, text_size: parsed.data } })
+        .update({
+            metadata: {
+                ...existingMetadata,
+                text_size: parsed.data.textSize,
+                high_contrast: parsed.data.highContrast,
+                reduced_motion: parsed.data.reducedMotion,
+            },
+        })
         .eq('id', user.id)
 
     if (error) {
-        return { ok: false, error: 'Could not save your text size preference.' }
+        return { ok: false, error: 'Could not save your accessibility preferences.' }
     }
 
     return { ok: true }
+}
+
+export async function updateTextSizePreference(textSize: 'normal' | 'larger'): Promise<SettingsActionResult> {
+    return updateAccessibilityPreferences({
+        textSize,
+        highContrast: false,
+        reducedMotion: false,
+    })
 }
 
 // PHASE 8 REMOVAL (2026-08-28, new conversation continuing the same

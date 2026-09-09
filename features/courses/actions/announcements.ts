@@ -24,7 +24,7 @@ export type AnnouncementComment = {
     body: string
     created_at: string
     author_id: string
-    users: { full_name: string; role: string } | null
+    users: { full_name: string; role: string; avatar_url: string | null } | null
 }
 
 export type Announcement = {
@@ -34,6 +34,7 @@ export type Announcement = {
     createdAt: string
     authorId: string
     authorName: string
+    authorAvatarUrl: string | null
     comments: AnnouncementComment[]
 }
 
@@ -157,7 +158,7 @@ export async function listAnnouncementsForCourse(courseId: string): Promise<Anno
 
     const { data: announcements } = await supabase
         .from('announcements')
-        .select('id, course_id, body, created_at, author_id, users!announcements_author_id_fkey(full_name)')
+        .select('id, course_id, body, created_at, author_id, users!announcements_author_id_fkey(full_name, avatar_url)')
         .eq('course_id', courseId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
@@ -169,7 +170,7 @@ export async function listAnnouncementsForCourse(courseId: string): Promise<Anno
             ? { data: [] as any[] }
             : await supabase
                   .from('announcement_comments')
-                  .select('id, announcement_id, body, created_at, author_id, users!announcement_comments_author_id_fkey(full_name, role)')
+                  .select('id, announcement_id, body, created_at, author_id, users!announcement_comments_author_id_fkey(full_name, role, avatar_url)')
                   .in('announcement_id', announcementIds)
                   .is('deleted_at', null)
                   .order('created_at', { ascending: true })
@@ -194,6 +195,7 @@ export async function listAnnouncementsForCourse(courseId: string): Promise<Anno
         createdAt: a.created_at,
         authorId: a.author_id,
         authorName: a.users?.full_name ?? 'Teacher',
+        authorAvatarUrl: a.users?.avatar_url ?? null,
         comments: commentsByAnnouncementId.get(a.id) ?? [],
     }))
 }

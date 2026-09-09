@@ -38,13 +38,13 @@ export function NotificationBell({ userId }: { userId: string }) {
     }
 
     return (
-        <div ref={containerRef} className="relative lg:fixed lg:right-4 lg:top-4 lg:z-40">
+        <div ref={containerRef} className="relative">
             <button
                 aria-label="Notifications"
                 onClick={handleBellClick}
-                className="relative flex h-11 w-11 items-center justify-center rounded-pill bg-white/10 shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:bg-surface"
+                className="relative flex h-11 w-11 items-center justify-center rounded-pill bg-white/10 shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-                <Bell size={20} className="text-on-ink lg:text-ink" aria-hidden="true" />
+                <Bell size={20} className="text-on-ink" aria-hidden="true" />
                 {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-pill bg-amber px-1 text-caption font-semibold text-on-ink">
                         {unreadCount > 9 ? '9+' : unreadCount}

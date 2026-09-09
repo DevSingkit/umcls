@@ -31,13 +31,18 @@
 //      the paired h-11 comment input (Classroom Mode inputs
 //      deliberately stay at 44px, not bumped) instead of stretching to
 //      match it.
-import { useState, useRef, useTransition } from 'react'
+import { useState, useRef, useTransition, useOptimistic } from 'react'
 import { useRouter } from 'next/navigation'
-import { Megaphone, MessageCircle } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 import { postAnnouncementComment, deleteAnnouncementComment } from '@/features/courses/actions/announcement-comments'
 import { editAnnouncement } from '@/features/courses/actions/announcements'
 import { AnnouncementItemMenu } from '@/features/courses/components/AnnouncementItemMenu'
+import { Avatar } from '@/components/ui/Avatar'
 import type { Announcement } from '@/features/courses/actions/announcements'
+
+type OptimisticAction =
+    | { type: 'add'; comment: Announcement['comments'][number] }
+    | { type: 'delete'; commentId: string }
 
 export function AnnouncementCard({
     announcement,
@@ -54,21 +59,23 @@ export function AnnouncementCard({
     const [isPending, startTransition] = useTransition()
     const formRef = useRef<HTMLFormElement>(null)
 
-    // PHASE 3.8b ADDITIONS (new conversation, same project): inline
-    // edit mode replaces the old standalone "Delete" text button —
-    // both Edit and Delete now live behind AnnouncementItemMenu,
-    // matching StreamItemMenu's pattern used everywhere else in the
-    // stream (confirmed by reading that file before building the
-    // sibling menu component, not guessed).
     const [isEditing, setIsEditing] = useState(false)
     const [editError, setEditError] = useState<string | null>(null)
     const editFormRef = useRef<HTMLFormElement>(null)
 
-    // Only the teacher who owns this course can delete OR edit the
-    // POST itself (RLS enforces both — see migration 088's "Teachers
-    // manage announcements on their own courses" policy). A comment's
-    // own delete permission is separate — author-of-that-comment OR
-    // isTeacher, same as CommentsTab.tsx's canDelete logic.
+    const [optimisticComments, setOptimisticComments] = useOptimistic(
+        announcement.comments,
+        (state, action: OptimisticAction) => {
+            if (action.type === 'add') {
+                return [...state, action.comment]
+            }
+            if (action.type === 'delete') {
+                return state.filter((c) => c.id !== action.commentId)
+            }
+            return state
+        }
+    )
+
     const canManagePost = isTeacher
 
     function handleSaveEdit(formData: FormData) {
@@ -86,19 +93,38 @@ export function AnnouncementCard({
 
     function handlePostComment(formData: FormData) {
         setError(null)
+        const body = (formData.get('body') as string)?.trim()
+        if (!body) return
+
+        const tempComment = {
+            id: `temp-${Date.now()}`,
+            announcement_id: announcement.id,
+            author_id: currentUserId,
+            body,
+            created_at: new Date().toISOString(),
+            users: {
+                full_name: 'You',
+                avatar_url: null,
+                role: isTeacher ? 'teacher' : 'student',
+            },
+        }
+
+        formRef.current?.reset()
+
         startTransition(async () => {
+            setOptimisticComments({ type: 'add', comment: tempComment })
             const result = await postAnnouncementComment(announcement.id, formData)
             if (!result.ok) {
                 setError(result.error)
                 return
             }
-            formRef.current?.reset()
             router.refresh()
         })
     }
 
     function handleDeleteComment(commentId: string) {
         startTransition(async () => {
+            setOptimisticComments({ type: 'delete', commentId })
             await deleteAnnouncementComment(commentId)
             router.refresh()
         })
@@ -107,12 +133,11 @@ export function AnnouncementCard({
     return (
         <div className="rounded-md bg-surface p-5 shadow-card">
             <div className="flex items-start gap-3">
-                <span
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-info-soft text-info"
-                    aria-hidden="true"
-                >
-                    <Megaphone size={20} />
-                </span>
+                <Avatar
+                    fullName={announcement.authorName}
+                    avatarUrl={announcement.authorAvatarUrl}
+                    size="md"
+                />
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
                         <p className="text-caption font-semibold text-text-secondary">
@@ -172,9 +197,9 @@ export function AnnouncementCard({
                         className="flex items-center gap-1.5 text-caption font-semibold text-text-secondary hover:text-ink mt-3"
                     >
                         <MessageCircle size={16} aria-hidden="true" />
-                        {announcement.comments.length === 0
+                        {optimisticComments.length === 0
                             ? 'Add class comment'
-                            : `${announcement.comments.length} comment${announcement.comments.length === 1 ? '' : 's'}`}
+                            : `${optimisticComments.length} comment${optimisticComments.length === 1 ? '' : 's'}`}
                     </button>
                 </div>
             </div>
@@ -193,25 +218,26 @@ export function AnnouncementCard({
                         />
                         <button
                             type="submit"
-                            disabled={isPending}
-                            className="h-12 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                            className="h-12 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover transition-colors"
                         >
                             Post
                         </button>
                     </form>
                     {error && <p className="text-caption text-error">{error}</p>}
 
-                    {announcement.comments.length > 0 && (
+                    {optimisticComments.length > 0 && (
                         <div className="grid gap-3">
-                            {announcement.comments.map((comment) => {
+                            {optimisticComments.map((comment) => {
                                 const canDeleteComment = comment.author_id === currentUserId || isTeacher
                                 return (
                                     <div key={comment.id} className="bg-surface-sunken rounded-md p-4">
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="flex items-center gap-2 text-label text-ink">
-                                                <span className="w-7 h-7 rounded-pill bg-brand-soft text-brand flex items-center justify-center text-caption font-bold">
-                                                    {(comment.users?.full_name ?? '?').charAt(0).toUpperCase()}
-                                                </span>
+                                                <Avatar
+                                                    fullName={comment.users?.full_name ?? '?'}
+                                                    avatarUrl={comment.users?.avatar_url ?? null}
+                                                    size="sm"
+                                                />
                                                 {comment.users?.full_name ?? 'Unknown'}
                                                 {comment.users?.role === 'teacher' && (
                                                     <span className="text-text-secondary font-medium">(Teacher)</span>
@@ -220,8 +246,7 @@ export function AnnouncementCard({
                                             {canDeleteComment && (
                                                 <button
                                                     onClick={() => handleDeleteComment(comment.id)}
-                                                    disabled={isPending}
-                                                    className="text-caption text-error font-medium hover:underline disabled:opacity-60"
+                                                    className="text-caption text-error font-medium hover:underline"
                                                 >
                                                     Delete
                                                 </button>
@@ -238,3 +263,4 @@ export function AnnouncementCard({
         </div>
     )
 }
+

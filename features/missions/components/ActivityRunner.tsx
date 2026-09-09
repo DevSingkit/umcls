@@ -787,12 +787,12 @@ export function ActivityRunner({
                 missions" button already used. ─────────────────────────── */}
             {showPauseMenu && (
                 <div
-                    className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
                     onClick={() => setShowPauseMenu(false)}
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
-                        className="w-full max-w-md rounded-t-2xl bg-surface p-6 pb-8 space-y-3 animate-drawer-up"
+                        className="w-full max-w-md rounded-2xl bg-surface p-6 pb-6 space-y-3 shadow-modal"
                     >
                         <div className="text-center mb-2">
                             <p className="font-heading text-mission text-ink">{mission.title}</p>

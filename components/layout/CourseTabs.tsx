@@ -1,8 +1,15 @@
 'use client'
-// Course-scoped tab row: Stream / Classwork / People / Grades.
+// Course-scoped tab row: Stream / People / Scores.
 // Matches real Google Classroom: plain text tabs, underline on the
-// active one, no icons, no card/pill chrome. Sits directly under the
-// course header on both student and teacher course shell pages.
+// active one, no icons, no card/pill chrome. Colors are white-based
+// (text-on-ink) since this renders inside TopNav's pink bar, not on a
+// white surface.
+//
+// This renders INSIDE the sticky TopNav header (passed via
+// usePageHeader({ tabs: <CourseTabs .../> })), not in the page body —
+// that's why it no longer owns its own bottom border/margin; TopNav's
+// header element supplies the enclosing border per design system v3
+// rule 3 (Header-Integrated Page Titles).
 //
 // "Stream" and "Classwork" both point at the course root page — real
 // Classroom has these as two separate views, but this app currently
@@ -21,9 +28,6 @@ export function CourseTabs({ courseId, role }: { courseId: string; role: Role })
     const pathname = usePathname()
     const base = `/${role}/courses/${courseId}`
 
-    // Dedup Stream/Classwork since they share a segment/href right now —
-    // only one of them should render as a real tab until Classwork gets
-    // its own view.
     const tabs = [
         { label: 'Stream', href: base, isActive: pathname === base },
         { label: 'People', href: `${base}/people`, isActive: pathname.startsWith(`${base}/people`) },
@@ -31,13 +35,7 @@ export function CourseTabs({ courseId, role }: { courseId: string; role: Role })
     ]
 
     return (
-        // min-w-0 + overflow-x-auto: with only 3 tabs today this rarely
-        // triggers, but if a fourth ever gets added back (Classwork as
-        // its own view) this keeps the row from squeezing labels or
-        // wrapping onto a second line on a narrow phone — it scrolls
-        // instead. whitespace-nowrap on each tab so a long label like
-        // "Classwork" never breaks mid-word while scrolling.
-        <nav className="min-w-0 border-b border-hairline mb-6" aria-label="Course sections">
+        <nav className="min-w-0" aria-label="Course sections">
             <ul className="flex gap-6 overflow-x-auto sm:gap-8">
                 {tabs.map((tab) => (
                     <li key={tab.label} className="shrink-0">
@@ -45,8 +43,8 @@ export function CourseTabs({ courseId, role }: { courseId: string; role: Role })
                             href={tab.href}
                             className={`inline-block whitespace-nowrap py-3 text-body-md font-semibold border-b-2 -mb-px transition-colors ${
                                 tab.isActive
-                                    ? 'border-brand text-brand'
-                                    : 'border-transparent text-text-secondary hover:text-ink'
+                                    ? 'border-on-ink text-on-ink'
+                                    : 'border-transparent text-on-ink/60 hover:text-on-ink/90'
                             }`}
                             aria-current={tab.isActive ? 'page' : undefined}
                         >
