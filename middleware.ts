@@ -16,13 +16,25 @@ function buildCsp(nonce: string) {
     // anything in this app's code. A strict-dynamic, no-unsafe-eval CSP
     // (correct and desired in production) blocks that eval() call and
     // silently breaks ALL client-side JS in dev.
-    const isDev = process.env.NODE_ENV !== 'production'
+        const isDev = process.env.NODE_ENV !== 'production'
+
+    // Vercel injects its preview "Toolbar" / live-feedback widget
+    // (vercel.live) on every deployment that is NOT production —
+    // preview URLs (like *-git-*.vercel.app branch deploys) and local
+    // `vercel dev`, but not the production domain. VERCEL_ENV is set by
+    // Vercel's own build environment: 'production' | 'preview' |
+    // 'development'. Without allowing vercel.live here, the toolbar's
+    // script, its websocket connection, and its feedback iframe are all
+    // silently blocked by CSP on every preview deployment — annoying for
+    // reviewers, but not a real production security concern, so it's
+    // scoped to non-production rather than allowed everywhere.
+    const isPreview = process.env.VERCEL_ENV !== 'production'
 
     return [
         "default-src 'self'",
         isDev
             ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
-            : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+            : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isPreview ? ' https://vercel.live' : ''}`,
         "style-src 'self' 'unsafe-inline'",
         // blob: added for the lesson-creation file preview modal
         // (NewLessonForm.tsx) — attached images/PDFs are previewed
@@ -35,8 +47,8 @@ function buildCsp(nonce: string) {
         "img-src 'self' data: https: blob:",
         "media-src 'self' blob:",
         "font-src 'self'",
-        "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
-        "frame-src https://www.youtube.com https://youtube.com https://www.google.com blob:",
+        `connect-src 'self' https://*.supabase.co wss://*.supabase.co${isPreview ? ' https://vercel.live wss://vercel.live' : ''}`,
+        `frame-src https://www.youtube.com https://youtube.com https://www.google.com blob:${isPreview ? ' https://vercel.live' : ''}`,
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",
