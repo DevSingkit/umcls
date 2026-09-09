@@ -38,6 +38,14 @@
 // (its content might still be worth reading, but this function's job
 // is picking ONE next thing to do, not enumerating everything
 // incomplete).
+//
+// UNSTABLE_CACHE REMOVED (2026-09-09): previously wrapped in
+// unstable_cache(), but the cached callback closed over a Supabase
+// client built from cookies() (via createClient()) and used it inside
+// the cache scope — Next.js disallows dynamic data sources (cookies,
+// headers) inside a cached function. This data is per-student and
+// RLS-scoped anyway, so caching across requests was never valid here;
+// removed rather than reworked.
 
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/get-current-user'
@@ -117,124 +125,115 @@ async function classifyMissionReason({
     return hasAnyWrong ? 'needs_practice' : 'in_progress'
 }
 
-import { unstable_cache } from 'next/cache'
-
 export async function getStudentDashboardData() {
     const user = await requireRole(['student'])
     const supabase = await createClient()
 
-    return unstable_cache(
-        async () => {
-            const { data: enrollments } = await supabase
-                .from('enrollments')
-                .select(
-                    'course_id, courses!inner(id, title, subject, description, created_at, users!courses_teacher_id_fkey(full_name, avatar_url))'
-                )
-                .eq('student_id', user.id)
-                .eq('status', 'active')
-                .order('created_at', { referencedTable: 'courses', ascending: false })
+    const { data: enrollments } = await supabase
+        .from('enrollments')
+        .select(
+            'course_id, courses!inner(id, title, subject, description, created_at, users!courses_teacher_id_fkey(full_name, avatar_url))'
+        )
+        .eq('student_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { referencedTable: 'courses', ascending: false })
 
-            const courseList = (enrollments ?? []).map((e: any) => e.courses)
-            const courseIds = courseList.map((c: any) => c.id)
+    const courseList = (enrollments ?? []).map((e: any) => e.courses)
+    const courseIds = courseList.map((c: any) => c.id)
 
-            if (courseIds.length === 0) {
-                return {
-                    continueLearning: [] as ContinueLearningItem[],
-                    coursesPreview: [] as StudentCoursePreview[],
-                    courseNameById: new Map<string, string>(),
-                }
+    if (courseIds.length === 0) {
+        return {
+            continueLearning: [] as ContinueLearningItem[],
+            coursesPreview: [] as StudentCoursePreview[],
+            courseNameById: new Map<string, string>(),
+        }
+    }
+
+    const courseNameById = new Map(courseList.map((c: any) => [c.id, c.title]))
+
+    const [lessonsResult, completionsResult] = await Promise.all([
+        supabase
+            .from('lessons')
+            .select('id, course_id, title, order_index')
+            .in('course_id', courseIds)
+            .eq('is_published', true)
+            .is('deleted_at', null)
+            .order('order_index', { ascending: true }),
+
+        supabase.from('lesson_completions').select('lesson_id').eq('student_id', user.id),
+    ])
+
+    const completedLessonIds = new Set((completionsResult.data ?? []).map((c) => c.lesson_id))
+    const allLessons = lessonsResult.data ?? []
+    const lessonIds = allLessons.map((l) => l.id)
+
+    const { data: allMissions } = await supabase
+        .from('missions')
+        .select('id, lesson_id')
+        .in('lesson_id', lessonIds.length > 0 ? lessonIds : ['00000000-0000-0000-0000-000000000000'])
+        .eq('is_published', true)
+        .is('deleted_at', null)
+
+    const lessonIdsWithMissions = new Set((allMissions ?? []).map((m) => m.lesson_id))
+    const coursesWithAnyMission = new Set(
+        allLessons.filter((l) => lessonIdsWithMissions.has(l.id)).map((l) => l.course_id)
+    )
+
+    const continueLearning: ContinueLearningItem[] = []
+
+    for (const courseId of courseIds) {
+        const courseName = courseNameById.get(courseId) ?? 'Course'
+        const lessonsInCourse = allLessons
+            .filter((l) => l.course_id === courseId)
+            .sort((a, b) => a.order_index - b.order_index)
+
+        if (!coursesWithAnyMission.has(courseId)) {
+            const nextLesson = lessonsInCourse.find((l) => !completedLessonIds.has(l.id))
+            if (nextLesson) {
+                continueLearning.push({
+                    courseId,
+                    courseName,
+                    lessonId: nextLesson.id,
+                    lessonTitle: nextLesson.title,
+                    mission: null,
+                })
             }
+            continue
+        }
 
-            const courseNameById = new Map(courseList.map((c: any) => [c.id, c.title]))
+        for (const lesson of lessonsInCourse) {
+            if (!lessonIdsWithMissions.has(lesson.id)) continue
 
-            const [lessonsResult, completionsResult] = await Promise.all([
-                supabase
-                    .from('lessons')
-                    .select('id, course_id, title, order_index')
-                    .in('course_id', courseIds)
-                    .eq('is_published', true)
-                    .is('deleted_at', null)
-                    .order('order_index', { ascending: true }),
+            const missionsForLesson = await getMissionsForStudent(lesson.id)
+            const target = missionsForLesson.find((m) => m.status === 'unlocked')
 
-                supabase.from('lesson_completions').select('lesson_id').eq('student_id', user.id),
-            ])
+            if (target) {
+                const reason = await classifyMissionReason({
+                    supabase,
+                    studentId: user.id,
+                    missionId: target.id,
+                })
 
-            const completedLessonIds = new Set((completionsResult.data ?? []).map((c) => c.lesson_id))
-            const allLessons = lessonsResult.data ?? []
-            const lessonIds = allLessons.map((l) => l.id)
-
-            const { data: allMissions } = await supabase
-                .from('missions')
-                .select('id, lesson_id')
-                .in('lesson_id', lessonIds.length > 0 ? lessonIds : ['00000000-0000-0000-0000-000000000000'])
-                .eq('is_published', true)
-                .is('deleted_at', null)
-
-            const lessonIdsWithMissions = new Set((allMissions ?? []).map((m) => m.lesson_id))
-            const coursesWithAnyMission = new Set(
-                allLessons.filter((l) => lessonIdsWithMissions.has(l.id)).map((l) => l.course_id)
-            )
-
-            const continueLearning: ContinueLearningItem[] = []
-
-            for (const courseId of courseIds) {
-                const courseName = courseNameById.get(courseId) ?? 'Course'
-                const lessonsInCourse = allLessons
-                    .filter((l) => l.course_id === courseId)
-                    .sort((a, b) => a.order_index - b.order_index)
-
-                if (!coursesWithAnyMission.has(courseId)) {
-                    const nextLesson = lessonsInCourse.find((l) => !completedLessonIds.has(l.id))
-                    if (nextLesson) {
-                        continueLearning.push({
-                            courseId,
-                            courseName,
-                            lessonId: nextLesson.id,
-                            lessonTitle: nextLesson.title,
-                            mission: null,
-                        })
-                    }
-                    continue
-                }
-
-                for (const lesson of lessonsInCourse) {
-                    if (!lessonIdsWithMissions.has(lesson.id)) continue
-
-                    const missionsForLesson = await getMissionsForStudent(lesson.id)
-                    const target = missionsForLesson.find((m) => m.status === 'unlocked')
-
-                    if (target) {
-                        const reason = await classifyMissionReason({
-                            supabase,
-                            studentId: user.id,
-                            missionId: target.id,
-                        })
-
-                        continueLearning.push({
-                            courseId,
-                            courseName,
-                            lessonId: lesson.id,
-                            lessonTitle: lesson.title,
-                            mission: { id: target.id, title: target.title, reason },
-                        })
-                        break
-                    }
-                }
+                continueLearning.push({
+                    courseId,
+                    courseName,
+                    lessonId: lesson.id,
+                    lessonTitle: lesson.title,
+                    mission: { id: target.id, title: target.title, reason },
+                })
+                break
             }
+        }
+    }
 
-            const coursesPreview: StudentCoursePreview[] = courseList.slice(0, 4).map((c: any) => ({
-                id: c.id,
-                title: c.title,
-                subject: c.subject,
-                description: c.description,
-                teacherName: c.users?.full_name ?? null,
-                teacherAvatarUrl: c.users?.avatar_url ?? null,
-            }))
+    const coursesPreview: StudentCoursePreview[] = courseList.slice(0, 4).map((c: any) => ({
+        id: c.id,
+        title: c.title,
+        subject: c.subject,
+        description: c.description,
+        teacherName: c.users?.full_name ?? null,
+        teacherAvatarUrl: c.users?.avatar_url ?? null,
+    }))
 
-            return { continueLearning, coursesPreview, courseNameById }
-        },
-        ['student-dashboard-data', user.id],
-        { revalidate: 60, tags: [`student-dashboard-${user.id}`] }
-    )()
+    return { continueLearning, coursesPreview, courseNameById }
 }
-
