@@ -95,6 +95,7 @@ export function ImageCropperModal({ imageSrc, onCancel, onCropAndCompress }: Ima
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
                 >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- imageSrc is a blob/data URL from a freshly selected file; next/image can't optimize it and this needs a raw <img> ref for canvas pixel access (naturalWidth/naturalHeight, drawImage) */}
                     <img
                         ref={imgRef}
                         src={imageSrc}

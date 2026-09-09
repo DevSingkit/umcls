@@ -463,7 +463,7 @@ export function ActivityRunner({
     }
 
     function exitToLesson() {
-        router.push(`/student/courses/${courseId}/lessons/${lessonId}`)
+        router.push(`/student/courses/${courseId}`)
         router.refresh()
     }
 
