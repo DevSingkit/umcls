@@ -32,7 +32,7 @@ const programs = [
     icon: Users2,
     title: "Nursery & Kindergarten",
     description:
-      "Early childhood education across Nursery, Kindergarten 1, and Kindergarten 2 — play-based literacy, foundational math, and Christian character formation.",
+      "Early childhood education across Nursery, Kindergarten 1, and Kindergarten 2 with play-based literacy, foundational math, and Christian character formation.",
   },
   {
     icon: BookOpen,
@@ -85,7 +85,7 @@ const announcements = [
   {
     date: "Enrollment",
     title: "School Year Enrollment Open",
-    description: "Slots for Nursery, Kindergarten, and Grades 1–6 are now open — visit the registrar or inquire online.",
+    description: "Slots for Nursery, Kindergarten, and Grades 1 through 6 are now open, so visit the registrar or inquire online.",
   },
   {
     date: "Academics",
@@ -103,7 +103,7 @@ const announcements = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] antialiased flex flex-col font-sans">
+    <div className="min-h-screen bg-canvas text-ink antialiased flex flex-col font-sans">
       <SiteNav />
 
       <main className="flex-1">
@@ -111,19 +111,19 @@ export default function LandingPage() {
         <section className="px-6 pb-16 pt-12 md:pb-24 md:pt-20">
           <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#DCFCE7] border border-[#15803D]/20 px-4 py-2 text-base font-bold text-[#15803D]">
+              <div className="inline-flex items-center gap-2 rounded-full bg-brand-soft border border-brand/20 px-4 py-2 text-base font-bold text-brand shadow-clay-sm">
                 <HandHeart className="h-5 w-5 shrink-0" strokeWidth={2.5} aria-hidden="true" />
-                <span>Classroom without walls... Classroom without losers</span>
+                <span>Classroom without walls, Classroom without losers</span>
               </div>
 
-              <h1 className="mt-6 text-3xl font-extrabold text-[#0F172A] sm:text-4xl md:text-5xl md:leading-[1.15]">
+              <h1 className="mt-6 text-3xl font-extrabold text-ink sm:text-4xl md:text-5xl md:leading-[1.15]">
                 Nurturing Minds, Building Character, Growing in Faith.
               </h1>
 
-              <p className="mt-6 max-w-2xl text-lg text-[#334155] leading-relaxed">
+              <p className="mt-6 max-w-2xl text-lg text-ink-soft leading-relaxed">
                 A private Christian basic education institution serving the
-                community of Tala, Caloocan City — offering Nursery,
-                Kindergarten, and Elementary (Grades 1–6) education paired with
+                community of Tala, Caloocan City, offering Nursery,
+                Kindergarten, and Elementary education paired with
                 interactive learning technology.
               </p>
 
@@ -131,14 +131,14 @@ export default function LandingPage() {
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <Link
                   href="/admissions"
-                  className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-[#15803D] px-8 text-xl font-bold text-white shadow-sm transition-colors hover:bg-[#166534] focus:outline-none focus:ring-2 focus:ring-[#15803D]"
+                  className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset transition-all"
                 >
                   Admissions
                   <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-8 text-xl font-bold text-[#0F172A] transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-surface px-8 text-xl font-bold text-ink shadow-card hover:shadow-card-hover transition-all"
                 >
                   Log in
                 </Link>
@@ -146,11 +146,11 @@ export default function LandingPage() {
 
               {/* High-Visibility Badges */}
               <div className="mt-8 flex flex-wrap gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#DCFCE7] border border-[#15803D]/30 px-4 py-2 text-base font-bold text-[#15803D]">
+                <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-base font-bold text-brand shadow-clay-sm">
                   <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
                   DepEd Recognized
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-slate-200 border border-slate-300 px-4 py-2 text-base font-bold text-[#334155]">
+                <span className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-base font-bold text-ink-soft shadow-clay-sm">
                   <MapPin className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
                   847 Sampaguita Street, Tala, Caloocan City
                 </span>
@@ -158,19 +158,23 @@ export default function LandingPage() {
             </div>
 
             {/* Hero visual slot */}
-            <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-200 border-2 border-slate-300 shadow-sm flex items-center justify-center text-[#64748B] font-bold text-lg">
-              Campus Visual Placeholder
+            <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface shadow-card">
+              <img 
+                src="/hero.jpe" 
+                alt="United Methodist Cooperative Learning System Hero Visual" 
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </section>
 
         {/* ── Trust & credentials bar ─────────────────────────────────────── */}
-        <section className="border-y-2 border-slate-200 bg-white px-6 py-8">
+        <section className="bg-surface px-6 py-8 shadow-clay-sm">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6">
             <ul className="flex flex-wrap gap-x-10 gap-y-3">
               {trustStats.map((stat) => (
-                <li key={stat.label} className="text-lg font-bold text-[#334155] flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#15803D]" />
+                <li key={stat.label} className="text-lg font-bold text-ink-soft flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-brand shadow-clay-sm" />
                   {stat.label}
                 </li>
               ))}
@@ -180,17 +184,17 @@ export default function LandingPage() {
 
         {/* ── Welcome message ──────────────────────────────────────────────── */}
         <section className="px-6 py-16 md:py-20">
-          <div className="mx-auto max-w-4xl bg-white border-2 border-slate-200 rounded-2xl p-8 md:p-12 shadow-sm">
-            <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">Our Educational Philosophy</span>
-            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">Welcome to UMCLSI</h2>
-            <p className="mt-6 text-xl leading-relaxed text-[#334155]">
+          <div className="mx-auto max-w-4xl bg-surface rounded-2xl p-8 md:p-12 shadow-card">
+            <span className="text-base font-bold uppercase tracking-wider text-brand">Our Educational Philosophy</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Welcome to UMCLSI</h2>
+            <p className="mt-6 text-xl leading-relaxed text-ink-soft">
               Every child who joins our school community enters a space built on cooperative 
-              learning and Christian values. We operate on the principle of a 
-              <strong className="text-[#0F172A]"> &ldquo;Classroom without walls... Classroom without losers&rdquo;</strong> — where 
+              learning and Christian values, operating on the principle of a 
+              <strong className="text-ink"> Classroom without walls and a Classroom without losers</strong>, where 
               students grow academically by encouraging one another rather than competing against each other.
             </p>
-            <p className="mt-4 text-lg leading-relaxed text-[#334155]">
-              We&apos;re a growing community of learners across Nursery,
+            <p className="mt-4 text-lg leading-relaxed text-ink-soft">
+              We are a growing community of learners across Nursery,
               Kindergarten, and Elementary, and by combining caring instruction
               with interactive tools like our Mission Engine LMS, we ensure
               every learner receives focused attention, sound academic
@@ -202,21 +206,21 @@ export default function LandingPage() {
         {/* ── Curriculum & core programs ───────────────────────────────────── */}
         <section className="px-6 py-16 md:py-20">
           <div className="mx-auto max-w-7xl">
-            <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">What we offer</span>
-            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">Curriculum &amp; Grade Levels</h2>
+            <span className="text-base font-bold uppercase tracking-wider text-brand">What we offer</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Curriculum &amp; Grade Levels</h2>
 
             <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {programs.map((program) => (
                 <div
                   key={program.title}
-                  className="rounded-2xl bg-white p-8 border-2 border-slate-200 shadow-sm flex flex-col justify-between"
+                  className="rounded-2xl bg-surface p-8 shadow-card hover:shadow-card-hover transition-all flex flex-col justify-between"
                 >
                   <div>
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#DCFCE7] border border-[#15803D]/20">
-                      <program.icon className="h-7 w-7 text-[#15803D]" strokeWidth={2} aria-hidden="true" />
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-soft shadow-clay-sm">
+                      <program.icon className="h-7 w-7 text-brand" strokeWidth={2} aria-hidden="true" />
                     </div>
-                    <h3 className="mt-6 text-2xl font-bold text-[#0F172A]">{program.title}</h3>
-                    <p className="mt-3 text-lg leading-relaxed text-[#334155]">{program.description}</p>
+                    <h3 className="mt-6 text-2xl font-bold text-ink">{program.title}</h3>
+                    <p className="mt-3 text-lg leading-relaxed text-ink-soft">{program.description}</p>
                   </div>
                 </div>
               ))}
@@ -227,20 +231,20 @@ export default function LandingPage() {
         {/* ── The UMCLS Advantage ──────────────────────────────────────────── */}
         <section className="px-6 py-16 md:py-20">
           <div className="mx-auto max-w-7xl">
-            <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">Why choose us</span>
-            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">The UMCLS Advantage</h2>
+            <span className="text-base font-bold uppercase tracking-wider text-brand">Why choose us</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">The UMCLS Advantage</h2>
 
             <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {advantages.map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-2xl bg-white p-8 border-2 border-slate-200 shadow-sm"
+                  className="rounded-2xl bg-surface p-8 shadow-card hover:shadow-card-hover transition-all"
                 >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#DCFCE7] border border-[#15803D]/20">
-                    <item.icon className="h-7 w-7 text-[#15803D]" strokeWidth={2} aria-hidden="true" />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-soft shadow-clay-sm">
+                    <item.icon className="h-7 w-7 text-brand" strokeWidth={2} aria-hidden="true" />
                   </div>
-                  <h3 className="mt-6 text-2xl font-bold text-[#0F172A]">{item.title}</h3>
-                  <p className="mt-3 text-lg leading-relaxed text-[#334155]">{item.description}</p>
+                  <h3 className="mt-6 text-2xl font-bold text-ink">{item.title}</h3>
+                  <p className="mt-3 text-lg leading-relaxed text-ink-soft">{item.description}</p>
                 </div>
               ))}
             </div>
@@ -248,17 +252,17 @@ export default function LandingPage() {
         </section>
 
         {/* ── Educational Commitments ──────────────────────────────────────── */}
-        <section className="bg-white border-y-2 border-slate-200 px-6 py-16 md:py-20">
+        <section className="bg-surface px-6 py-16 md:py-20 shadow-clay-sm">
           <div className="mx-auto max-w-7xl">
-            <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">What drives our mission</span>
-            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">Our Core Commitments</h2>
+            <span className="text-base font-bold uppercase tracking-wider text-brand">What drives our mission</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Our Core Commitments</h2>
 
             <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {corePillars.map((item) => (
-                <div key={item.title} className="rounded-2xl bg-[#F8FAFC] p-8 border-2 border-slate-200 shadow-sm">
-                  <Quote className="h-8 w-8 text-[#15803D]" strokeWidth={2} aria-hidden="true" />
-                  <h3 className="mt-4 text-2xl font-bold text-[#0F172A]">{item.title}</h3>
-                  <p className="mt-3 text-lg leading-relaxed text-[#334155]">{item.quote}</p>
+                <div key={item.title} className="rounded-2xl bg-surface-sunken p-8 shadow-clay-inset">
+                  <Quote className="h-8 w-8 text-brand" strokeWidth={2} aria-hidden="true" />
+                  <h3 className="mt-4 text-2xl font-bold text-ink">{item.title}</h3>
+                  <p className="mt-3 text-lg leading-relaxed text-ink-soft">{item.quote}</p>
                 </div>
               ))}
             </div>
@@ -270,12 +274,12 @@ export default function LandingPage() {
           <div className="mx-auto max-w-7xl">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <span className="text-base font-bold uppercase tracking-wider text-[#15803D]">Stay in the loop</span>
-                <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-[#0F172A]">Latest Announcements</h2>
+                <span className="text-base font-bold uppercase tracking-wider text-brand">Stay in the loop</span>
+                <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Latest Announcements</h2>
               </div>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 text-xl font-bold text-[#15803D] hover:underline"
+                className="inline-flex items-center gap-2 text-xl font-bold text-brand hover:underline"
               >
                 Contact us for details
                 <ArrowUpRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
@@ -286,31 +290,31 @@ export default function LandingPage() {
               {announcements.map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-2xl bg-white p-8 border-2 border-slate-200 shadow-sm"
+                  className="rounded-2xl bg-surface p-8 shadow-card hover:shadow-card-hover transition-all"
                 >
-                  <span className="inline-flex items-center gap-2 rounded-full bg-[#DCFCE7] px-4 py-1.5 text-base font-bold text-[#15803D]">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-4 py-1.5 text-base font-bold text-brand shadow-clay-sm">
                     <CalendarDays className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
                     {item.date}
                   </span>
-                  <h3 className="mt-6 text-2xl font-bold text-[#0F172A]">{item.title}</h3>
-                  <p className="mt-3 text-lg leading-relaxed text-[#334155]">{item.description}</p>
+                  <h3 className="mt-6 text-2xl font-bold text-ink">{item.title}</h3>
+                  <p className="mt-3 text-lg leading-relaxed text-ink-soft">{item.description}</p>
                 </div>
               ))}
             </div>
 
             {/* Portal Callout Banner */}
-            <div className="mt-12 flex flex-col items-start justify-between gap-6 rounded-2xl bg-[#DCFCE7] border-2 border-[#15803D]/30 p-8 md:p-10 lg:flex-row lg:items-center">
+            <div className="mt-12 flex flex-col items-start justify-between gap-6 rounded-2xl bg-surface p-8 md:p-10 lg:flex-row lg:items-center shadow-card">
               <div>
-                <h3 className="text-2xl md:text-3xl font-extrabold text-[#0F172A]">
+                <h3 className="text-2xl md:text-3xl font-extrabold text-ink">
                   Students and parents: access the LMS portal
                 </h3>
-                <p className="mt-2 text-lg font-medium text-[#334155]">
+                <p className="mt-2 text-lg font-medium text-ink-soft">
                   Check schedules, coursework, and updates any time.
                 </p>
               </div>
               <Link
                 href="/login"
-                className="inline-flex h-14 shrink-0 items-center justify-center gap-3 rounded-xl bg-[#15803D] px-8 text-xl font-bold text-white shadow-sm transition-colors hover:bg-[#166534] focus:outline-none focus:ring-2 focus:ring-[#15803D]"
+                className="inline-flex h-14 shrink-0 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset transition-all"
               >
                 Go to LMS Portal
                 <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />

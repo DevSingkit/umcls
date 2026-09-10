@@ -56,7 +56,7 @@ export function MobileBottomNav({ role }: MobileBottomNavProps) {
                         href={item.href}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
-                            "flex h-16 min-h-[44px] flex-col items-center justify-center gap-1",
+                            "flex h-16 min-h-touch flex-col items-center justify-center gap-1",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset",
                             isActive ? "text-brand" : "text-text-secondary"
                         )}

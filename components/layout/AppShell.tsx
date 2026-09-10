@@ -6,6 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { BackButton } from "@/components/ui/BackButton";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { NAV_ITEMS, type Role } from "@/lib/navigation/nav-items";
 import { PageHeaderProvider } from "./PageHeaderContext";
 
@@ -76,6 +77,9 @@ export function AppShell({ user, children }: AppShellProps) {
             {children}
           </div>
         </main>
+
+        {/* Floating scroll-to-top button */}
+        <ScrollToTop />
 
         {/* Mobile Bottom Navigation Bar */}
         <MobileBottomNav role={user.role} />

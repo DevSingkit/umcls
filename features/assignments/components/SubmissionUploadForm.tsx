@@ -10,6 +10,7 @@
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { submitAssignment, unsubmitAssignment, removeSubmissionFile } from '@/features/assignments/actions/submissions'
+import { MultimodalDock } from '@/components/ui/MultimodalDock'
 
 const ACCEPT = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.mp3,.mp4'
 const MAX_FILE_SIZE_BYTES = 40 * 1024 * 1024
@@ -221,7 +222,7 @@ export function SubmissionUploadForm({
                         rows={textareaRows}
                         defaultValue={existing?.response_text ?? ''}
                         placeholder="Add a note (optional)"
-                        className="w-full px-4 py-3 rounded-md bg-surface border-2 border-hairline text-body-md text-ink leading-relaxed
+                        className="clay-well w-full px-4 py-3 rounded-2xl border-2 border-hairline text-body-md text-ink leading-relaxed
                                    placeholder:text-text-muted focus:border-brand focus:outline-none"
                     />
 
@@ -243,6 +244,14 @@ export function SubmissionUploadForm({
                     )}
 
                     <div className={`flex items-center gap-3 flex-wrap ${compact ? 'flex-col items-stretch' : ''}`}>
+                        {/* ── Multimodal Dock: Voice / Draw / Photo ── */}
+                        <MultimodalDock
+                            onFileCaptured={(file) => setPendingFiles((prev) => [...prev, file])}
+                            disabled={isPending}
+                        />
+
+                        <p className="text-caption text-text-secondary text-center w-full">or attach files</p>
+
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -250,15 +259,15 @@ export function SubmissionUploadForm({
                             accept={ACCEPT}
                             onChange={(e) => handleFilesPicked(e.target.files)}
                             className="text-caption text-text-secondary cursor-pointer
-                                       file:mr-3 file:h-9 file:px-4 file:rounded-md file:border-0
+                                       file:mr-3 file:min-h-touch file:px-4 file:rounded-2xl file:border-0
                                        file:bg-surface-sunken file:text-caption file:font-semibold file:text-ink
                                        file:cursor-pointer hover:file:bg-hairline"
                         />
                         <button
                             type="submit"
                             disabled={isPending}
-                            className={`px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 ${
-                                compact ? 'h-12 w-full' : 'h-14'
+                            className={`clay-button px-6 bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 ${
+                                compact ? 'w-full' : ''
                             }`}
                         >
                             {isPending ? 'Submitting…' : existing ? 'Resubmit' : 'Submit'}

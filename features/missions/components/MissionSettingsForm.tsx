@@ -178,7 +178,7 @@ export function MissionSettingsForm({
 
     return (
         <div className="mx-auto w-full max-w-md space-y-6 sm:max-w-lg mb-8">
-            <div className="bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 space-y-8">
+            <div className="clay-card p-5 sm:p-6 space-y-8">
                 <div>
                     <label htmlFor="missionSettingsTitle" className="text-label text-ink-soft block mb-2">
                         Mission name <span className="text-error">(required)</span>
@@ -187,7 +187,7 @@ export function MissionSettingsForm({
                         id="missionSettingsTitle"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="w-full h-11 px-4 text-body-emphasis text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
+                        className="clay-well w-full min-h-touch px-4 text-body-emphasis text-ink rounded-2xl border-2 border-hairline focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
 
@@ -200,7 +200,7 @@ export function MissionSettingsForm({
                         rows={2}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="clay-well w-full px-5 py-3 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
 
@@ -215,7 +215,7 @@ export function MissionSettingsForm({
                             min={1}
                             value={masteryThreshold}
                             onChange={(e) => setMasteryThreshold(Number(e.target.value))}
-                            className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                            className="clay-well w-24 min-h-touch px-4 text-body-md text-ink rounded-2xl border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                         />
                         <span className="text-body-md text-text-secondary">
                             A student unlocks the next mission after {masteryThreshold} correct answer
@@ -289,7 +289,7 @@ export function MissionSettingsForm({
                                 type="button"
                                 onClick={handleSave}
                                 disabled={isPending}
-                                className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
+                                className="clay-button px-6 bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
                             >
                                 {isPending ? 'Saving…' : 'Update'}
                             </button>
@@ -300,7 +300,7 @@ export function MissionSettingsForm({
                                 type="button"
                                 onClick={handleSave}
                                 disabled={isPending || !hasActivities}
-                                className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60"
+                                className="clay-button px-6 bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60"
                             >
                                 {isPending ? 'Posting…' : 'Save & Post'}
                             </button>
@@ -333,12 +333,12 @@ export function MissionSettingsForm({
                             <button
                                 type="button"
                                 onClick={() => setIsResetConfirming(true)}
-                                className="h-11 px-6 rounded-md border-2 border-error text-error font-semibold hover:bg-error-soft disabled:opacity-60"
+                                className="min-h-touch px-6 rounded-2xl border-2 border-error text-error font-semibold hover:bg-error-soft disabled:opacity-60"
                             >
                                 Reset student progress…
                             </button>
                         ) : (
-                            <div className="rounded-md border-2 border-error bg-error-soft p-5">
+                            <div className="rounded-2xl border-2 border-error bg-error-soft p-5">
                                 <p className="text-body-emphasis text-ink">
                                     Reset every student&apos;s progress on &ldquo;{title}&rdquo;?
                                 </p>

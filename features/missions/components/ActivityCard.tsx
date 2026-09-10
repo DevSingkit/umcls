@@ -63,6 +63,7 @@ import { useState } from 'react'
 import { X, Plus, Check, Circle, Square, Triangle, Diamond } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { updateActivity, deleteActivity } from '@/features/missions/actions/create-activity'
+import { TTSButton } from '@/components/ui/TTSButton'
 
 const QUESTION_TYPE_LABEL: Record<string, string> = {
     multiple_choice_single: 'Multiple choice',
@@ -97,10 +98,10 @@ type Activity = {
 // directly (not imported, since neither file exports it) so this
 // card's tiles are visually identical to both.
 const TILE_STYLES = [
-    { icon: Circle, bg: 'bg-brand' },
-    { icon: Square, bg: 'bg-info' },
-    { icon: Triangle, bg: 'bg-warning' },
-    { icon: Diamond, bg: 'bg-brand-hover' },
+    { icon: Circle, bg: 'bg-brand', border: 'border-brand-border' },
+    { icon: Square, bg: 'bg-info', border: 'border-gamified-pink-dark' },
+    { icon: Triangle, bg: 'bg-warning', border: 'border-[#C47A30]' },
+    { icon: Diamond, bg: 'bg-brand-hover', border: 'border-brand-border' },
 ]
 
 let keySeed = 0
@@ -326,7 +327,7 @@ export function ActivityCard({
 
     if (!isEditing) {
         return (
-            <div className="mx-auto w-full max-w-md sm:max-w-lg bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 space-y-5">
+            <div className="clay-card mx-auto w-full max-w-md sm:max-w-lg p-5 sm:p-6 space-y-5">
                 <div className="flex items-center justify-between mb-1 gap-3">
                     <p className="text-caption text-text-secondary">
                         Activity {index + 1} · {activity.questions.length} question
@@ -359,6 +360,7 @@ export function ActivityCard({
                             </span>
                         </div>
                         <p className="text-body-emphasis text-ink mb-3">{q.prompt}</p>
+                        <TTSButton text={q.prompt} className="mb-2" />
 
                         {/* Tactile tiles — non-interactive here (view
                             mode is a summary, nothing to tap), but
@@ -373,7 +375,7 @@ export function ActivityCard({
                                 return (
                                     <div
                                         key={option.id}
-                                        className={`flex min-h-[56px] w-full items-center gap-3 rounded-md p-3 text-on-ink shadow-card ${style.bg} ${
+                                        className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-3 text-on-ink shadow-clay-button border-b-[6px] ${style.bg} ${style.border} ${
                                             option.is_correct ? 'ring-4 ring-success ring-offset-2' : ''
                                         }`}
                                     >
@@ -417,7 +419,7 @@ export function ActivityCard({
     return (
         <form
             onSubmit={handleSave}
-            className="mx-auto w-full max-w-md sm:max-w-lg bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6 space-y-6"
+            className="clay-card mx-auto w-full max-w-md sm:max-w-lg p-5 sm:p-6 space-y-6"
         >
             <h2 className="text-body-emphasis text-ink">Editing activity {index + 1}</h2>
 
@@ -472,7 +474,7 @@ export function ActivityCard({
                                 return (
                                     <div
                                         key={option.key}
-                                        className={`relative flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-on-ink shadow-card transition-all ${style.bg} ${
+                                        className={`relative flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
                                             isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                         }`}
                                     >
@@ -537,7 +539,7 @@ export function ActivityCard({
                                         key={label}
                                         type="button"
                                         onClick={() => updateQuestion(q.key, { correctTf: label })}
-                                        className={`flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-left text-on-ink shadow-card transition-all ${style.bg} ${
+                                        className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-left text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
                                             isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                         }`}
                                     >
@@ -621,7 +623,7 @@ export function ActivityCard({
                 <button
                     type="submit"
                     disabled={isSaving}
-                    className="flex-1 h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+                    className="flex-1 min-h-touch rounded-2xl bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60 clay-button"
                 >
                     {isSaving ? 'Saving…' : 'Save changes'}
                 </button>

@@ -97,7 +97,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
 
     return (
         // max-w-2xl is the shared single-form-card width, DESIGN-LMS.md §7.8.
-        <form action={handleSubmit} className="max-w-2xl grid gap-4 bg-surface rounded-md shadow-card p-8">
+        <form action={handleSubmit} className="max-w-2xl grid gap-4 clay-card p-8">
             {error && <p className="text-caption text-error">{error}</p>}
             <div>
                 <label htmlFor="title" className="text-label text-ink-soft">Title</label>
@@ -105,7 +105,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     id="title"
                     name="title"
                     required
-                    className="mt-1 h-11 w-full px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="clay-well mt-1 min-h-touch w-full px-4 rounded-2xl border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
             </div>
             <div>
@@ -116,7 +116,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     ref={instructionsRef}
                     rows={4}
                     onInput={resizeInstructions}
-                    className="mt-1 w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none overflow-hidden"
+                    className="clay-well mt-1 w-full px-4 py-3 rounded-2xl border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none overflow-hidden"
                 />
             </div>
             <div className="pt-2 border-t border-hairline space-y-6">
@@ -276,7 +276,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     min={1}
                     defaultValue={100}
                     required
-                    className="mt-1 h-11 w-full px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="clay-well mt-1 min-h-touch w-full px-4 rounded-2xl border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
             </div>
 
@@ -299,7 +299,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-14 rounded-md bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                className="clay-button w-full bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover disabled:opacity-60"
             >
                 {isPending ? 'Creating…' : 'Create assignment'}
             </button>

@@ -130,7 +130,7 @@ export function EditAssignmentForm({
         <div className="max-w-2xl mx-auto pb-16">
             <h1 className="text-h1 text-ink mb-8">Edit assignment</h1>
 
-            <form action={handleSave} className="bg-surface rounded-md shadow-card p-8 space-y-6 mb-8">
+            <form action={handleSave} className="clay-card p-8 space-y-6 mb-8">
                 <input type="hidden" name="assignmentId" value={assignmentId} />
 
                 <div>
@@ -143,7 +143,7 @@ export function EditAssignmentForm({
                         type="text"
                         required
                         defaultValue={initialTitle}
-                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline text-body-md text-ink
+                        className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline text-body-md text-ink
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
@@ -157,7 +157,7 @@ export function EditAssignmentForm({
                         name="instructions"
                         rows={6}
                         defaultValue={initialInstructions}
-                        className="w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink leading-relaxed
+                        className="clay-well w-full px-4 py-3 rounded-2xl border-2 border-hairline text-body-md text-ink leading-relaxed
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
@@ -191,7 +191,7 @@ export function EditAssignmentForm({
                         min={1}
                         required
                         defaultValue={initialMaxScore}
-                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline text-body-md text-ink
+                        className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline text-body-md text-ink
                                    focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
@@ -229,8 +229,8 @@ export function EditAssignmentForm({
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-12 rounded-md bg-brand text-on-ink font-semibold text-body-md
-                               hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                    className="clay-button w-full bg-brand text-on-ink font-semibold text-body-md
+                               hover:bg-brand-hover disabled:opacity-60"
                 >
                     {isPending ? 'Saving…' : 'Save changes'}
                 </button>

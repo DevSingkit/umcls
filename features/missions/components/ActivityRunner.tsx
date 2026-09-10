@@ -78,8 +78,11 @@ import {
     Flame,
     Pause,
 } from 'lucide-react'
+import confetti from 'canvas-confetti'
 import { submitQuestionAttempt } from '@/features/missions/actions/submit-question-attempt'
 import type { MissionPreviewForStudent, ActivityPreviewForStudent, QuestionPreviewForStudent } from '@/features/missions/actions/get-mission-for-student'
+import { TTSButton } from '@/components/ui/TTSButton'
+import { useAudioFX } from '@/lib/utils/useAudioFX'
 
 const MISSION_MASTERY_STREAK_TARGET_FALLBACK = 3 // only used if masteryThreshold is ever missing
 const QUESTION_MASTERY_STREAK_TARGET = 3
@@ -89,10 +92,10 @@ const QUESTION_MASTERY_STREAK_TARGET = 3
 // four brand-safe tokens. `amber` fixed to `warning` in the earlier
 // design pass; unchanged here.
 const TILE_STYLES = [
-    { icon: Circle, bg: 'bg-brand', ring: 'ring-brand' },
-    { icon: Square, bg: 'bg-info', ring: 'ring-info' },
-    { icon: Triangle, bg: 'bg-warning', ring: 'ring-warning' },
-    { icon: Diamond, bg: 'bg-brand-hover', ring: 'ring-brand-hover' },
+    { icon: Circle, bg: 'bg-brand', ring: 'ring-brand', border: 'border-brand-border' },
+    { icon: Square, bg: 'bg-info', ring: 'ring-info', border: 'border-gamified-pink-dark' },
+    { icon: Triangle, bg: 'bg-warning', ring: 'ring-warning', border: 'border-[#C47A30]' },
+    { icon: Diamond, bg: 'bg-brand-hover', ring: 'ring-brand-hover', border: 'border-brand-border' },
 ]
 
 // PHASE C GRID FIX (2026-09-04): the answer grid was a hardcoded
@@ -202,6 +205,7 @@ export function ActivityRunner({
     initialCorrectStreak: number
 }) {
     const router = useRouter()
+    const { playCorrect, playRetry } = useAudioFX()
 
     // REVIEW MODE (2026-09-07): true when EVERY question in EVERY
     // activity of this mission is already mastered — i.e. this whole
@@ -348,6 +352,10 @@ export function ActivityRunner({
 
         markSeen(activeQuestion.id)
 
+        // Audio FX feedback
+        if (result.isCorrect) playCorrect()
+        else if (!result.remediationActivityId) playRetry()
+
         if (isReviewMode) {
             // REVIEW MODE (2026-09-07): the server never writes
             // anything for this session and always reports this
@@ -409,6 +417,8 @@ export function ActivityRunner({
 
         if (result.justMastered) {
             setShowMastered(true)
+            // Fire confetti on mastery
+            confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 } })
             return
         }
 
@@ -527,7 +537,7 @@ export function ActivityRunner({
     if (showMastered) {
         return (
             <div className="fixed inset-0 z-50 bg-brand flex flex-col items-center justify-center gap-6 px-6 text-center">
-                <span className="motion-safe:animate-bounce flex h-28 w-28 items-center justify-center rounded-pill bg-surface text-warning shadow-modal">
+                <span className="motion-safe:animate-bounce-in flex h-28 w-28 items-center justify-center rounded-pill bg-surface text-warning shadow-modal">
                     <Star size={56} fill="currentColor" aria-hidden="true" />
                 </span>
                 <div className="flex items-center justify-center gap-2">
@@ -541,14 +551,14 @@ export function ActivityRunner({
                     You got {masteryThreshold} in a row on &quot;{mission.title}&quot;.
                 </p>
                 {unlockedNextMission && (
-                    <p className="font-sans text-body-emphasis text-brand bg-surface inline-block rounded-pill px-5 py-2 shadow-card">
+                    <p className="font-sans text-body-emphasis text-brand bg-surface inline-block rounded-pill px-5 py-2 shadow-clay-card">
                         A new mission just unlocked!
                     </p>
                 )}
                 <button
                     type="button"
                     onClick={exitToLesson}
-                    className="mt-2 h-14 px-10 rounded-2xl bg-surface text-brand font-heading text-lg uppercase tracking-wide border-b-4 border-hairline-strong shadow-modal transition-all active:border-b-0 active:translate-y-1 hover:scale-105"
+                    className="clay-button mt-2 px-10 bg-surface text-brand font-heading text-lg uppercase tracking-wide border-hairline-strong shadow-modal hover:scale-105"
                 >
                     Back to missions
                 </button>
@@ -634,11 +644,12 @@ export function ActivityRunner({
                     request that this kind of context "is too little to
                     be noticed." */}
                 {isReviewMode && (
-                    <div className="flex items-center gap-2 rounded-md bg-gamified-purple/10 border-2 border-gamified-purple px-4 py-3">
+                    <div className="flex items-center gap-2 rounded-2xl bg-gamified-purple/10 border-2 border-gamified-purple px-4 py-3">
                         <RotateCcw size={22} className="text-gamified-purple shrink-0" aria-hidden="true" />
-                        <p className="font-sans text-body-emphasis lg:text-lg font-bold text-gamified-purple">
+                        <p className="font-sans text-body-emphasis lg:text-lg font-bold text-gamified-purple flex-1">
                             Review mode — you already mastered this! Just for fun.
                         </p>
+                        <TTSButton text="Review mode. You already mastered this! Just for fun." />
                     </div>
                 )}
 
@@ -668,11 +679,14 @@ export function ActivityRunner({
                 text shown for a correct answer — the streak-count
                 sentence that used to sit alongside it was removed. ── */}
             <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 sm:px-8 py-4 max-w-2xl lg:max-w-4xl mx-auto w-full">
-                <p className="text-center font-heading text-mission md:text-[1.75rem] lg:text-4xl text-ink">
-                    {activeQuestion.prompt}
-                </p>
+                <div className="flex items-center gap-2">
+                    <p className="text-center font-heading text-mission md:text-[1.75rem] lg:text-4xl text-ink">
+                        {activeQuestion.prompt}
+                    </p>
+                    <TTSButton text={activeQuestion.prompt} />
+                </div>
                 {feedback?.isCorrect && (
-                    <div className="flex items-center gap-2 text-success animate-bounce">
+                    <div className="flex items-center gap-2 text-success motion-safe:animate-wiggle">
                         <Sparkles size={24} aria-hidden="true" />
                         <span className="font-heading text-lg lg:text-2xl uppercase tracking-wide">Nice job!</span>
                         <Sparkles size={24} aria-hidden="true" />
@@ -725,11 +739,12 @@ export function ActivityRunner({
                                 disabled={Boolean(feedback) || isSubmitting}
                                 onClick={() => handleSelectOption(option.id)}
                                 className={[
-                                    `flex ${gridLayout.tileMinH} lg:min-h-[140px] w-full items-center gap-3 lg:gap-4 rounded-md ${gridLayout.padding} lg:p-6 text-left font-sans font-bold ${gridLayout.textSize} lg:text-xl text-on-ink shadow-card transition-opacity`,
+                                    `flex ${gridLayout.tileMinH} lg:min-h-[140px] w-full items-center gap-3 lg:gap-4 rounded-2xl ${gridLayout.padding} lg:p-6 text-left font-sans font-bold ${gridLayout.textSize} lg:text-xl text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none`,
                                     style.bg,
+                                    style.border,
                                     spanFull ? 'col-span-2' : '',
                                     isSelected ? `ring-4 ${style.ring} ring-offset-2` : '',
-                                    isCorrectAnswer ? 'ring-4 ring-success ring-offset-2' : '',
+                                    isCorrectAnswer ? 'ring-4 ring-success ring-offset-2 motion-safe:animate-wiggle' : '',
                                     isRevealedCorrect ? 'ring-4 ring-success ring-offset-2' : '',
                                     isWrongAnswer ? 'opacity-50' : '',
                                     feedback && !isSelected && !isRevealedCorrect ? 'opacity-50' : '',
@@ -751,10 +766,11 @@ export function ActivityRunner({
                     whether they've answered yet — replaces the old
                     auto-after-2-wrong banner tied to feedback state. */}
                 {hintRevealed && activeQuestion.hintText && (
-                    <p className="flex items-start gap-2 font-sans text-body-md lg:text-lg text-info bg-info-soft rounded-md px-4 py-3 font-medium">
+                    <div className="flex items-start gap-2 font-sans text-body-md lg:text-lg text-info bg-info-soft rounded-2xl px-4 py-3 font-medium">
                         <Lightbulb size={20} className="shrink-0 mt-0.5" aria-hidden="true" />
-                        <span>Hint: {activeQuestion.hintText}</span>
-                    </p>
+                        <span className="flex-1">Hint: {activeQuestion.hintText}</span>
+                        <TTSButton text={`Hint: ${activeQuestion.hintText}`} />
+                    </div>
                 )}
 
                 {error && (
@@ -775,7 +791,7 @@ export function ActivityRunner({
                     <button
                         type="button"
                         onClick={handleGoToRemediation}
-                        className="w-full h-14 lg:h-20 rounded-2xl bg-brand hover:bg-brand-hover text-white font-heading text-lg lg:text-2xl uppercase tracking-wide shadow-card border-b-4 lg:border-b-8 border-brand-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
+                        className="clay-button w-full lg:min-h-[80px] bg-brand hover:bg-brand-hover text-white font-heading text-lg lg:text-2xl uppercase tracking-wide flex items-center justify-center"
                     >
                         Try a related question first
                     </button>
@@ -803,14 +819,14 @@ export function ActivityRunner({
                         <button
                             type="button"
                             onClick={() => setShowPauseMenu(false)}
-                            className="w-full h-14 rounded-2xl bg-brand hover:bg-brand-hover text-white font-heading text-lg uppercase tracking-wide shadow-card border-b-4 border-brand-border active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
+                            className="clay-button w-full bg-brand hover:bg-brand-hover text-white font-heading text-lg uppercase tracking-wide flex items-center justify-center"
                         >
                             Resume
                         </button>
                         <button
                             type="button"
                             onClick={exitToLesson}
-                            className="w-full h-14 rounded-2xl bg-surface-sunken hover:bg-hairline text-ink font-heading text-lg uppercase tracking-wide border-b-4 border-hairline-strong active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
+                            className="clay-button w-full bg-surface-sunken hover:bg-hairline text-ink font-heading text-lg uppercase tracking-wide border-hairline-strong flex items-center justify-center"
                         >
                             Quit mission
                         </button>

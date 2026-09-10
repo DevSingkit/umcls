@@ -81,7 +81,7 @@ export function Sidebar({ role }: SidebarProps) {
           aria-pressed={isPinned}
           aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar open"}
           className={cn(
-            "flex h-10 w-full items-center gap-3 rounded-md text-on-ink/70 hover:bg-white/10 hover:text-on-ink transition-colors",
+            "flex min-h-touch w-full items-center gap-3 rounded-md text-on-ink/70 hover:bg-white/10 hover:text-on-ink transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
             isPinned && "bg-white/10 text-on-ink font-medium",
             !isExpanded && "justify-center px-0"
@@ -111,7 +111,7 @@ export function Sidebar({ role }: SidebarProps) {
               aria-current={isActive ? "page" : undefined}
               title={isExpanded ? undefined : item.label}
               className={cn(
-                "flex h-11 items-center gap-3 rounded-md text-body-md text-on-ink/80 transition-colors overflow-hidden",
+                "flex min-h-touch items-center gap-3 rounded-md text-body-md text-on-ink/80 transition-colors overflow-hidden",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
                 isActive
                   ? "bg-brand font-semibold text-white shadow-sm"

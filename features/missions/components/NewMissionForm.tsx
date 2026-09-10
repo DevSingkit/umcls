@@ -54,10 +54,10 @@ type QuestionType = 'multiple_choice_single' | 'true_false'
 // component doesn't export it) so the authoring tiles are visually
 // identical to what a student actually sees, not an approximation.
 const TILE_STYLES = [
-    { icon: Circle, bg: 'bg-brand' },
-    { icon: Square, bg: 'bg-info' },
-    { icon: Triangle, bg: 'bg-warning' },
-    { icon: Diamond, bg: 'bg-brand-hover' },
+    { icon: Circle, bg: 'bg-brand', border: 'border-brand-border' },
+    { icon: Square, bg: 'bg-info', border: 'border-gamified-pink-dark' },
+    { icon: Triangle, bg: 'bg-warning', border: 'border-[#C47A30]' },
+    { icon: Diamond, bg: 'bg-brand-hover', border: 'border-brand-border' },
 ]
 
 let keySeed = 0
@@ -292,7 +292,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
 
     return (
         <form onSubmit={handleSubmit} className="mx-auto w-full max-w-md space-y-6 py-4 sm:max-w-lg sm:py-8">
-            <div className="space-y-5 bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6">
+            <div className="space-y-5 clay-card p-5 sm:p-6">
                 <div>
                     <label htmlFor="newMissionTitle" className="text-label text-ink-soft block mb-2">
                         Mission name <span className="text-error">(required)</span>
@@ -306,7 +306,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                         }}
                         placeholder="e.g. Fractions: Adding & Subtracting"
                         aria-required="true"
-                        className="w-full h-11 px-4 text-body-emphasis text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
+                        className="clay-well w-full min-h-touch px-4 text-body-emphasis text-ink rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
 
@@ -320,7 +320,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="What will students practice in this mission?"
-                        className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="clay-well w-full px-5 py-3 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                     />
                 </div>
 
@@ -336,7 +336,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                             min={1}
                             value={masteryThreshold}
                             onChange={(e) => setMasteryThreshold(Number(e.target.value))}
-                            className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                            className="clay-well w-24 min-h-touch px-4 text-body-md text-ink rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                         />
                     </div>
                 </div>
@@ -385,7 +385,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
 
             {/* ── Activities, stacked inline — no staging step ─────────── */}
             {activities.map((activity, aIndex) => (
-                <div key={activity.key} className="space-y-4 bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6">
+                <div key={activity.key} className="space-y-4 clay-card p-5 sm:p-6">
                     <div className="flex items-center justify-between gap-3">
                         <p className="text-label text-ink-soft">Activity {aIndex + 1}</p>
                         {activities.length > 1 && (
@@ -401,7 +401,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                     </div>
 
                     {activity.questions.map((q, qIndex) => (
-                        <div key={q.key} className="space-y-4 rounded-md border border-hairline p-4">
+                        <div key={q.key} className="space-y-4 rounded-2xl border border-hairline p-4">
                             <div className="flex items-center justify-between gap-3">
                                 <p className="text-caption font-semibold text-text-secondary">Question {qIndex + 1}</p>
                                 {activity.questions.length > 1 && (
@@ -429,7 +429,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                                     onChange={(e) =>
                                         updateQuestion(activity.key, q.key, { questionType: e.target.value as QuestionType })
                                     }
-                                    className="w-full h-11 px-4 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                    className="clay-well w-full min-h-touch px-4 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                                 >
                                     <option value="multiple_choice_single">Multiple choice</option>
                                     <option value="true_false">True / False</option>
@@ -442,7 +442,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                                 required
                                 value={q.prompt}
                                 onChange={(e) => updateQuestion(activity.key, q.key, { prompt: e.target.value })}
-                                className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="clay-well w-full px-5 py-3 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                                 placeholder="Type the question prompt here"
                             />
 
@@ -461,7 +461,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                                         return (
                                             <div
                                                 key={option.key}
-                                                className={`relative flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-on-ink shadow-card transition-all ${style.bg} ${
+                                                className={`relative flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
                                                     isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                                 }`}
                                             >
@@ -528,7 +528,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                                                 key={label}
                                                 type="button"
                                                 onClick={() => updateQuestion(activity.key, q.key, { correctTf: label })}
-                                                className={`flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-left text-on-ink shadow-card transition-all ${style.bg} ${
+                                                className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-left text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
                                                     isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                                 }`}
                                             >
@@ -564,7 +564,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                                     value={q.hintText}
                                     onChange={(e) => updateQuestion(activity.key, q.key, { hintText: e.target.value })}
                                     placeholder="A nudge in the right direction, not the answer itself"
-                                    className="w-full px-5 py-3 rounded-md border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                    className="clay-well w-full px-5 py-3 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
                                 />
                             </div>
                         </div>
@@ -591,7 +591,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
             </button>
 
             {/* ── Publish + submit ─────────────────────────────────────── */}
-            <div className="space-y-5 bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6">
+            <div className="space-y-5 clay-card p-5 sm:p-6">
                 <label className="flex items-center gap-2 text-body-md text-ink cursor-pointer select-none">
                     <input
                         type="checkbox"
@@ -611,7 +611,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-12 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+                    className="clay-button w-full bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md disabled:opacity-60"
                 >
                     {isPending
                         ? 'Creating…'

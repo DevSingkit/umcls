@@ -111,7 +111,7 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
               </p>
               <Link
                 href="/settings"
-                className="flex min-h-[44px] items-center gap-2 rounded-md px-3 text-body-md text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="flex min-h-touch items-center gap-2 rounded-md px-3 text-body-md text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 <Settings className="h-4 w-4 shrink-0 text-ink-soft" aria-hidden="true" />
                 Settings
@@ -119,7 +119,7 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
               <form action={signOut}>
                 <button
                   type="submit"
-                  className="flex w-full min-h-[44px] items-center rounded-md px-3 text-left text-body-md text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  className="flex w-full min-h-touch items-center rounded-md px-3 text-left text-body-md text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   Sign out
                 </button>

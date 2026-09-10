@@ -42,10 +42,10 @@ type QuestionType = 'multiple_choice_single' | 'true_false'
 // copied here directly (not imported, since none of those files export
 // it) so this form's tiles are visually identical to all three.
 const TILE_STYLES = [
-    { icon: Circle, bg: 'bg-brand' },
-    { icon: Square, bg: 'bg-info' },
-    { icon: Triangle, bg: 'bg-warning' },
-    { icon: Diamond, bg: 'bg-brand-hover' },
+    { icon: Circle, bg: 'bg-brand', border: 'border-brand-border' },
+    { icon: Square, bg: 'bg-info', border: 'border-gamified-pink-dark' },
+    { icon: Triangle, bg: 'bg-warning', border: 'border-[#C47A30]' },
+    { icon: Diamond, bg: 'bg-brand-hover', border: 'border-brand-border' },
 ]
 
 type ExistingActivity = {
@@ -213,12 +213,12 @@ export function AddActivityForm({
         <form
             ref={formRef}
             onSubmit={handleSubmit}
-            className="mx-auto w-full max-w-md sm:max-w-lg space-y-6 bg-surface rounded-md border border-hairline shadow-card p-5 sm:p-6"
+            className="mx-auto w-full max-w-md sm:max-w-lg space-y-6 clay-card p-5 sm:p-6"
         >
                 {questions.map((q, qIndex) => (
                     <div
                         key={q.key}
-                        className="space-y-4 rounded-md border border-hairline p-4"
+                        className="space-y-4 rounded-2xl border border-hairline p-4"
                     >
                         <div className="flex items-center justify-between gap-3">
                             <p className="text-label text-ink-soft">Question {qIndex + 1}</p>
@@ -242,7 +242,7 @@ export function AddActivityForm({
                                 id={`questionType-${q.key}`}
                                 value={q.questionType}
                                 onChange={(e) => updateQuestion(q.key, { questionType: e.target.value as QuestionType })}
-                                className="w-full h-11 px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                                className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
                             >
                                 <option value="multiple_choice_single">Multiple choice</option>
                                 <option value="true_false">True / False</option>
@@ -255,7 +255,7 @@ export function AddActivityForm({
                             required
                             value={q.prompt}
                             onChange={(e) => updateQuestion(q.key, { prompt: e.target.value })}
-                            className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                            className="clay-well w-full px-5 py-3 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
                             placeholder="Type the question prompt here"
                         />
 
@@ -271,7 +271,7 @@ export function AddActivityForm({
                                     return (
                                         <div
                                             key={option.key}
-                                            className={`relative flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-on-ink shadow-card transition-all ${style.bg} ${
+                                            className={`relative flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
                                                 isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                             }`}
                                         >
@@ -336,7 +336,7 @@ export function AddActivityForm({
                                             key={label}
                                             type="button"
                                             onClick={() => updateQuestion(q.key, { correctTf: label })}
-                                            className={`flex min-h-[64px] w-full items-center gap-3 rounded-md p-4 text-left text-on-ink shadow-card transition-all ${style.bg} ${
+                                            className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-left text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
                                                 isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                             }`}
                                         >
@@ -369,7 +369,7 @@ export function AddActivityForm({
                                 value={q.hintText}
                                 onChange={(e) => updateQuestion(q.key, { hintText: e.target.value })}
                                 placeholder="A nudge in the right direction, not the answer itself"
-                                className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                                className="clay-well w-full px-5 py-3 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
                             />
                         </div>
                     </div>
@@ -393,7 +393,7 @@ export function AddActivityForm({
                             id="addActivityRemediation"
                             value={remediatesActivityId}
                             onChange={(e) => setRemediatesActivityId(e.target.value)}
-                            className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                            className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
                         >
                             <option value="">None</option>
                             {existingActivities.map((a) => {
@@ -417,7 +417,7 @@ export function AddActivityForm({
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+                    className="clay-button w-full bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md disabled:opacity-60"
                 >
                     {isPending ? 'Adding…' : 'Add activity'}
                 </button>
