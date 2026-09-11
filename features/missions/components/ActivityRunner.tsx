@@ -205,7 +205,7 @@ export function ActivityRunner({
     initialCorrectStreak: number
 }) {
     const router = useRouter()
-    const { playCorrect, playRetry } = useAudioFX()
+    const { playCorrect, playRetry, playMastery } = useAudioFX()
 
     // REVIEW MODE (2026-09-07): true when EVERY question in EVERY
     // activity of this mission is already mastered — i.e. this whole
@@ -388,7 +388,15 @@ export function ActivityRunner({
                 // than refilling the queue and cycling forever. Same
                 // celebration screen as real first mastery, just with
                 // different wording (see the showMastered screen below).
+                //
+                // BUGFIX (2026-09-10): this branch previously had NEITHER
+                // confetti NOR a mastery sound at all — only the real
+                // first-mastery path below did. "Mastered again" is
+                // still a real celebration moment worth the same
+                // treatment, so both are added here to match.
                 setShowMastered(true)
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 } })
+                playMastery()
                 return
             }
 
@@ -417,8 +425,9 @@ export function ActivityRunner({
 
         if (result.justMastered) {
             setShowMastered(true)
-            // Fire confetti on mastery
+            // Fire confetti + mastery sound
             confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 } })
+            playMastery()
             return
         }
 

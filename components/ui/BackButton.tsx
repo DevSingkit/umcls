@@ -4,16 +4,12 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-// ── Route-label map ─────────────────────────────────────────────────
-// Maps known URL segments to human-readable labels. For dynamic
-// segments (UUIDs), the component falls back to a generic "Back" label
-// since the title isn't available from the URL alone.
 const SEGMENT_LABELS: Record<string, string> = {
     student: "Home",
     teacher: "Dashboard",
     admin: "Dashboard",
     dashboard: "Dashboard",
-    courses: "Courses",
+    courses: "Dashboard",
     lessons: "Lessons",
     missions: "Missions",
     assignments: "Assignments",
@@ -30,8 +26,6 @@ const SEGMENT_LABELS: Record<string, string> = {
     results: "Results",
 };
 
-// Dashboard roots — navigating "up" from these should not happen
-// (AppShell already hides BackButton on primary nav paths).
 const DASHBOARD_ROOTS = [
     "/student/dashboard",
     "/teacher/dashboard",
@@ -41,40 +35,42 @@ const DASHBOARD_ROOTS = [
     "/admin/audit-logs",
     "/admin/backups",
     "/student/todo",
-    "/student/archived",
     "/teacher/archived",
     "/settings",
+    "/student/courses",
+    "/teacher/courses",
 ];
 
 /**
- * Computes the parent URL by stripping the last path segment.
- * Returns null if already at a dashboard root.
+ * Computes the parent URL by stripping path segments.
+ * Redirects course paths directly to the role dashboard.
  */
 function getParentPath(pathname: string): { href: string; label: string } | null {
-    // Normalize trailing slash
     const clean = pathname.replace(/\/+$/, "");
 
     if (DASHBOARD_ROOTS.includes(clean)) return null;
 
     const segments = clean.split("/").filter(Boolean);
-    if (segments.length <= 2) return null; // e.g. "/student/dashboard" — already at root
+    if (segments.length <= 2) return null;
 
-    // Pop the last segment to get parent
+    // Direct course pages back to /<role>/dashboard
+    if (segments.includes("courses")) {
+        const role = segments[0]; // student | teacher | admin
+        return {
+            href: `/${role}/dashboard`,
+            label: SEGMENT_LABELS[role ?? ""] ?? "Dashboard",
+        };
+    }
+
     const parentSegments = segments.slice(0, -1);
     const parentPath = "/" + parentSegments.join("/");
 
-    // The label comes from the LAST segment of the PARENT path
     const parentLastSegment = parentSegments[parentSegments.length - 1]!;
     const label = SEGMENT_LABELS[parentLastSegment] ?? "Back";
 
     return { href: parentPath, label };
 }
 
-/**
- * Hierarchical back button — navigates UP the URL tree (parent route)
- * instead of using browser history. Shows on desktop only (lg+); mobile
- * uses the native back gesture.
- */
 export function BackButton() {
     const pathname = usePathname();
     const parent = getParentPath(pathname);
