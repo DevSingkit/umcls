@@ -14,9 +14,9 @@ insert into auth.users (id, email) values
     ('11111111-1111-1111-1111-111111111111', 'admin@test.local'),
     ('22222222-2222-2222-2222-222222222222', 'teacher@test.local');
 
-insert into public.users (id, role, full_name, is_active) values
-    ('11111111-1111-1111-1111-111111111111', 'admin', 'Test Admin', true),
-    ('22222222-2222-2222-2222-222222222222', 'teacher', 'Test Teacher', true);
+insert into public.users (id, email, role, full_name, is_active) values
+    ('11111111-1111-1111-1111-111111111111', 'admin@test.local', 'admin', 'Test Admin', true),
+    ('22222222-2222-2222-2222-222222222222', 'teacher@test.local', 'teacher', 'Test Teacher', true);
 
 insert into public.audit_logs (actor_id, actor_role, action, target_table, target_id, metadata)
 values ('11111111-1111-1111-1111-111111111111', 'admin', 'test_action', 'users', '00000000-0000-0000-0000-000000000000', '{}');

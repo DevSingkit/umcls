@@ -1,0 +1,237 @@
+'use client'
+// Design pass: the "Remove" button on each material row used plain
+// text-error with only a hover underline — violates §7.1a ("every
+// clickable action must look like one at rest, never plain text that
+// only changes on hover"). Given a real button-ghost treatment
+// instead. No save/upload/delete logic touched.
+import { useState, useTransition, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { updateLesson } from '@/features/lessons/actions/lessons'
+import { uploadMaterial, addMaterialLink, deleteMaterial, listMaterials } from '@/features/materials/actions/materials'
+import { MaterialList } from '@/features/materials/components/MaterialList'
+
+type Material = Awaited<ReturnType<typeof listMaterials>>[number]
+
+export function EditLessonForm({
+    courseId,
+    lessonId,
+    initialTitle,
+    initialContent,
+    initialMaterials,
+}: {
+    courseId: string
+    lessonId: string
+    initialTitle: string
+    initialContent: string
+    initialMaterials: Material[]
+}) {
+    const router = useRouter()
+    const [materials, setMaterials] = useState(initialMaterials)
+    const [saveError, setSaveError] = useState<string | null>(null)
+    const [uploadError, setUploadError] = useState<string | null>(null)
+    const [isSaving, startSaving] = useTransition()
+    const [isUploading, startUploading] = useTransition()
+    const [deletingMaterialId, setDeletingMaterialId] = useState<string | null>(null)
+    const fileFormRef = useRef<HTMLFormElement>(null)
+    const linkFormRef = useRef<HTMLFormElement>(null)
+
+    // Lesson content grows with its content instead of scrolling
+    // internally — same treatment as NewAssignmentForm's Instructions
+    // field.
+    const contentRef = useRef<HTMLTextAreaElement>(null)
+    function resizeContent() {
+        const el = contentRef.current
+        if (!el) return
+        el.style.height = 'auto'
+        el.style.height = `${el.scrollHeight}px`
+    }
+    useEffect(() => {
+        resizeContent()
+    }, [])
+
+    async function refreshMaterials() {
+        const all = await listMaterials(courseId, { type: 'lesson', lessonId })
+        setMaterials(all.filter((m) => m.lesson_id === lessonId))
+    }
+
+    function handleSave(formData: FormData) {
+        setSaveError(null)
+        startSaving(async () => {
+            const result = await updateLesson(formData)
+            if (!result.ok) {
+                setSaveError(result.error)
+                return
+            }
+            router.push(`/teacher/courses/${courseId}/lessons/${lessonId}`)
+        })
+    }
+
+    function handleFileUpload(formData: FormData) {
+        setUploadError(null)
+        startUploading(async () => {
+            const result = await uploadMaterial(courseId, { type: 'lesson', lessonId }, formData)
+            if (!result.ok) {
+                setUploadError(result.error)
+                return
+            }
+            fileFormRef.current?.reset()
+            await refreshMaterials()
+        })
+    }
+
+    function handleLinkAdd(formData: FormData) {
+        setUploadError(null)
+        startUploading(async () => {
+            const result = await addMaterialLink(courseId, { type: 'lesson', lessonId }, formData)
+            if (!result.ok) {
+                setUploadError(result.error)
+                return
+            }
+            linkFormRef.current?.reset()
+            await refreshMaterials()
+        })
+    }
+
+    async function handleDeleteMaterial(materialId: string) {
+        setDeletingMaterialId(materialId)
+        await deleteMaterial(materialId)
+        await refreshMaterials()
+        setDeletingMaterialId(null)
+    }
+
+    return (
+        <div className="max-w-2xl mx-auto pb-16">
+            <h1 className="text-h1 text-ink mb-8">Edit lesson</h1>
+
+            <form action={handleSave} className="bg-surface rounded-md shadow-card p-8 space-y-6 mb-8">
+                <input type="hidden" name="lessonId" value={lessonId} />
+
+                <div>
+                    <label htmlFor="title" className="block text-label text-ink mb-2">
+                        Lesson title
+                    </label>
+                    <input
+                        id="title"
+                        name="title"
+                        type="text"
+                        required
+                        defaultValue={initialTitle}
+                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline text-body-md text-ink
+                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    />
+                </div>
+
+                <div>
+                    <label htmlFor="content" className="block text-label text-ink mb-2">
+                        Lesson content
+                    </label>
+                    <textarea
+                        id="content"
+                        name="content"
+                        ref={contentRef}
+                        rows={10}
+                        required
+                        defaultValue={initialContent}
+                        onInput={resizeContent}
+                        className="w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink leading-relaxed
+                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none overflow-hidden"
+                    />
+                </div>
+
+                {saveError && (
+                    <p className="text-caption text-error" role="alert">
+                        {saveError}
+                    </p>
+                )}
+
+                <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="w-full h-11 rounded-md bg-brand text-on-ink font-semibold text-body-md
+                               hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                >
+                    {isSaving ? 'Saving…' : 'Save changes'}
+                </button>
+            </form>
+
+            <h2 className="text-h3 text-ink mb-4">Materials</h2>
+
+            {/* Single card holding upload controls + the material list
+                together — was two stacked cards (controls card, then
+                MaterialList's own cards below with a gap between).
+                Matches NewLessonForm's one-card-holds-everything feel
+                instead of looking like separate sections. */}
+            <div className="bg-surface rounded-md shadow-card p-6 space-y-4">
+                <form
+                    ref={fileFormRef}
+                    action={handleFileUpload}
+                    className="flex items-center gap-3 flex-wrap"
+                >
+                    <input
+                        type="file"
+                        name="file"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.mp3,.mp4"
+                        required
+                        className="text-caption text-text-secondary flex-1 min-w-[200px] cursor-pointer
+                                   file:mr-3 file:h-9 file:px-4 file:rounded-md file:border-0
+                                   file:bg-surface-sunken file:text-caption file:font-semibold file:text-ink
+                                   file:cursor-pointer hover:file:bg-hairline"
+                    />
+                    <button
+                        type="submit"
+                        disabled={isUploading}
+                        className="h-11 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
+                    >
+                        {isUploading ? 'Uploading…' : 'Upload file'}
+                    </button>
+                </form>
+
+                <form
+                    ref={linkFormRef}
+                    action={handleLinkAdd}
+                    className="flex items-center gap-3 flex-wrap"
+                >
+                    <input
+                        type="text"
+                        name="label"
+                        placeholder="Label (optional)"
+                        className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[140px]
+                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    />
+                    <input
+                        type="url"
+                        name="url"
+                        placeholder="https://..."
+                        required
+                        className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[200px]
+                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    />
+                    <button
+                        type="submit"
+                        disabled={isUploading}
+                        className="h-11 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
+                    >
+                        {isUploading ? 'Adding…' : 'Add link'}
+                    </button>
+                </form>
+
+                {uploadError && <p className="text-caption text-error">{uploadError}</p>}
+
+                {materials.length > 0 ? (
+                    <div className="border-t border-hairline pt-4 space-y-2">
+                        <MaterialList
+                            materials={materials}
+                            canDelete
+                            onDelete={handleDeleteMaterial}
+                            deletingId={deletingMaterialId}
+                        />
+                    </div>
+                ) : (
+                    <p className="border-t border-hairline pt-4 text-caption text-text-secondary">
+                        No materials attached yet.
+                    </p>
+                )}
+            </div>
+        </div>
+    )
+}

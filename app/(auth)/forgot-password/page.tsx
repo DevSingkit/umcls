@@ -1,136 +1,83 @@
-"use client";
-
-// app/forgot-password/page.tsx
+// app/(auth)/forgot-password/page.tsx
 //
-// Design system: DESIGN-LMS.md v3.0.0 (§2.1 Auth Flow — Forgot Password)
-// Same card treatment as app/login/page.tsx — see that file for the full
-// token → Tailwind arbitrary-value map.
+// Design system: DESIGN-LMS.md v1.8
+//
+// No longer a self-service reset flow. As of 2026-08-17, password
+// resets are admin-only — an admin resets a user's password directly
+// (see features/admin, once that action exists) rather than the user
+// emailing themselves a reset link. This page is now a static notice
+// pointing them to their admin, and no longer calls
+// requestPasswordReset. The old email-a-link flow and its landing
+// page (app/reset-password/page.tsx) have been removed entirely.
+//
+// DESIGN-LMS 2.1 (2026-08-31): removed font-heading (Fredoka) — global
+// default is now Roboto (font-document) via globals.css's base h1-h6
+// rule. Fixed text-amber -> text-warning: `amber` was a color name
+// from the OLD DESIGN-LMS v1.0 tailwind.config.ts and does not exist
+// in the current config (which uses `warning`/`warning-soft` for the
+// same hex value) — this class was silently not applying.
+//
+// Also: added the shared SiteNav/SiteFooter shell, matching every
+// other public page (about/our-story/contact/admissions/academics/
+// login) — previously this page had its own standalone centered-logo
+// header instead, flagged as an open inconsistency and now resolved
+// per explicit user confirmation ("add it for consistency"). The
+// standalone logo block above the card is removed since SiteNav
+// already shows the logo/school name in its own header.
+//
+// DESIGN-LMS 2.1 bugfix pass (2026-08-31, continued): two fixes.
+// (1) The "• Forgot your password?" eyebrow line directly restated the
+// h1 right below it ("Contact your school admin") — a redundant label
+// adding no information, which the locked decluttering rule (cut
+// redundant/explanatory UI copy) targets. Removed. (2) "Back to sign
+// in" was h-11 (44px) — bumped to h-12 (48px), the standing minimum
+// for any clickable target.
+// app/(auth)/forgot-password/page.tsx
 
-import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { Mail } from "lucide-react";
-import { requestPasswordReset } from "@/features/auth/actions/request-password-reset";
+import { UserCog } from "lucide-react";
+import { SiteNav } from "@/components/layout/SiteNav";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export default function ForgotPasswordPage() {
-    const [submitted, setSubmitted] = useState(false);
-    const [isPending, setIsPending] = useState(false);
+  return (
+    <div className="flex min-h-screen flex-col bg-canvas text-ink antialiased">
+      <SiteNav />
 
-    async function handleSubmit(formData: FormData) {
-        setIsPending(true);
-        await requestPasswordReset(formData);
-        // Always show the same confirmation, whether or not the email
-        // was found. See request-password-reset.ts for why.
-        setSubmitted(true);
-        setIsPending(false);
-    }
-
-    return (
-        <main
-            id="main-content"
-            className="flex min-h-screen flex-col items-center justify-center bg-[#F3F0EE] px-6 py-16"
-        >
-            <div className="w-full max-w-sm">
-                {/* Logo */}
-                <div className="mb-8 flex justify-center">
-                    <Image
-                        src="/logo.png"
-                        alt="UMCLS LMS"
-                        width={140}
-                        height={44}
-                        priority
-                        className="h-11 w-auto object-contain"
-                    />
-                </div>
-
-                {/* Card — white / 40px radius (rounded.hero) / card-lift shadow */}
-                <div className="rounded-[40px] bg-white p-8 shadow-[0_24px_48px_rgba(0,0,0,0.08)] sm:p-10">
-                    {submitted ? (
-                        <div className="text-center">
-                            {/* Circle icon — echoes the circle-portrait signature */}
-                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F3F0EE]">
-                                <Mail className="h-6 w-6 text-[#141413]" strokeWidth={1.5} />
-                            </div>
-
-                            <p className="mt-5 flex items-center justify-center gap-1.5 text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]">
-                                <span aria-hidden="true" className="text-[#F37338]">
-                                    •
-                                </span>
-                                Check your email
-                            </p>
-
-                            <h1 className="mt-2 text-[20px] font-medium leading-[1.2] tracking-[-0.4px] text-[#141413]">
-                                Link sent
-                            </h1>
-
-                            <p className="mt-3 text-[14px] leading-[1.5] text-[#696969]">
-                                If an account exists for that email, we&apos;ve sent a
-                                link to reset your password. The link expires in 1 hour.
-                            </p>
-
-                            <Link
-                                href="/login"
-                                className="mt-8 inline-flex h-11 items-center justify-center text-[14px] text-[#3860BE] hover:underline"
-                            >
-                                Back to sign in
-                            </Link>
-                        </div>
-                    ) : (
-                        <>
-                            <p className="mb-3 flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]">
-                                <span aria-hidden="true" className="text-[#F37338]">
-                                    •
-                                </span>
-                                Reset password
-                            </p>
-
-                            <h1 className="text-[20px] font-medium leading-[1.2] tracking-[-0.4px] text-[#141413]">
-                                Forgot your password?
-                            </h1>
-                            <p className="mb-8 mt-2 text-[16px] leading-[1.4] text-[#696969]">
-                                Enter your school email and we&apos;ll send you a link
-                                to reset it.
-                            </p>
-
-                            <form action={handleSubmit}>
-                                <div className="mb-6">
-                                    <label
-                                        htmlFor="email"
-                                        className="mb-2 block text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]"
-                                    >
-                                        Email
-                                    </label>
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        autoComplete="email"
-                                        required
-                                        placeholder="you@school.edu"
-                                        className="h-11 w-full rounded-[20px] border border-[#D1CDC7] bg-white px-5 text-[16px] text-[#141413] placeholder:text-[#9A9390] focus:border-[1.5px] focus:border-[#141413] focus:outline-none"
-                                    />
-                                </div>
-
-                                {/* button-primary — ink pill, no uppercase (v3 §7.1) */}
-                                <button
-                                    type="submit"
-                                    disabled={isPending}
-                                    className="h-11 w-full rounded-[20px] bg-[#141413] text-[16px] font-medium tracking-[-0.48px] text-[#F3F0EE] transition-colors hover:bg-[#292929] active:bg-[#141413] disabled:bg-[#E8E8E8] disabled:text-[#9A9390]"
-                                >
-                                    {isPending ? "Sending…" : "Send reset link"}
-                                </button>
-                            </form>
-
-                            <Link
-                                href="/login"
-                                className="mt-6 block text-center text-[14px] text-[#3860BE] hover:underline"
-                            >
-                                Back to sign in
-                            </Link>
-                        </>
-                    )}
-                </div>
+      <main
+        id="main-content"
+        className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 md:py-16"
+      >
+        <div className="w-full max-w-md">
+          {/* Card */}
+          <div className="rounded-xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-canvas text-ink">
+              <UserCog className="h-6 w-6" strokeWidth={1.5} />
             </div>
-        </main>
-    );
+
+            <h1 className="mt-4 text-xl font-bold tracking-tight text-ink sm:text-2xl">
+              Contact your school admin
+            </h1>
+
+            <p className="mt-2 text-caption text-text-secondary leading-relaxed">
+              For your account&apos;s security, password resets are handled
+              by your school admin. Reach out to them directly and they&apos;ll
+              set a new password for your account.
+            </p>
+
+            <div className="mt-6">
+              <Link
+                href="/login"
+                className="inline-flex h-12 items-center justify-center text-caption font-semibold text-brand hover:underline"
+              >
+                Back to sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <SiteFooter />
+    </div>
+  );
 }

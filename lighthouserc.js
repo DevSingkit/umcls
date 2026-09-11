@@ -16,10 +16,10 @@ module.exports = {
         collect: {
             numberOfRuns: 3,
             settings: {
-                // Preview deployments require auth in some setups — if Vercel
-                // preview protection is on, either disable it for this project
-                // or add a bypass token here (extraHeaders) before this will work.
                 preset: 'desktop',
+                extraHeaders: JSON.stringify({
+                    'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '',
+                }),
             },
         },
         assert: {

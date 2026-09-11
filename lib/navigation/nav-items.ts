@@ -2,13 +2,10 @@ import type { LucideIcon } from "lucide-react";
 import {
     Home,
     Users,
-    BarChart3,
     ScrollText,
-    Settings,
+    Archive,
     BookOpen,
-    ClipboardList,
-    GraduationCap,
-    Sparkles,
+    ListChecks,
 } from "lucide-react";
 
 export type Role = "admin" | "teacher" | "student";
@@ -17,82 +14,84 @@ export interface NavItem {
     label: string;
     href: string;
     icon: LucideIcon;
-    /**
-     * Whether this destination is actually built in V1 (see VERSION_ROADMAP.md).
-     * The design system (§3.1) calls for exactly 5 tabs per role at all times —
-     * items not yet built still render, but point at /coming-soon instead of a
-     * real feature, so the shell never links to a 404.
-     */
     isV1: boolean;
+    isActive?: (pathname: string) => boolean;
 }
 
-// Tab order/labels/icons here follow DESIGN-LMS.md §3.1 "Tab definitions per role" verbatim.
-// V1 status follows VERSION_ROADMAP.md's cut list.
+// Final shape, corrected 2026-08-23 after checking real Google
+// Classroom behavior directly (not assumption):
+//   - Teacher has NO "To-do" nav item — confirmed real Classroom
+//     behavior: teachers' own classes never show under To-do at all,
+//     that's a student-only concept. Teacher's real equivalent is the
+//     grading queue, which stays dashboard-only (NeedsAttentionList),
+//     not a separate nav destination.
+//   - Teacher's "My Courses" was REMOVED — real Classroom's own
+//     Teaching/Home screen already IS the full class list (the same
+//     card grid), there's no separate list page to link to. The
+//     teacher dashboard's course grid is no longer capped/sliced for
+//     this exact reason (see teacher-dashboard.ts) — it's now the one
+//     and only place a teacher's classes are listed, not a "preview."
+//     Teacher: Dashboard, Archived — 2 items.
+//   - Student's "My Courses" REMOVED for the same reason and the same
+//     way — the student dashboard's course grid is now the sole,
+//     uncapped course-listing surface too (see student-dashboard.ts).
+//     No asymmetry between roles anymore. Student: Home, To-do,
+//     Archived — 3 items.
+//   - Settings is NOT a primary nav item for ANY role — reachable only
+//     via the account-menu dropdown, same place as Sign Out.
+//   - People/Grades are course-scoped only (§6.1b) — never global nav.
+//   - Admin's Bulk Import lives as a /admin/users page action, not its
+//     own nav item. Admin's Grades route stays unlinked from nav.
 export const NAV_ITEMS: Record<Role, NavItem[]> = {
     admin: [
         { label: "Dashboard", href: "/admin/dashboard", icon: Home, isV1: true },
-        { label: "Users", href: "/admin/users", icon: Users, isV1: true }, // PH2-002, trimmed
         {
-            label: "Analytics",
-            href: "/coming-soon?feature=Analytics",
-            icon: BarChart3,
-            isV1: false, // PH2-001, V2
+            label: "Users",
+            href: "/admin/users",
+            icon: Users,
+            isV1: true,
+        },
+        {
+            label: "Archive",
+            href: "/admin/courses",
+            icon: BookOpen,
+            isV1: true,
         },
         {
             label: "Audit Logs",
-            href: "/coming-soon?feature=Audit+Logs",
+            href: "/admin/audit-logs",
             icon: ScrollText,
-            isV1: false, // PH2-004, V2
+            isV1: true,
         },
         {
-            label: "Settings",
-            href: "/coming-soon?feature=Settings",
-            icon: Settings,
-            isV1: false,
+            label: "Backups",
+            href: "/admin/backups",
+            icon: Archive,
+            isV1: true,
         },
     ],
     teacher: [
         { label: "Dashboard", href: "/teacher/dashboard", icon: Home, isV1: true },
-        { label: "My Courses", href: "/teacher/courses", icon: BookOpen, isV1: true }, // PH3-001/002
         {
-            label: "Assignments",
-            href: "/coming-soon?feature=Assignments",
-            icon: ClipboardList,
-            isV1: false, // PH3-004 / PH4-003 / PH5-001, V2
-        },
-        {
-            label: "Grades",
-            href: "/coming-soon?feature=Grades",
-            icon: GraduationCap,
-            isV1: false, // full gradebook is PH5-002, V2
-        },
-        {
-            label: "Settings",
-            href: "/coming-soon?feature=Settings",
-            icon: Settings,
-            isV1: false,
+            label: "Archived",
+            href: "/teacher/archived",
+            icon: Archive,
+            isV1: true,
         },
     ],
     student: [
         { label: "Home", href: "/student/dashboard", icon: Home, isV1: true },
-        { label: "My Courses", href: "/student/courses", icon: BookOpen, isV1: true }, // PH4-002
         {
-            label: "Assignments",
-            href: "/coming-soon?feature=Assignments",
-            icon: ClipboardList,
-            isV1: false, // V2
+            label: "To-do",
+            href: "/student/todo",
+            icon: ListChecks,
+            isV1: true,
         },
         {
-            label: "Grades",
-            href: "/coming-soon?feature=Grades",
-            icon: GraduationCap,
-            isV1: false, // V1 only has the post-submit result screen (PH4-005), not a grades tab
-        },
-        {
-            label: "Recommendations",
-            href: "/coming-soon?feature=Recommendations",
-            icon: Sparkles,
-            isV1: false, // PH7-002, V3
+            label: "Archived",
+            href: "/student/archived",
+            icon: Archive,
+            isV1: true,
         },
     ],
 };

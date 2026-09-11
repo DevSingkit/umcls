@@ -1,0 +1,40 @@
+-- Revokes the `anon` role's default table grants across the entire
+-- public schema. Found while independently re-checking a single
+-- table's grants (answer_options, flagged as never-confirmed in
+-- SECURITY.md/DATABASE.md) — that check showed `anon` holding
+-- DELETE/INSERT/REFERENCES/SELECT/TRIGGER/TRUNCATE/UPDATE, which
+-- turned out not to be specific to that table at all: a follow-up
+-- query across every public table showed the identical grant set on
+-- all of them. This is Supabase's project-creation default
+-- (`GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated`),
+-- never pruned for `anon` specifically at any point in this project's
+-- migration history.
+--
+-- This app has no legitimate anonymous-access feature anywhere — every
+-- real read/write goes through `authenticated`, gated by RLS policies
+-- that were written with `authenticated` in mind (confirmed via
+-- pg_policies: no policy on answer_options, or any other table checked
+-- so far, names `anon`/`public` in its roles list). Practical exposure
+-- today is low — RLS default-denies any role with no matching policy,
+-- so `anon` reading real data would require a future policy mistake
+-- naming `public`/`anon` instead of `authenticated` — but that's a
+-- single migration typo away from being a real, silent data leak
+-- rather than a defense-in-depth gap, and there's no reason to carry
+-- the risk when this role should have zero table access by design.
+--
+-- Does NOT touch Supabase Auth (login, signup, password reset) — those
+-- flows go through the `auth` schema and Supabase's Auth API, not
+-- PostgREST access to `public` tables, so this has no effect on them.
+-- Does NOT touch `authenticated`'s grants at all — those weren't
+-- independently audited in this pass and some (e.g. INSERT/UPDATE on
+-- answer_options) are load-bearing for real app code
+-- (features/quizzes/actions/create-quiz.ts's addQuestion/updateQuestion
+-- insert/delete option rows via the regular, non-admin client).
+--
+-- The ALTER DEFAULT PRIVILEGES line ensures this isn't just a one-time
+-- cleanup that a future `create table` silently undoes — new tables
+-- created by the migration-running role going forward won't grant
+-- `anon` anything by default either.
+
+revoke all privileges on all tables in schema public from anon;
+alter default privileges in schema public revoke all privileges on tables from anon;

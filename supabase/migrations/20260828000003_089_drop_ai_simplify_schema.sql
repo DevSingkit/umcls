@@ -1,0 +1,56 @@
+-- 20260828000003_089_drop_ai_simplify_schema.sql
+-- Cleanup migration, requested directly by the user for thesis
+-- database documentation — follows this project's own established
+-- convention of dedicated "drop unused X" migrations once a feature
+-- is confirmed retired (see 044_remove_reteach_retake.sql,
+-- 046_remove_ai_question_generation.sql,
+-- 064_drop_unused_grades_mastery_recommendations.sql,
+-- 066_drop_unused_question_bank.sql, 083_drop_deped_gradebook.sql).
+--
+-- Closes the loop deliberately left open in this same session's Phase
+-- 8 (AI Simplify retirement): SimplifyTab.tsx and
+-- features/simplify/actions/simplify.ts were already deleted, and
+-- every reference to Simplify was removed from both lesson pages and
+-- settings.ts. The database was intentionally left untouched at that
+-- time — this migration is the follow-up now that user has confirmed
+-- the database should be cleaned up too.
+--
+-- CONFIRMED orphaned by this session's own work, not guessed:
+--   - lesson_simplifications: Simplify's own data table. No other
+--     feature ever read or wrote it — confirmed by having read
+--     simplify.ts (its only writer/reader) in full before deleting it.
+--   - users.preferred_simplify_language: read/written ONLY by
+--     SimplifyTab.tsx's student view (via
+--     updatePreferredSimplifyLanguage, also already removed from
+--     settings.ts) and the lesson pages' now-removed language-
+--     resolution logic. Confirmed via ProfileSection.tsx (read in
+--     full this session) that account settings never touches this
+--     column independently.
+--
+-- NOT touched here, deliberately — flagged as worth investigating
+-- separately rather than dropped on a guess:
+--   - ai_generation_logs: simplify.ts's own inserts into this table
+--     used generation_mode: 'simplify', a value NOT included in this
+--     table's own CHECK constraint (generation_mode = ANY(ARRAY['ai',
+--     'manual'])). Those inserts were therefore violating the CHECK
+--     constraint on every single call, and simplify.ts never checked
+--     the insert's returned {error} — so AI Simplify's own usage
+--     logging has silently been a no-op this whole time. This is a
+--     real, confirmed bug, independent of whether the table itself
+--     should be dropped. Whether ai_generation_logs has OTHER live
+--     callers (e.g. any lesson-authoring AI assist) was not checked
+--     this session — no file confirming that either way was read —
+--     so the table is left alone here rather than dropped on
+--     incomplete information.
+--   - questions.difficulty / questions.explanation: never referenced
+--     by anything read this session. Plausible dead columns on the
+--     OLD quiz system, but AddQuestionForm.tsx / the quiz results
+--     page were never uploaded, so there's no confirmation either
+--     way — left alone.
+--   - login_events: plausible use by admin analytics (WeeklyActivity
+--     Chart.tsx / RecentActivityFeed.tsx, referenced in the file tree
+--     but never uploaded/read this session) — left alone.
+
+drop table if exists public.lesson_simplifications;
+
+alter table public.users drop column if exists preferred_simplify_language;

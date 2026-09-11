@@ -1,109 +1,101 @@
 // app/page.tsx
-//
-// Landing page — UMCLS LMS
-// Design system: DESIGN-LMS.md v3.0.0 (Mastercard-inspired editorial redesign)
-//
-// What changed vs. the v2.1 build:
-//   • Page shell moved off pure white → Canvas Cream #F3F0EE everywhere (§1.1 "warm canvas, never white")
-//   • Header replaced with a floating white pill nav (§3.3) instead of a flat bordered top bar
-//   • Primary CTA is now an Ink pill (#141413), not Electric Blue — blue is reserved for data/semantic use only (§1.2)
-//   • Radii collapsed to the three-tier system: 20px buttons, 40px cards/hero, 999px pills (§1.5) — no more 4px/16px
-//   • Feature + role cards use circle icon frames instead of square icon tiles, echoing the circle-portrait signature (§7.8)
-//   • A ghost watermark word sits behind the feature section per §7.8, hidden on mobile
-//   • Section eyebrows now carry the small orange "•" per §1.3 ("• WHAT THE SYSTEM DOES")
-//   • Footer is the one dark (ink) surface on the page, per "one dark tone only" (§1.1)
 
 import Image from "next/image";
+import Link from "next/link";
+
 import {
+  Heart,
   BookOpen,
-  ClipboardCheck,
-  BarChart3,
-  Shield,
-  Users,
-  Sparkles,
-  Phone,
-  MapPin,
-  ArrowRight,
+  Users2,
+  HandHeart,
   ArrowUpRight,
+  ArrowRight,
+  Gamepad2,
+  Quote,
+  CalendarDays,
+  CheckCircle2,
+  MapPin,
 } from "lucide-react";
+import { SiteNav } from "@/components/layout/SiteNav";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
-const features = [
+const trustStats = [
+  { label: "DepEd Recognized" },
+  { label: "Christ-Centered & Values-Focused" },
+  { label: "Cooperative Learning Approach" },
+];
+
+const programs = [
+  {
+    icon: Users2,
+    title: "Nursery & Kindergarten",
+    description:
+      "Early childhood education across Nursery, Kindergarten 1, and Kindergarten 2 with play-based literacy, foundational math, and Christian character formation.",
+  },
   {
     icon: BookOpen,
-    title: "Lessons & materials",
+    title: "Elementary (Grades 1 to 6)",
     description:
-      "Teachers create rich-text lessons with embedded videos and downloadable PDFs. Students read on any device — no horizontal scrolling, no clutter.",
+      "DepEd K-12 aligned curriculum emphasizing academic excellence, cooperative learning, and moral development.",
   },
   {
-    icon: ClipboardCheck,
-    title: "Quizzes & assignments",
+    icon: Gamepad2,
+    title: "Mission Engine (Gamified LMS)",
     description:
-      "Multiple-choice and true/false quizzes with instant auto-grading. File-upload assignments with teacher feedback and a running score.",
-  },
-  {
-    icon: Sparkles,
-    title: "AI re-teach lessons",
-    description:
-      "When a student struggles, the system can generate a simplified explanation — reviewed and approved by the teacher before any student sees it.",
-  },
-  {
-    icon: BarChart3,
-    title: "Grades & progress",
-    description:
-      "Running averages per course, per-assignment scores, and teacher-visible struggle indicators to spot who needs help at a glance.",
-  },
-  {
-    icon: Shield,
-    title: "Secure & private",
-    description:
-      "Row-level security on every query, encrypted data at rest and in transit, and Data Privacy Act-aligned erasure. Children's data is protected by design.",
-  },
-  {
-    icon: Users,
-    title: "Three roles, one system",
-    description:
-      "Administrators manage users and view analytics. Teachers build content and grade. Parents guide their children through lessons at home.",
+      "Interactive digital practice, quizzes, and skill challenges designed to make homework engaging and measurable.",
   },
 ];
 
-const roles = [
+const advantages = [
   {
-    label: "Administrator",
-    // role-admin token #356373 — storm-teal
-    badgeClass: "bg-[#356373]/10 text-[#356373]",
-    borderClass: "border-[#356373]/20",
-    items: [
-      "Create and manage user accounts",
-      "Bulk-import students via CSV",
-      "View analytics and audit logs",
-      "Assign teachers to courses",
-    ],
+    icon: HandHeart,
+    title: "Christ-Centered Foundation",
+    description: "Daily devotions and moral values integrated across all learning activities.",
   },
   {
-    label: "Teacher",
-    // role-teacher token — ink badge on fog surface
-    badgeClass: "bg-[#E8E8E8] text-[#141413]",
-    borderClass: "border-[#D1CDC7]",
-    items: [
-      "Build courses, lessons, and quizzes",
-      "Grade submissions with written feedback",
-      "Track class progress with struggle indicators",
-      "Generate and publish AI re-teach lessons",
-    ],
+    icon: Users2,
+    title: "Classroom Without Losers",
+    description: "Cooperative learning dynamics that emphasize peer support, empathy, and collective growth over rivalry.",
   },
   {
-    label: "Student / Parent",
-    // role-student token #dbeafe — accent-soft
-    badgeClass: "bg-[#dbeafe] text-[#3860BE]",
-    borderClass: "border-[#dbeafe]",
-    items: [
-      "Read lessons on phone or laptop",
-      "Submit assignments and take quizzes",
-      "View grades and teacher feedback",
-      "Access simplified lessons when struggling",
-    ],
+    icon: Heart,
+    title: "Safe & Nurturing Environment",
+    description: "Dedicated faculty providing personal attention in a modern, supportive classroom setting.",
+  },
+];
+
+const corePillars = [
+  {
+    title: "Character & Faith First",
+    quote: "We nurture young minds with sound academic fundamentals while anchoring them in Christian faith and integrity.",
+  },
+  {
+    title: "Cooperative Growth",
+    quote: "Students learn by encouraging and guiding one another, building leadership and teamwork skills early on.",
+  },
+  {
+    title: "Interactive Mastery",
+    quote: "Our gamified learning tools provide real-time feedback so every child masters key concepts at their own pace.",
+  },
+];
+
+const announcements = [
+  {
+    date: "Enrollment",
+    title: "School Year Enrollment Open",
+    description: "Slots for Nursery, Kindergarten, and Grades 1 through 6 are now open, so visit the registrar or inquire online.",
+  },
+  {
+    date: "Academics",
+    title: "Quarterly Assessment Calendar",
+    description: "Review upcoming schedule and examination guidelines on the LMS portal.",
+  },
+  {
+    date: "Ministry",
+    title: "Campus Chapel & Devotionals",
+    description: "Weekly student assemblies for worship, prayer, and character enrichment.",
   },
 ];
 
@@ -111,283 +103,229 @@ const roles = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#F3F0EE] text-[#141413] antialiased">
-      {/* ── Floating pill nav ────────────────────────────────────────────── */}
-      <div className="sticky top-4 z-40 px-4 sm:top-6">
-        <header className="mx-auto flex max-w-[1200px] items-center justify-between rounded-full bg-white px-5 py-3 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:px-8">
-          <a href="/" className="inline-flex min-h-[44px] items-center">
-            <Image
-              src="/logo.png"
-              alt="UMCLS LMS"
-              width={112}
-              height={34}
-              priority
-              className="h-8 w-auto object-contain"
-            />
-          </a>
+    <div className="min-h-screen bg-canvas text-ink antialiased flex flex-col font-sans">
+      <SiteNav />
 
-          <a
-            href="/login"
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#141413] px-6 text-[14px] font-medium tracking-[-0.42px] text-[#F3F0EE] transition-colors hover:bg-[#292929]"
-          >
-            Sign in
-            <ArrowRight className="h-3.5 w-3.5" />
-          </a>
-        </header>
-      </div>
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="px-6 pb-16 pt-12 md:pb-24 md:pt-20">
+          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-brand-soft border border-brand/20 px-4 py-2 text-base font-bold text-brand shadow-clay-sm">
+                <HandHeart className="h-5 w-5 shrink-0" strokeWidth={2.5} aria-hidden="true" />
+                <span>Classroom without walls, Classroom without losers</span>
+              </div>
 
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="px-4 pb-16 pt-16 sm:px-6 md:pb-24 md:pt-20 lg:pt-24">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]">
-            <span aria-hidden="true" className="text-[#F37338]">
-              •
-            </span>
-            Grades 1–6 · United Methodist Cooperative
-          </p>
+              <h1 className="mt-6 text-3xl font-extrabold text-ink sm:text-4xl md:text-5xl md:leading-[1.15]">
+                Nurturing Minds, Building Character, Growing in Faith.
+              </h1>
 
-          {/* display-xxl / -2% tracking */}
-          <h1 className="mt-4 max-w-3xl text-[40px] font-medium leading-[1.0] tracking-[-0.8px] text-[#141413] sm:text-[52px] sm:tracking-[-1.04px] lg:text-[64px] lg:tracking-[-1.28px]">
-            Cooperative Learning System
-          </h1>
+              <p className="mt-6 max-w-2xl text-lg text-ink-soft leading-relaxed">
+                A private Christian basic education institution serving the
+                community of Tala, Caloocan City, offering Nursery,
+                Kindergarten, and Elementary education paired with
+                interactive learning technology.
+              </p>
 
-          <p className="mt-6 max-w-xl text-[18px] italic leading-[1.4] text-[#696969]">
-            &ldquo;Classroom without walls&hellip; Classroom with care.&rdquo;
-          </p>
+              {/* 56px Primary Touch Targets */}
+              <div className="mt-10 flex flex-wrap items-center gap-4">
+                <Link
+                  href="/admissions"
+                  className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset transition-all"
+                >
+                  Admissions
+                  <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-surface px-8 text-xl font-bold text-ink shadow-card hover:shadow-card-hover transition-all"
+                >
+                  Log in
+                </Link>
+              </div>
 
-          <p className="mt-4 max-w-xl text-[16px] font-normal leading-[1.4] text-[#696969]">
-            A simple, secure Learning Management System built for grades
-            1–6. Teachers create lessons and quizzes. Parents guide their
-            children at home. No complexity, no clutter — just learning.
-          </p>
+              {/* High-Visibility Badges */}
+              <div className="mt-8 flex flex-wrap gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-base font-bold text-brand shadow-clay-sm">
+                  <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                  DepEd Recognized
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-base font-bold text-ink-soft shadow-clay-sm">
+                  <MapPin className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                  847 Sampaguita Street, Tala, Caloocan City
+                </span>
+              </div>
+            </div>
 
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <a
-              href="/login"
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-[20px] bg-[#141413] px-7 text-[16px] font-medium tracking-[-0.48px] text-[#F3F0EE] transition-colors hover:bg-[#292929]"
-            >
-              Sign in to your account
-              <ArrowRight className="h-4 w-4" />
-            </a>
-
-            <a
-              href="#features"
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-[20px] border-[1.5px] border-[#141413] bg-white px-7 text-[16px] font-medium tracking-[-0.48px] text-[#141413] transition-colors hover:bg-[#F3F0EE]"
-            >
-              See what&rsquo;s inside
-            </a>
+            {/* Hero visual slot */}
+            <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface shadow-card">
+              <img 
+                src="/hero.jpe" 
+                alt="United Methodist Cooperative Learning System Hero Visual" 
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
+        </section>
 
-          {/* Recognition pills — kept out of the CTA row so the ink pill reads
-              as the only "signal" element in the viewport */}
-          <div className="mt-10 flex flex-wrap gap-2.5">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#d4f5e3] px-4 py-1.5 text-[12px] font-bold uppercase tracking-[0.48px] text-[#1a7a4a]">
-              <Shield className="h-3 w-3" strokeWidth={2} />
-              DepEd NCR Recognized
-            </span>
-            <span className="inline-flex items-center rounded-full border border-[#D1CDC7] bg-white px-4 py-1.5 text-[13px] text-[#696969]">
-              Kinder Permit K-0025 s.&nbsp;2023
-            </span>
-            <span className="inline-flex items-center rounded-full border border-[#D1CDC7] bg-white px-4 py-1.5 text-[13px] text-[#696969]">
-              Elementary Permit E-0024 s.&nbsp;2023
-            </span>
+        {/* ── Trust & credentials bar ─────────────────────────────────────── */}
+        <section className="bg-surface px-6 py-8 shadow-clay-sm">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6">
+            <ul className="flex flex-wrap gap-x-10 gap-y-3">
+              {trustStats.map((stat) => (
+                <li key={stat.label} className="text-lg font-bold text-ink-soft flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-brand shadow-clay-sm" />
+                  {stat.label}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── Features ─────────────────────────────────────────────────────── */}
-      <section id="features" className="relative overflow-hidden px-4 py-20 sm:px-6 md:py-24">
-        {/* Ghost watermark — cream-on-cream, decorative only, hidden on mobile */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-6 right-0 hidden select-none text-[140px] font-medium leading-none tracking-[-2.8px] text-[#E8E8E8] md:block lg:text-[180px]"
-        >
-          LEARN
-        </span>
+        {/* ── Welcome message ──────────────────────────────────────────────── */}
+        <section className="px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-4xl bg-surface rounded-2xl p-8 md:p-12 shadow-card">
+            <span className="text-base font-bold uppercase tracking-wider text-brand">Our Educational Philosophy</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Welcome to UMCLSI</h2>
+            <p className="mt-6 text-xl leading-relaxed text-ink-soft">
+              Every child who joins our school community enters a space built on cooperative 
+              learning and Christian values, operating on the principle of a 
+              <strong className="text-ink"> Classroom without walls and a Classroom without losers</strong>, where 
+              students grow academically by encouraging one another rather than competing against each other.
+            </p>
+            <p className="mt-4 text-lg leading-relaxed text-ink-soft">
+              We are a growing community of learners across Nursery,
+              Kindergarten, and Elementary, and by combining caring instruction
+              with interactive tools like our Mission Engine LMS, we ensure
+              every learner receives focused attention, sound academic
+              guidance, and a strong moral foundation.
+            </p>
+          </div>
+        </section>
 
-        <div className="relative mx-auto max-w-[1200px]">
-          <p className="flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]">
-            <span aria-hidden="true" className="text-[#F37338]">
-              •
-            </span>
-            What the system does
-          </p>
+        {/* ── Curriculum & core programs ───────────────────────────────────── */}
+        <section className="px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-7xl">
+            <span className="text-base font-bold uppercase tracking-wider text-brand">What we offer</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Curriculum &amp; Grade Levels</h2>
 
-          <h2 className="mt-3 max-w-xl text-[28px] font-medium leading-[1.2] tracking-[-0.56px] text-[#141413] md:text-[36px] md:tracking-[-0.72px]">
-            Everything a school needs. Nothing it doesn&rsquo;t.
-          </h2>
-
-          <p className="mt-4 max-w-lg text-[16px] leading-[1.4] text-[#696969]">
-            Built around real classroom workflows — not feature checkboxes.
-            Each capability exists because a teacher or parent asked for it.
-          </p>
-
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="rounded-[40px] bg-white p-7 shadow-[0_24px_48px_rgba(0,0,0,0.08)] transition-transform hover:-translate-y-0.5"
-              >
-                {/* Circle icon frame — echoes the circle-portrait signature */}
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F3F0EE]">
-                  <feature.icon
-                    className="h-6 w-6 text-[#141413]"
-                    strokeWidth={1.5}
-                  />
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {programs.map((program) => (
+                <div
+                  key={program.title}
+                  className="rounded-2xl bg-surface p-8 shadow-card hover:shadow-card-hover transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-soft shadow-clay-sm">
+                      <program.icon className="h-7 w-7 text-brand" strokeWidth={2} aria-hidden="true" />
+                    </div>
+                    <h3 className="mt-6 text-2xl font-bold text-ink">{program.title}</h3>
+                    <p className="mt-3 text-lg leading-relaxed text-ink-soft">{program.description}</p>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-                <h3 className="mt-5 text-[16px] font-medium leading-[1.4] tracking-[-0.32px] text-[#141413]">
-                  {feature.title}
+        {/* ── The UMCLS Advantage ──────────────────────────────────────────── */}
+        <section className="px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-7xl">
+            <span className="text-base font-bold uppercase tracking-wider text-brand">Why choose us</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">The UMCLS Advantage</h2>
+
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {advantages.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl bg-surface p-8 shadow-card hover:shadow-card-hover transition-all"
+                >
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-soft shadow-clay-sm">
+                    <item.icon className="h-7 w-7 text-brand" strokeWidth={2} aria-hidden="true" />
+                  </div>
+                  <h3 className="mt-6 text-2xl font-bold text-ink">{item.title}</h3>
+                  <p className="mt-3 text-lg leading-relaxed text-ink-soft">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Educational Commitments ──────────────────────────────────────── */}
+        <section className="bg-surface px-6 py-16 md:py-20 shadow-clay-sm">
+          <div className="mx-auto max-w-7xl">
+            <span className="text-base font-bold uppercase tracking-wider text-brand">What drives our mission</span>
+            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Our Core Commitments</h2>
+
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {corePillars.map((item) => (
+                <div key={item.title} className="rounded-2xl bg-surface-sunken p-8 shadow-clay-inset">
+                  <Quote className="h-8 w-8 text-brand" strokeWidth={2} aria-hidden="true" />
+                  <h3 className="mt-4 text-2xl font-bold text-ink">{item.title}</h3>
+                  <p className="mt-3 text-lg leading-relaxed text-ink-soft">{item.quote}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Announcements & LMS portal notice ────────────────────────────── */}
+        <section className="px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span className="text-base font-bold uppercase tracking-wider text-brand">Stay in the loop</span>
+                <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Latest Announcements</h2>
+              </div>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 text-xl font-bold text-brand hover:underline"
+              >
+                Contact us for details
+                <ArrowUpRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
+              </Link>
+            </div>
+
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {announcements.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl bg-surface p-8 shadow-card hover:shadow-card-hover transition-all"
+                >
+                  <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-4 py-1.5 text-base font-bold text-brand shadow-clay-sm">
+                    <CalendarDays className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                    {item.date}
+                  </span>
+                  <h3 className="mt-6 text-2xl font-bold text-ink">{item.title}</h3>
+                  <p className="mt-3 text-lg leading-relaxed text-ink-soft">{item.description}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Portal Callout Banner */}
+            <div className="mt-12 flex flex-col items-start justify-between gap-6 rounded-2xl bg-surface p-8 md:p-10 lg:flex-row lg:items-center shadow-card">
+              <div>
+                <h3 className="text-2xl md:text-3xl font-extrabold text-ink">
+                  Students and parents: access the LMS portal
                 </h3>
-
-                <p className="mt-2 text-[14px] leading-[1.5] text-[#696969]">
-                  {feature.description}
+                <p className="mt-2 text-lg font-medium text-ink-soft">
+                  Check schedules, coursework, and updates any time.
                 </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Roles ────────────────────────────────────────────────────────── */}
-      <section className="px-4 py-20 sm:px-6 md:py-24">
-        <div className="mx-auto max-w-[1200px]">
-          <p className="flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-[0.56px] text-[#696969]">
-            <span aria-hidden="true" className="text-[#F37338]">
-              •
-            </span>
-            Three roles
-          </p>
-
-          <h2 className="mt-3 max-w-xl text-[28px] font-medium leading-[1.2] tracking-[-0.56px] text-[#141413] md:text-[36px] md:tracking-[-0.72px]">
-            One system for everyone in the classroom.
-          </h2>
-
-          <div className="mt-14 grid gap-5 md:grid-cols-3">
-            {roles.map((role) => (
-              <div
-                key={role.label}
-                className={`rounded-[40px] border bg-white p-7 shadow-[0_24px_48px_rgba(0,0,0,0.08)] ${role.borderClass}`}
+              <Link
+                href="/login"
+                className="inline-flex h-14 shrink-0 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset transition-all"
               >
-                <span
-                  className={`inline-flex rounded-full px-4 py-1.5 text-[12px] font-bold uppercase tracking-[0.48px] ${role.badgeClass}`}
-                >
-                  {role.label}
-                </span>
-
-                <ul className="mt-6 space-y-3.5">
-                  {role.items.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-start gap-2.5 text-[14px] leading-[1.5] text-[#3d3d3d]"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#141413]"
-                      />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA band ─────────────────────────────────────────────────────── */}
-      <section className="px-4 py-20 sm:px-6 md:py-24">
-        <div className="mx-auto max-w-[1200px]">
-          <div className="relative overflow-hidden rounded-[40px] bg-[#141413] px-8 py-16 text-center md:px-16">
-            <h2 className="text-[28px] font-medium leading-[1.2] tracking-[-0.56px] text-[#F3F0EE] md:text-[36px] md:tracking-[-0.72px]">
-              Ready to get started?
-            </h2>
-
-            <p className="mx-auto mt-4 max-w-md text-[16px] leading-[1.4] text-[#9A9390]">
-              If you&rsquo;re a teacher or parent at UMCLS, your account has
-              already been created. Sign in with the credentials sent to your
-              email.
-            </p>
-
-            <a
-              href="/login"
-              className="mt-8 inline-flex min-h-[44px] items-center gap-2 rounded-[20px] bg-[#F3F0EE] px-7 text-[16px] font-medium tracking-[-0.48px] text-[#141413] transition-colors hover:bg-white"
-            >
-              Sign in
-              <ArrowRight className="h-4 w-4" />
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Footer — the one dark (ink) surface on the page ────────────────── */}
-      <footer className="bg-[#141413] text-[#F3F0EE]">
-        <div className="mx-auto max-w-[1200px] px-4 py-14 sm:px-6">
-          <div className="grid gap-10 md:grid-cols-3">
-            <div>
-              <Image
-                src="/logo.png"
-                alt="UMCLS LMS"
-                width={100}
-                height={30}
-                className="h-8 w-auto object-contain brightness-0 invert"
-              />
-              <p className="mt-3 text-[13px] leading-[1.5] text-[#9A9390]">
-                United Methodist Cooperative
-                <br />
-                Learning System, Inc.
-              </p>
-            </div>
-
-            <div>
-              <p className="text-[12px] font-bold uppercase tracking-[0.48px] text-[#F3F0EE]">
-                Contact
-              </p>
-              <ul className="mt-3 space-y-2.5">
-                <li className="flex items-start gap-2 text-[13px] leading-[1.5] text-[#9A9390]">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} />
-                  <span>
-                    847 Sampaguita Street, San Jose,
-                    <br />
-                    Tala, Caloocan City, Metro Manila 1437
-                  </span>
-                </li>
-                <li className="flex items-center gap-2 text-[13px] text-[#9A9390]">
-                  <Phone className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                  +63 975 152 1284
-                </li>
-                <li className="flex items-center gap-2 text-[13px]">
-                  <a
-                    href="https://facebook.com/p/United-Methodist-Cooperative-Learning-System-Inc-61576554814851"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-[44px] items-center gap-1 text-[#F3F0EE] hover:underline"
-                  >
-                    Facebook page
-                    <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-[12px] font-bold uppercase tracking-[0.48px] text-[#F3F0EE]">
-                Government recognition
-              </p>
-              <ul className="mt-3 space-y-2 text-[13px] leading-[1.5] text-[#9A9390]">
-                <li>Kindergarten Permit K-0025 s.&nbsp;2023</li>
-                <li>Elementary Permit E-0024 s.&nbsp;2023</li>
-                <li>DepEd NCR Region</li>
-              </ul>
+                Go to LMS Portal
+                <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
+              </Link>
             </div>
           </div>
+        </section>
+      </main>
 
-          <div className="mt-10 border-t border-[#3d3d3d] pt-6 text-center text-[12px] text-[#9A9390]">
-            &copy;&nbsp;{new Date().getFullYear()} United Methodist Cooperative
-            Learning System, Inc. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      {/* Shared Single Source-of-Truth Footer */}
+      <SiteFooter />
     </div>
   );
 }

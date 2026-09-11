@@ -1,0 +1,194 @@
+"use client";
+
+// features/auth/components/LoginForm.tsx
+//
+// Login form, extracted from the old standalone /login page so it can
+// live directly on the landing page instead. Same form logic as
+// before (useActionState + login server action) — only the page shell
+// around it changed. See DESIGN-LMS.md §8.9.
+//
+// Two behaviors added 2026-08-17:
+//  1. Email and password are now controlled inputs. On a failed
+//     login, the password field is cleared but the email field is
+//     left exactly as the person typed it — they should never have to
+//     retype their email just because the password was wrong. This
+//     can't be left to browser default behavior (uncontrolled inputs),
+//     which is inconsistent across browsers/autofill — it has to be
+//     handled explicitly.
+//  2. Reads ?reason=timeout / ?reason=deactivated from the URL (set
+//     by middleware.ts and get-current-user.ts when they redirect a
+//     signed-out session here) and shows an explanatory banner, since
+//     those redirects used to land on a dedicated /login page that no
+//     longer exists — without this, the person would just see a blank
+//     sign-in form with no explanation for why they were signed out.
+//
+// DESIGN-LMS 2.1 (2026-08-31): removed font-heading (Fredoka) and cut
+// the redundant heading stack this card used to render on top of the
+// page's own heading — app/login/page.tsx already shows an eyebrow
+// ("LMS Gateway"), h1 ("Sign in to your account"), and "Welcome!"
+// directly above this component. This card previously repeated all of
+// that a second time (its own "• Sign in" eyebrow, two h2 lines
+// spelling out the school name already shown in SiteNav's logo, and
+// "Sign in to your account" again) — a real duplicate-heading stack,
+// not just visual noise. The page's heading is now the sole title;
+// this component starts directly at the form.
+"use client";
+
+// features/auth/components/LoginForm.tsx
+
+import { useActionState, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Eye, EyeOff, AlertCircle, Info } from "lucide-react";
+import { login } from "@/features/auth/actions/login";
+import { cn } from "@/lib/utils";
+
+async function loginAction(
+  _prevState: { error: string | null },
+  formData: FormData
+): Promise<{ error: string | null }> {
+  return login(formData);
+}
+
+const initialState: { error: string | null } = { error: null };
+
+const REASON_MESSAGES: Record<string, string> = {
+  timeout: "You were signed out after a period of inactivity. Please sign in again.",
+  deactivated: "This account is not active. Please contact your school admin.",
+};
+
+export function LoginForm() {
+  const [state, formAction, isPending] = useActionState(
+    loginAction,
+    initialState
+  );
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason");
+  const reasonMessage = reason ? REASON_MESSAGES[reason] : undefined;
+
+  useEffect(() => {
+    if (state.error) {
+      setPassword("");
+    }
+  }, [state.error]);
+
+  return (
+    <div className="w-full">
+      {reasonMessage && !state.error && (
+        <div
+          role="status"
+          className="mb-5 flex items-start gap-2 rounded-lg bg-info-soft px-4 py-3"
+        >
+          <Info
+            className="mt-0.5 h-4 w-4 shrink-0 text-info"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          <p className="text-caption text-info">{reasonMessage}</p>
+        </div>
+      )}
+
+      <form action={formAction} noValidate className="space-y-4">
+        <div>
+          <label
+            htmlFor="email"
+            className="mb-2 block text-caption font-medium text-ink-soft"
+          >
+            Email address
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-describedby={state.error ? "login-error" : undefined}
+            aria-invalid={state.error ? true : undefined}
+            placeholder="example@gmail.com"
+            className="h-11 w-full rounded-lg border border-border bg-canvas px-4 text-caption text-ink focus:border-brand focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="password"
+            className="mb-2 block text-caption font-medium text-ink-soft"
+          >
+            Password
+          </label>
+          <div className="relative">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-describedby={state.error ? "login-error" : undefined}
+              aria-invalid={state.error ? true : undefined}
+              placeholder="••••••••••••"
+              className="h-11 w-full rounded-lg border border-border bg-canvas px-4 pr-12 text-caption text-ink focus:border-brand focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={
+                showPassword ? "Hide password" : "Show password"
+              }
+              aria-pressed={showPassword}
+              className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center text-text-secondary focus:outline-none"
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" strokeWidth={1.5} />
+              ) : (
+                <Eye className="h-5 w-5" strokeWidth={1.5} />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="text-right">
+          <Link
+            href="/forgot-password"
+            className="text-caption font-medium text-brand hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
+        {state.error && (
+          <div
+            id="login-error"
+            role="alert"
+            className="flex items-start gap-2 rounded-lg bg-red-soft px-4 py-3"
+          >
+            <AlertCircle
+              className="mt-0.5 h-4 w-4 shrink-0 text-red"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <p className="text-caption text-red">{state.error}</p>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className={cn(
+            "h-11 w-full rounded-lg bg-brand text-caption font-semibold text-white transition-all hover:bg-brand-hover",
+            "disabled:bg-border disabled:text-text-muted"
+          )}
+        >
+          {isPending ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+    </div>
+  );
+}
