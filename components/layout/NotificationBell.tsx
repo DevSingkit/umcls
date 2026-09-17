@@ -41,7 +41,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         <div ref={containerRef} className="relative">
             <button
                 type="button"
-                aria-label="Notifications"
+                aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
                 aria-expanded={isOpen}
                 onClick={handleBellClick}
                 className="relative flex h-12 w-12 min-h-touch min-w-touch items-center justify-center rounded-pill bg-white/10 shadow-card transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
@@ -55,13 +55,13 @@ export function NotificationBell({ userId }: { userId: string }) {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 z-40 mt-2 max-h-96 w-[calc(100vw-2rem)] max-w-80 overflow-y-auto rounded-md bg-surface shadow-modal border border-hairline">
+                <div className="absolute right-0 z-40 mt-2 max-h-96 w-[calc(100vw-2rem)] max-w-80 overflow-y-auto rounded-md bg-surface shadow-modal border border-hairline animate-fade-in-down">
                     <div className="border-b border-hairline px-4 py-3">
                         <p className="text-body-emphasis text-ink">Notifications</p>
                     </div>
                     {notifications.length === 0 ? (
-                        <p className="px-4 py-6 text-center text-caption text-text-secondary">
-                            Nothing yet.
+                        <p className="px-4 py-6 text-center text-body-md text-text-secondary">
+                            No notifications right now.
                         </p>
                     ) : (
                         notifications.map((n) => (

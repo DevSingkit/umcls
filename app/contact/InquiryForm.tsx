@@ -42,10 +42,18 @@ export function InquiryForm() {
 
   if (submitted) {
     return (
-      <div className="mt-8 rounded-xl border border-hairline bg-surface p-6 text-body-md text-ink-soft shadow-card">
-        This form isn&apos;t connected to anything yet, so your message wasn&apos;t
-        actually sent. Please call or email us directly for now using the
-        details on this page.
+      <div className="mt-8 rounded-md border border-hairline bg-surface p-6 text-body-md text-ink-soft shadow-card space-y-2">
+        <p className="font-semibold text-ink">Thank you for your interest!</p>
+        <p className="text-text-secondary leading-relaxed">
+          Online inquiry processing is currently being updated. For immediate assistance and enrollment questions, please call us directly at{" "}
+          <a href="tel:+639945849446" className="text-brand font-semibold hover:underline">
+            0994 584 9446
+          </a>{" "}
+          or email{" "}
+          <a href="mailto:umcls20educ@gmail.com" className="text-brand font-semibold hover:underline">
+            umcls20educ@gmail.com
+          </a>.
+        </p>
       </div>
     );
   }

@@ -245,7 +245,7 @@ function VoiceModal({
     return (
         <ModalOverlay title="Record Voice Note" onClose={onClose}>
             {error && (
-                <p className="text-caption text-error" role="alert">{error}</p>
+                <p className="text-caption text-error font-medium" role="alert" aria-live="assertive">{error}</p>
             )}
 
             <div className="flex flex-col items-center gap-4 py-4">
@@ -296,7 +296,7 @@ function VoiceModal({
                                 onClick={handleSave}
                                 className="clay-button flex-1 px-6 py-3 min-h-touch bg-brand text-on-ink font-heading text-body-emphasis focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             >
-                                Use this
+                                Attach Voice Note
                             </button>
                         </div>
                     </>
@@ -409,7 +409,7 @@ function DrawModal({
                     className="clay-button flex items-center justify-center gap-2 px-8 py-3 min-h-touch bg-brand text-on-ink font-heading text-body-emphasis focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     <Check size={20} aria-hidden="true" />
-                    Done
+                    Attach Drawing
                 </button>
             </div>
         </ModalOverlay>
@@ -455,7 +455,7 @@ function PhotoModal({
     return (
         <ModalOverlay title="Take a Photo" onClose={onClose}>
             {error && (
-                <p className="text-caption text-error" role="alert">{error}</p>
+                <p className="text-caption text-error font-medium" role="alert" aria-live="assertive">{error}</p>
             )}
 
             {!capturedUrl ? (
@@ -481,14 +481,14 @@ function PhotoModal({
                         className="clay-button w-full px-6 py-3 min-h-touch bg-brand text-on-ink font-heading text-body-emphasis flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         <Camera size={22} aria-hidden="true" />
-                        Capture
+                        Take Photo
                     </button>
                 </div>
             ) : (
                 <div className="space-y-4">
                     <div className="clay-well rounded-2xl overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={capturedUrl} alt="Captured photo" className="w-full aspect-[4/3] object-cover" />
+                        <img src={capturedUrl} alt="Captured photo preview" className="w-full aspect-[4/3] object-cover" />
                     </div>
                     <div className="flex items-center gap-3">
                         <button
@@ -496,14 +496,14 @@ function PhotoModal({
                             onClick={() => setCapturedUrl(null)}
                             className="flex-1 h-14 min-h-touch rounded-2xl border-2 border-hairline text-ink font-heading text-body-emphasis hover:bg-surface-sunken transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         >
-                            Retake
+                            Retake Photo
                         </button>
                         <button
                             type="button"
                             onClick={handleSave}
                             className="clay-button flex-1 px-6 py-3 min-h-touch bg-brand text-on-ink font-heading text-body-emphasis focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         >
-                            Use this
+                            Attach Photo
                         </button>
                     </div>
                 </div>

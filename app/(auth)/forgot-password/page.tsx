@@ -50,25 +50,25 @@ export default function ForgotPasswordPage() {
       >
         <div className="w-full max-w-md">
           {/* Card */}
-          <div className="rounded-xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-canvas text-ink">
+          <div className="rounded-md border border-hairline bg-surface p-6 text-center shadow-card sm:p-8">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
               <UserCog className="h-6 w-6" strokeWidth={1.5} />
             </div>
 
-            <h1 className="mt-4 text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            <h1 className="mt-4 text-h2 font-bold tracking-tight text-ink">
               Contact your school admin
             </h1>
 
-            <p className="mt-2 text-caption text-text-secondary leading-relaxed">
+            <p className="mt-2 text-body-md text-text-secondary leading-relaxed">
               For your account&apos;s security, password resets are handled
-              by your school admin. Reach out to them directly and they&apos;ll
+              by your school administrator. Reach out to them directly and they&apos;ll
               set a new password for your account.
             </p>
 
             <div className="mt-6">
               <Link
                 href="/login"
-                className="inline-flex h-12 items-center justify-center text-caption font-semibold text-brand hover:underline"
+                className="inline-flex h-12 items-center justify-center text-body-md font-semibold text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:rounded-sm"
               >
                 Back to sign in
               </Link>

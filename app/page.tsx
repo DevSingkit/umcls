@@ -158,11 +158,14 @@ export default function LandingPage() {
             </div>
 
             {/* Hero visual slot */}
-            <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface border border-hairline shadow-card">
-              <img 
+            <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface border border-hairline shadow-card relative">
+              <Image 
                 src="/hero.jpe" 
                 alt="United Methodist Cooperative Learning System Hero Visual" 
-                className="w-full h-full object-cover"
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
               />
             </div>
           </div>

@@ -14,14 +14,14 @@ export default function LoginPage() {
           <p className="text-caption font-semibold uppercase tracking-wider text-brand">
             LMS Gateway
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-            Login to your account
+          <h1 className="mt-2 text-h1 font-bold tracking-tight text-ink">
+            Log in to your account
           </h1>
-          <p className="mt-2 text-caption text-text-secondary">
+          <p className="mt-2 text-body-md text-text-secondary">
             Welcome! Enter your credentials below to access your dashboard.
           </p>
 
-          <div className="mt-8 rounded-xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+          <div className="mt-8 rounded-md border border-hairline bg-surface p-6 shadow-card sm:p-8">
             <LoginForm />
           </div>
         </div>

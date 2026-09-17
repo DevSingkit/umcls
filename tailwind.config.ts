@@ -50,7 +50,14 @@ const config: Config = {
           DEFAULT: "#8F1349",       // Deep UMCLSI Raspberry Pink
           hover: "#7A1040",         // Sidebar hover state
           active: "#A3124C",        // Active highlight
+          soft: "#FDF2F8",          // Sidebar soft background
           slate: "#1E293B",         // Soft slate theme option
+        },
+        secondary: {
+          DEFAULT: "#8F1349",
+          hover: "#7A1040",
+          active: "#A3124C",
+          soft: "#FDF2F8",
         },
 
         // ── Action & Brand Colors (Forest Green CTAs) ───────────
@@ -137,9 +144,11 @@ const config: Config = {
         "touch-primary": "56px",
         "touch-secondary": "48px",
         touch: "56px",
+        "touch-sm": "44px",
       },
       minWidth: {
         touch: "56px",
+        "touch-sm": "44px",
       },
       keyframes: {
         "slide-up": {
@@ -170,6 +179,14 @@ const config: Config = {
           "0%": { transform: "scale(1)", opacity: "0.6" },
           "100%": { transform: "scale(1.6)", opacity: "0" },
         },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "fade-in-down": {
+          "0%": { opacity: "0", transform: "translateY(-8px) scale(0.98)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
       },
       animation: {
         "drawer-up": "slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -177,6 +194,8 @@ const config: Config = {
         "pop-in": "pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
         "bounce-in": "bounce-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both",
         "pulse-ring": "pulse-ring 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
+        "fade-in": "fade-in 0.15s ease-out both",
+        "fade-in-down": "fade-in-down 0.15s cubic-bezier(0.16, 1, 0.3, 1) both",
       },
     },
   },

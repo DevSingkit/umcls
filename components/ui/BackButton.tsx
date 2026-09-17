@@ -233,6 +233,7 @@ export function BackButton({ role, parentRoute }: BackButtonProps) {
     return (
         <Link
             href={parent.href}
+            aria-label={`Go back to ${parent.label}`}
             className="inline-flex min-h-touch items-center gap-2 rounded-md px-3.5 py-1.5 text-body-md font-semibold text-ink-soft hover:text-ink hover:bg-surface-sunken border border-hairline bg-surface shadow-card hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
         >
             <ArrowLeft size={16} className="text-brand shrink-0" aria-hidden="true" />

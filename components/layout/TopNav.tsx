@@ -140,7 +140,7 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
               <div
                 role="menu"
                 aria-label="Account"
-                className="absolute right-0 z-40 mt-2 w-48 rounded-md bg-surface p-2 shadow-modal border border-hairline"
+                className="absolute right-0 z-40 mt-2 w-48 rounded-md bg-surface p-2 shadow-modal border border-hairline animate-fade-in-down"
               >
                 <p className="truncate px-3 py-2 text-caption font-bold text-ink-soft border-b border-hairline mb-1">
                   {fullName}

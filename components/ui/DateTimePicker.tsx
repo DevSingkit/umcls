@@ -60,7 +60,7 @@ function to24Hour(hour12: number, period: 'AM' | 'PM'): number {
 }
 
 function formatDisplayDate(date: Date | null): string {
-    if (!date) return 'Choose a date'
+    if (!date) return 'Select date & time'
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
@@ -159,7 +159,7 @@ export function DateTimePicker({
             {isOpen && (
                 <div
                     role="dialog"
-                    className="absolute left-0 z-30 mt-2 w-[320px] max-w-[calc(100vw-2rem)] rounded-md border border-hairline bg-surface p-4 shadow-modal"
+                    className="absolute left-0 z-30 mt-2 w-[320px] max-w-[calc(100vw-2rem)] rounded-md border border-hairline bg-surface p-4 shadow-modal animate-fade-in-down"
                 >
                     <div className="flex items-center justify-between mb-3">
                         <button
@@ -293,9 +293,9 @@ export function DateTimePicker({
                         <button
                             type="button"
                             onClick={() => setIsOpen(false)}
-                            className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
+                            className="h-12 px-5 rounded-md bg-brand text-on-ink text-body-md font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                         >
-                            Done
+                            Apply Date & Time
                         </button>
                     </div>
                 </div>

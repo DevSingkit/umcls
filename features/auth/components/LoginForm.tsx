@@ -81,14 +81,15 @@ export function LoginForm() {
       {reasonMessage && !state.error && (
         <div
           role="status"
-          className="mb-5 flex items-start gap-2 rounded-lg bg-info-soft px-4 py-3"
+          aria-live="polite"
+          className="mb-5 flex items-start gap-2 rounded-md bg-info-soft px-4 py-3 border border-info/20"
         >
           <Info
             className="mt-0.5 h-4 w-4 shrink-0 text-info"
             strokeWidth={2}
             aria-hidden="true"
           />
-          <p className="text-caption text-info">{reasonMessage}</p>
+          <p className="text-caption font-medium text-info">{reasonMessage}</p>
         </div>
       )}
 
@@ -111,14 +112,14 @@ export function LoginForm() {
             aria-describedby={state.error ? "login-error" : undefined}
             aria-invalid={state.error ? true : undefined}
             placeholder="example@gmail.com"
-            className="h-11 w-full rounded-lg border border-border bg-canvas px-4 text-caption text-ink focus:border-brand focus:outline-none"
+            className="h-12 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
           />
         </div>
 
         <div>
           <label
             htmlFor="password"
-            className="mb-2 block text-caption font-medium text-ink-soft"
+            className="mb-2 block text-label text-ink-soft"
           >
             Password
           </label>
@@ -134,7 +135,7 @@ export function LoginForm() {
               aria-describedby={state.error ? "login-error" : undefined}
               aria-invalid={state.error ? true : undefined}
               placeholder="••••••••••••"
-              className="h-11 w-full rounded-lg border border-border bg-canvas px-4 pr-12 text-caption text-ink focus:border-brand focus:outline-none"
+              className="h-12 w-full rounded-md border-2 border-hairline bg-surface px-4 pr-12 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
             />
             <button
               type="button"
@@ -143,7 +144,7 @@ export function LoginForm() {
                 showPassword ? "Hide password" : "Show password"
               }
               aria-pressed={showPassword}
-              className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center text-text-secondary focus:outline-none"
+              className="absolute inset-y-0 right-0 flex h-12 w-12 items-center justify-center text-text-secondary hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" strokeWidth={1.5} />
@@ -157,7 +158,7 @@ export function LoginForm() {
         <div className="text-right">
           <Link
             href="/forgot-password"
-            className="text-caption font-medium text-brand hover:underline"
+            className="text-caption font-semibold text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:rounded-sm"
           >
             Forgot password?
           </Link>
@@ -167,14 +168,15 @@ export function LoginForm() {
           <div
             id="login-error"
             role="alert"
-            className="flex items-start gap-2 rounded-lg bg-red-soft px-4 py-3"
+            aria-live="assertive"
+            className="flex items-start gap-2 rounded-md bg-error-soft px-4 py-3 border border-error/20"
           >
             <AlertCircle
-              className="mt-0.5 h-4 w-4 shrink-0 text-red"
+              className="mt-0.5 h-4 w-4 shrink-0 text-error"
               strokeWidth={2}
               aria-hidden="true"
             />
-            <p className="text-caption text-red">{state.error}</p>
+            <p className="text-caption font-medium text-error">{state.error}</p>
           </div>
         )}
 
@@ -182,8 +184,8 @@ export function LoginForm() {
           type="submit"
           disabled={isPending}
           className={cn(
-            "h-11 w-full rounded-lg bg-brand text-caption font-semibold text-white transition-all hover:bg-brand-hover",
-            "disabled:bg-border disabled:text-text-muted"
+            "h-12 w-full rounded-md bg-brand text-body-md font-bold text-white transition-all hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+            "disabled:bg-hairline disabled:text-text-muted"
           )}
         >
           {isPending ? "Signing in…" : "Sign in"}
