@@ -304,30 +304,9 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
-
-            {/* Portal Callout Banner */}
-            <div className="mt-12 flex flex-col items-start justify-between gap-6 rounded-2xl bg-surface p-8 md:p-10 lg:flex-row lg:items-center border border-hairline shadow-card">
-              <div>
-                <h3 className="text-2xl md:text-3xl font-extrabold text-ink">
-                  Students and parents: access the LMS portal
-                </h3>
-                <p className="mt-2 text-lg font-medium text-ink-soft">
-                  Check schedules, coursework, and updates any time.
-                </p>
-              </div>
-              <Link
-                href="/login"
-                className="inline-flex h-14 shrink-0 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
-              >
-                Go to LMS Portal
-                <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
-              </Link>
-            </div>
           </div>
         </section>
       </main>
-
-      {/* Shared Single Source-of-Truth Footer */}
       <SiteFooter />
     </div>
   );
