@@ -1,5 +1,6 @@
 // app/login/page.tsx
 
+import Image from "next/image";
 import { SiteNav } from "@/components/layout/SiteNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { LoginForm } from "@/features/auth/components/LoginForm";
@@ -9,17 +10,30 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col bg-canvas text-ink antialiased">
       <SiteNav />
 
-      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 md:py-16">
-        <div className="w-full max-w-md">
-          <p className="text-caption font-semibold uppercase tracking-wider text-brand">
-            LMS Gateway
-          </p>
+      <main className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-12 sm:px-6 md:py-16">
+        {/* Decorative watermark, scoped to this section only so it never
+            bleeds into the nav or footer. Scales from a modest badge on
+            mobile up to a larger centered mark on desktop without ever
+            competing with the form for attention. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+        >
+          <Image
+            src="/logo.webp"
+            alt=""
+            width={800}
+            height={800}
+            className="h-[280px] w-[280px] opacity-[0.06] object-contain sm:h-[420px] sm:w-[420px] md:h-[560px] md:w-[560px]"
+            priority={false}
+          />
+        </div>
+
+        <div className="relative z-10 w-full max-w-md">
+          
           <h1 className="mt-2 text-h1 font-bold tracking-tight text-ink">
             Log in to your account
           </h1>
-          <p className="mt-2 text-body-md text-text-secondary">
-            Welcome! Enter your credentials below to access your dashboard.
-          </p>
 
           <div className="mt-8 rounded-md border border-hairline bg-surface p-6 shadow-card sm:p-8">
             <LoginForm />
