@@ -9,13 +9,6 @@ next-env.d.ts
 
 .vercel
 
-
-# impeccable-ignore-start
-# Ephemeral output, runtime state, and per-dev overrides.
-# Unanchored: .impeccable may sit at the repo root or under a nested
-# workspace (apps/web/.impeccable/...); anchored patterns would miss it.
-# Shared artifacts stay tracked: config.json, live/config.json,
-# design.json, surfaces/*.md, critique/*.md.
 .impeccable/config.local.json
 .impeccable/hook.cache.json
 .impeccable/hook.pending.json
@@ -33,4 +26,15 @@ next-env.d.ts
 .impeccable/live/pending-manual-edits.json
 .impeccable/live/deferred-svelte-component-accepts.json
 .impeccable/live/*.png
-# impeccable-ignore-end
+.impeccable/config.json
+.impeccable/design.json
+DESIGN.md
+PRODUCT.md
+.github/agents/impeccable-asset-producer.agent.md
+.github/skills/impeccable
+.github/hooks/impeccable.json
+.github/agents
+.github/agents/impeccable-documenter.agent.md
+.github/agents/impeccable-finish-reviewer.agent.md
+.github/agents/impeccable-manual-edit-applier.agent.md
+.github/hooks/impeccable.json
