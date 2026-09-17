@@ -35,34 +35,8 @@ export default async function StudentCourseDetailPage({
 
     const items = await getCourseStream(courseId)
 
-    const lessonItems = items.filter((i) => i.kind === 'lesson')
-    const completedCount = lessonItems.filter((i) => i.kind === 'lesson' && i.completed).length
-    const totalLessons = lessonItems.length
-    const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
-
     return (
         <div>
-            {course.description && (
-                <p className="text-body-md text-text-secondary mb-8">{course.description}</p>
-            )}
-
-            {totalLessons > 0 && (
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-caption text-text-secondary">
-                            {completedCount} of {totalLessons} lessons completed
-                        </span>
-                        <span className="text-caption text-text-secondary">{progressPercent}%</span>
-                    </div>
-                    <div className="h-2 w-full rounded-pill bg-hairline overflow-hidden">
-                        <div
-                            className="h-full bg-info rounded-pill"
-                            style={{ width: `${progressPercent}%` }}
-                        />
-                    </div>
-                </div>
-            )}
-
             <CourseStream courseId={courseId} items={items} />
         </div>
     )

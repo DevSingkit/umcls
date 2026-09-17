@@ -89,27 +89,28 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
         {/* Desktop page title, sourced from PageHeaderContext.
             Always breadcrumbs off "UMCLSI" — e.g. "UMCLSI > English"
             with the section/instructor as a lighter subtitle. */}
-        <div className="hidden min-w-0 items-baseline gap-2 md:flex">
+        <div className="hidden min-w-0 items-center gap-2 md:flex">
           <span className="text-body-md font-semibold text-on-ink/70 shrink-0">
             UMCLSI
           </span>
-          <span className="text-on-ink/70 shrink-0" aria-hidden="true">
-            &gt;
-          </span>
+          {header && (
+            <span className="text-on-ink/70 shrink-0" aria-hidden="true">
+              &gt;
+            </span>
+          )}
           {header ? (
-            <div className="min-w-0 truncate">
-              <span className="text-h2 text-on-ink truncate">
+            <div className="min-w-0 flex flex-col justify-center">
+              <span className="text-h2 text-on-ink truncate leading-tight">
                 {header.title}
               </span>
               {header.subtitle && (
-                <span className="ml-3 text-caption text-on-ink/70 truncate">
+                <span className="text-caption text-on-ink/70 truncate leading-tight">
                   {header.subtitle}
                 </span>
               )}
             </div>
           ) : (
             <span className="text-h2 text-on-ink truncate">
-              {ROLE_LABELS[role]}
             </span>
           )}
         </div>
@@ -125,7 +126,7 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
               aria-haspopup="menu"
               aria-expanded={isMenuOpen}
               className={cn(
-                "rounded-pill",
+                "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-pill shadow-card transition-opacity hover:opacity-90",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
               )}
             >
@@ -151,7 +152,6 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
                   onClick={() => setIsMenuOpen(false)}
                   className="flex min-h-touch items-center gap-2 rounded-md px-3 text-body-md text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
-                  <Settings className="h-4 w-4 shrink-0 text-ink-soft" aria-hidden="true" />
                   Settings
                 </Link>
                 <form action={signOut}>
@@ -168,10 +168,7 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
           </div>
         </div>
       </div>
-
-      {/* Optional tabs row (e.g. CourseTabs), pushed here by whatever page
-          called usePageHeader. Kept inside the same sticky bar so it reads
-          as one header, matching the Classroom reference. */}
+      
       {header?.tabs && (
         <div className="px-4 lg:px-6">{header.tabs}</div>
       )}

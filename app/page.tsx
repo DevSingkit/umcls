@@ -160,7 +160,7 @@ export default function LandingPage() {
             {/* Hero visual slot */}
             <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface border border-hairline shadow-card relative">
               <Image 
-                src="/hero.jpe" 
+                src="/hero.jpg" 
                 alt="United Methodist Cooperative Learning System Hero Visual" 
                 fill
                 priority

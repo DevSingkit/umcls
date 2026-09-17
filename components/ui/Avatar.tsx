@@ -4,11 +4,14 @@
 // bucket means avatarUrl is always just a plain, directly-usable URL
 // — no signing/resolution involved anywhere.
 
+import { cn } from "@/lib/utils";
+
 export function Avatar({
     fullName,
     avatarUrl,
     size = 'md',
     toneClassName = 'bg-brand-soft text-brand',
+    className,
 }: {
     fullName: string
     avatarUrl: string | null
@@ -17,13 +20,19 @@ export function Avatar({
     // different fallback-circle tone than the default brand-soft one,
     // which is meant for light surfaces.
     toneClassName?: string
+    className?: string
 }) {
     const initial = fullName?.trim()?.charAt(0)?.toUpperCase() || '?'
     const sizeClass = size === 'sm' ? 'h-9 w-9 text-body-emphasis' : size === 'lg' ? 'h-16 w-16 text-h3' : 'h-11 w-11 text-body-emphasis'
 
     return (
         <span
-            className={`flex shrink-0 items-center justify-center rounded-pill overflow-hidden ${sizeClass} ${avatarUrl ? '' : toneClassName}`}
+            className={cn(
+                "flex shrink-0 items-center justify-center rounded-pill overflow-hidden",
+                sizeClass,
+                !avatarUrl && toneClassName,
+                className
+            )}
             aria-hidden="true"
         >
             {avatarUrl ? (

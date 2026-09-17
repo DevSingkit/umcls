@@ -44,7 +44,7 @@ export function NotificationBell({ userId }: { userId: string }) {
                 aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
                 aria-expanded={isOpen}
                 onClick={handleBellClick}
-                className="relative flex h-12 w-12 min-h-touch min-w-touch items-center justify-center rounded-pill bg-white/10 shadow-card transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
+                className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-white/10 shadow-card transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
             >
                 <Bell size={20} className="text-on-ink" aria-hidden="true" />
                 {unreadCount > 0 && (
