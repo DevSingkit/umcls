@@ -104,7 +104,7 @@ function LessonCard({
     const allMissionsMastered = hasMissions && item.missions.practiceMissionId === null
 
     return (
-        <div className="rounded-md bg-surface p-4 shadow-card hover:shadow-card-hover">
+        <div className="rounded-md bg-surface border border-hairline p-4 shadow-card hover:shadow-card-hover transition-shadow">
             <div className="flex items-start gap-4">
                 <Avatar fullName={item.authorName} avatarUrl={item.authorAvatarUrl} size="md" />
 
@@ -114,7 +114,10 @@ function LessonCard({
                         {KIND_LABEL.lesson} ·{' '}
                         {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </p>
-                    <Link href={lessonHref} className="block truncate text-body-md font-semibold text-ink hover:underline mt-1">
+                    <Link
+                        href={lessonHref}
+                        className="inline-block truncate text-body-md font-semibold text-ink hover:underline mt-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    >
                         {item.title}
                     </Link>
                 </div>
@@ -125,19 +128,19 @@ function LessonCard({
             </div>
 
             {item.description && (
-                <p className="text-body-md text-ink-soft whitespace-pre-wrap mt-3 pl-[60px]">
+                <p className="text-body-md text-ink-soft whitespace-pre-wrap mt-3 pl-0 sm:pl-[60px]">
                     {item.description}
                 </p>
             )}
 
             {item.materials.length > 0 && (
-                <div className="mt-3 pl-[60px]">
+                <div className="mt-3 pl-0 sm:pl-[60px]">
                     <MaterialList materials={item.materials} />
                 </div>
             )}
 
             {hasMissions && (
-                <div className="mt-3 pl-[60px] flex items-center justify-between gap-3 rounded-md bg-surface-sunken px-4 py-3">
+                <div className="mt-3 pl-0 sm:pl-[60px] flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-md bg-surface-sunken px-4 py-3">
                     <p className="text-caption font-semibold text-text-secondary">
                         {item.missions.masteredCount} / {item.missions.total} mission
                         {item.missions.total === 1 ? '' : 's'} mastered
@@ -150,7 +153,7 @@ function LessonCard({
                     ) : (
                         <Link
                             href={`/student/courses/${courseId}/lessons/${item.id}/missions/${item.missions.practiceMissionId}`}
-                            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover transition-colors"
+                            className="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover transition-colors w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
                         >
                             <Play size={14} fill="currentColor" aria-hidden="true" />
                             {item.missions.masteredCount > 0 ? 'Continue' : 'Practice'}
@@ -172,7 +175,7 @@ function LessonCard({
 export async function CourseStream({ courseId, items }: { courseId: string; items: StreamItem[] }) {
     if (items.length === 0) {
         return (
-            <div className="bg-surface rounded-md shadow-card p-8 text-center">
+            <div className="bg-surface border border-hairline rounded-md shadow-card p-8 text-center">
                 <p className="text-body-md text-text-secondary">
                     Nothing posted here yet.
                 </p>
@@ -211,7 +214,7 @@ export async function CourseStream({ courseId, items }: { courseId: string; item
                     <Link
                         key={`${item.kind}-${item.id}`}
                         href={hrefFor(courseId, item)}
-                        className="flex items-start gap-4 rounded-md bg-surface p-4 shadow-card hover:shadow-card-hover"
+                        className="flex items-start gap-4 rounded-md bg-surface border border-hairline p-4 shadow-card hover:shadow-card-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         <Avatar fullName={item.authorName} avatarUrl={item.authorAvatarUrl} size="md" />
 

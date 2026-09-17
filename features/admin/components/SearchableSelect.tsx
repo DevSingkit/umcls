@@ -117,7 +117,7 @@ export function SearchableSelect({
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
                     autoComplete="off"
-                    className="w-full h-13 px-5 pr-11 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full h-13 px-5 pr-11 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 />
                 <ChevronDown
                     className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary"

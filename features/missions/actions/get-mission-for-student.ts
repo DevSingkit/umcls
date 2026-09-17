@@ -218,9 +218,9 @@ export async function getMissionPreviewForStudent(missionId: string): Promise<Mi
         throw new Error('Mission not found')
     }
 
-    const { data: activities, error: activitiesError } = await supabase
+        const { data: activities, error: activitiesError } = await supabase
         .from('activities')
-        .select('id, prompt, activity_type, order_index')
+        .select('id, order_index')
         .eq('mission_id', missionId)
         .order('order_index')
 
@@ -327,14 +327,20 @@ export async function getMissionPreviewForStudent(missionId: string): Promise<Mi
         return aMastered - bMastered
     })
 
-    const activitiesWithQuestions: ActivityPreviewForStudent[] = sortedActivities.map((activity) => {
+        const activitiesWithQuestions: ActivityPreviewForStudent[] = sortedActivities.map((activity) => {
         const rollup = getActivityMasteryRollup(activity.id)
+        const sortedQuestions = (questionsByActivityId.get(activity.id) ?? []).sort(
+            (a, b) => a.orderIndex - b.orderIndex
+        )
+        // prompt/activityType no longer live on activities (migration
+        // 106) — same fallback as teacher-dashboard.ts: the activity's
+        // first question stands in for both.
         return {
             id: activity.id,
-            prompt: activity.prompt,
-            activityType: activity.activity_type,
+            prompt: sortedQuestions[0]?.prompt ?? '',
+            activityType: sortedQuestions[0]?.questionType ?? 'multiple_choice_single',
             orderIndex: activity.order_index,
-            questions: (questionsByActivityId.get(activity.id) ?? []).sort((a, b) => a.orderIndex - b.orderIndex),
+            questions: sortedQuestions,
             isMastered: rollup.isMastered,
             masteredQuestionCount: rollup.masteredCount,
             totalQuestionCount: rollup.totalCount,

@@ -146,7 +146,7 @@ export function MaterialList({
 
     if (materials.length === 0) {
         return (
-            <div className="bg-surface rounded-md shadow-card p-8 text-center">
+            <div className="bg-surface rounded-md border border-hairline shadow-card p-8 text-center">
                 <p className="text-body-md text-text-secondary">No materials attached.</p>
             </div>
         )
@@ -174,7 +174,7 @@ export function MaterialList({
                                         handleDelete(material.id)
                                     }}
                                     disabled={isRemoving}
-                                    className="shrink-0 text-caption font-medium text-error hover:underline disabled:opacity-60"
+                                    className="shrink-0 text-caption font-medium text-error hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded-sm disabled:opacity-60"
                                 >
                                     {isRemoving ? 'Removing…' : 'Remove'}
                                 </button>
@@ -193,7 +193,7 @@ export function MaterialList({
                         type="button"
                         onClick={() => setPreview(null)}
                         aria-label="Close preview"
-                        className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-ink shadow-card hover:bg-surface-sunken"
+                        className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-ink border border-hairline shadow-card hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         <X size={20} aria-hidden="true" />
                     </button>
@@ -204,12 +204,12 @@ export function MaterialList({
                             src={preview.url}
                             alt=""
                             onClick={(e) => e.stopPropagation()}
-                            className="max-h-[85vh] max-w-[90vw] w-auto h-auto rounded-md object-contain shadow-modal"
+                            className="max-h-[85vh] max-w-[90vw] w-auto h-auto rounded-md object-contain border border-hairline shadow-modal"
                         />
                     ) : (
                         <div
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full max-w-3xl aspect-video rounded-md overflow-hidden shadow-modal"
+                            className="w-full max-w-3xl aspect-video rounded-md overflow-hidden border border-hairline shadow-modal"
                         >
                             <iframe
                                 src={toYoutubeEmbedUrl(preview.videoId)}

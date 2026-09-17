@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
 import { MobileBottomNav } from "./MobileBottomNav";
-import { BackButton } from "@/components/ui/BackButton";
+import { BackButton, getParentPath } from "@/components/ui/BackButton";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { NAV_ITEMS, type Role } from "@/lib/navigation/nav-items";
 import { PageHeaderProvider } from "./PageHeaderContext";
@@ -47,7 +47,8 @@ export function AppShell({ user, children }: AppShellProps) {
   }
 
   const primaryNavPaths = NAV_ITEMS[user.role].map((item) => item.href);
-  const showBackButton = !primaryNavPaths.includes(pathname);
+  const parentRoute = getParentPath(pathname, user.role);
+  const showBackButton = !primaryNavPaths.includes(pathname) && parentRoute !== null;
 
   return (
     <PageHeaderProvider>
@@ -67,11 +68,11 @@ export function AppShell({ user, children }: AppShellProps) {
         <TopNav role={user.role} fullName={user.fullName} userId={user.id} avatarUrl={user.avatarUrl} />
 
         {/* Main Content Layout Container */}
-        <main id="main-content" className="pb-24 lg:pb-12 lg:pl-[72px] transition-[padding] duration-200">
+        <main id="main-content" className="pb-24 md:pb-12 md:pl-[72px] transition-[padding] duration-200">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-12 lg:py-8">
-            {showBackButton && (
+            {showBackButton && parentRoute && (
               <div className="mb-4">
-                <BackButton />
+                <BackButton role={user.role} parentRoute={parentRoute} />
               </div>
             )}
             {children}

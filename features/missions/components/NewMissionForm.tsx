@@ -41,6 +41,18 @@
 // (activities[].questions[].{prompt,questionType,options,
 // correctAnswer,hintText}) — only the CLIENT UI/interaction model
 // changed, not what gets sent to the server.
+//
+// ACTIVITY-TO-QUESTION UI COLLAPSE (2026-09-10): the "one activity,
+// itself containing a list of questions" TWO-level nesting above (see
+// point 3, "Multiple activities are built inline") is now a FLAT list
+// of questions — "Activity" as a container concept was confusing
+// teachers with no real pedagogical payoff, a leftover from before the
+// multi-question rework. "Add another activity" is now just "Add
+// another question," appending directly to one flat list — no
+// container to name or think about. Server contract STILL unchanged:
+// handleSubmit still builds activities[].questions[] exactly as
+// before, just by wrapping each single question into its own one-item
+// activity at payload-build time.
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -84,24 +96,15 @@ function makeEmptyQuestion() {
 
 type QuestionDraft = ReturnType<typeof makeEmptyQuestion>
 
-function makeEmptyActivity() {
-    return {
-        key: nextKey('activity'),
-        questions: [makeEmptyQuestion()],
-    }
-}
-
-type ActivityDraft = ReturnType<typeof makeEmptyActivity>
-
 export function NewMissionForm({ courseId, lessonId }: { courseId: string; lessonId: string }) {
     const router = useRouter()
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
 
-    // Every activity being built, inline, on this one page — no
-    // separate staging list. Each activity has its own array of
-    // question drafts.
-    const [activities, setActivities] = useState<ActivityDraft[]>([makeEmptyActivity()])
+    // FLAT list of questions being built, inline, on this one page — no
+    // activity container layer anymore (see this file's 2026-09-10
+    // header note). "Add another question" appends directly here.
+    const [questions, setQuestions] = useState<QuestionDraft[]>([makeEmptyQuestion()])
 
     const [error, setError] = useState('')
     const [isPending, setIsPending] = useState(false)
@@ -111,92 +114,48 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
     const [shuffleOptions, setShuffleOptions] = useState(false)
     const [publishNow, setPublishNow] = useState(false)
 
-    function updateQuestion(activityKey: string, questionKey: string, patch: Partial<QuestionDraft>) {
-        setActivities((prev) =>
-            prev.map((a) =>
-                a.key !== activityKey
-                    ? a
-                    : { ...a, questions: a.questions.map((q) => (q.key === questionKey ? { ...q, ...patch } : q)) }
+    function updateQuestion(questionKey: string, patch: Partial<QuestionDraft>) {
+        setQuestions((prev) => prev.map((q) => (q.key === questionKey ? { ...q, ...patch } : q)))
+    }
+
+    function updateOptionText(questionKey: string, optionKey: string, text: string) {
+        setQuestions((prev) =>
+            prev.map((q) =>
+                q.key === questionKey
+                    ? { ...q, options: q.options.map((o) => (o.key === optionKey ? { ...o, text } : o)) }
+                    : q
             )
         )
     }
 
-    function addQuestionBlock(activityKey: string) {
-        setActivities((prev) =>
-            prev.map((a) => (a.key === activityKey ? { ...a, questions: [...a.questions, makeEmptyQuestion()] } : a))
+    function addOptionRow(questionKey: string) {
+        setQuestions((prev) =>
+            prev.map((q) => (q.key === questionKey ? { ...q, options: [...q.options, makeEmptyOption()] } : q))
         )
     }
 
-    function removeQuestionBlock(activityKey: string, questionKey: string) {
-        setActivities((prev) =>
-            prev.map((a) =>
-                a.key === activityKey && a.questions.length > 1
-                    ? { ...a, questions: a.questions.filter((q) => q.key !== questionKey) }
-                    : a
-            )
-        )
-    }
-
-    function updateOptionText(activityKey: string, questionKey: string, optionKey: string, text: string) {
-        setActivities((prev) =>
-            prev.map((a) =>
-                a.key !== activityKey
-                    ? a
-                    : {
-                          ...a,
-                          questions: a.questions.map((q) =>
-                              q.key === questionKey
-                                  ? { ...q, options: q.options.map((o) => (o.key === optionKey ? { ...o, text } : o)) }
-                                  : q
-                          ),
-                      }
-            )
-        )
-    }
-
-    function addOptionRow(activityKey: string, questionKey: string) {
-        setActivities((prev) =>
-            prev.map((a) =>
-                a.key !== activityKey
-                    ? a
-                    : {
-                          ...a,
-                          questions: a.questions.map((q) =>
-                              q.key === questionKey ? { ...q, options: [...q.options, makeEmptyOption()] } : q
-                          ),
-                      }
-            )
-        )
-    }
-
-    function removeOptionRow(activityKey: string, questionKey: string, optionKey: string) {
-        setActivities((prev) =>
-            prev.map((a) => {
-                if (a.key !== activityKey) return a
-                return {
-                    ...a,
-                    questions: a.questions.map((q) => {
-                        if (q.key !== questionKey) return q
-                        const removedIndex = q.options.findIndex((o) => o.key === optionKey)
-                        const nextOptions = q.options.filter((o) => o.key !== optionKey)
-                        let nextCorrectIndex = q.correctIndex
-                        if (nextCorrectIndex !== null) {
-                            if (removedIndex === nextCorrectIndex) nextCorrectIndex = null
-                            else if (removedIndex < nextCorrectIndex) nextCorrectIndex = nextCorrectIndex - 1
-                        }
-                        return { ...q, options: nextOptions, correctIndex: nextCorrectIndex }
-                    }),
+    function removeOptionRow(questionKey: string, optionKey: string) {
+        setQuestions((prev) =>
+            prev.map((q) => {
+                if (q.key !== questionKey) return q
+                const removedIndex = q.options.findIndex((o) => o.key === optionKey)
+                const nextOptions = q.options.filter((o) => o.key !== optionKey)
+                let nextCorrectIndex = q.correctIndex
+                if (nextCorrectIndex !== null) {
+                    if (removedIndex === nextCorrectIndex) nextCorrectIndex = null
+                    else if (removedIndex < nextCorrectIndex) nextCorrectIndex = nextCorrectIndex - 1
                 }
+                return { ...q, options: nextOptions, correctIndex: nextCorrectIndex }
             })
         )
     }
 
-    function addActivity() {
-        setActivities((prev) => [...prev, makeEmptyActivity()])
+    function addQuestion() {
+        setQuestions((prev) => [...prev, makeEmptyQuestion()])
     }
 
-    function removeActivity(activityKey: string) {
-        setActivities((prev) => (prev.length > 1 ? prev.filter((a) => a.key !== activityKey) : prev))
+    function removeQuestion(questionKey: string) {
+        setQuestions((prev) => (prev.length > 1 ? prev.filter((q) => q.key !== questionKey) : prev))
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -213,53 +172,53 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
             return
         }
 
-        // Validate every activity's every question before building the
-        // payload — same "never write an empty mission" principle as
-        // before, now checked across the whole inline page at once
-        // instead of per-staged-activity.
-        for (const [aIndex, activity] of activities.entries()) {
-            for (const [qIndex, q] of activity.questions.entries()) {
-                if (!q.prompt.trim()) {
-                    setError(`Activity ${aIndex + 1}, question ${qIndex + 1}: enter a prompt.`)
+        // Validate every question before building the payload — same
+        // "never write an empty mission" principle as before, now
+        // checked across one flat list instead of nested per-activity.
+        for (const [qIndex, q] of questions.entries()) {
+            if (!q.prompt.trim()) {
+                setError(`Question ${qIndex + 1}: enter a prompt.`)
+                return
+            }
+            if (q.questionType === 'multiple_choice_single') {
+                const filled = q.options.map((o) => o.text.trim()).filter(Boolean)
+                if (filled.length < 2) {
+                    setError(`Question ${qIndex + 1}: add at least two answer options.`)
                     return
                 }
-                if (q.questionType === 'multiple_choice_single') {
-                    const filled = q.options.map((o) => o.text.trim()).filter(Boolean)
-                    if (filled.length < 2) {
-                        setError(`Activity ${aIndex + 1}, question ${qIndex + 1}: add at least two answer options.`)
-                        return
-                    }
-                    if (q.correctIndex === null || !q.options[q.correctIndex]?.text.trim()) {
-                        setError(`Activity ${aIndex + 1}, question ${qIndex + 1}: tap a tile to mark the correct answer.`)
-                        return
-                    }
+                if (q.correctIndex === null || !q.options[q.correctIndex]?.text.trim()) {
+                    setError(`Question ${qIndex + 1}: tap a tile to mark the correct answer.`)
+                    return
                 }
             }
         }
 
         // Same payload shape create-mission.ts's createMissionSchema
-        // expects — built here in one pass across every activity/
-        // question instead of accumulated via a staging step.
-        const activitiesPayload = activities.map((activity) => ({
-            questions: activity.questions.map((q) => {
-                if (q.questionType === 'true_false') {
-                    return {
-                        prompt: q.prompt.trim(),
-                        questionType: q.questionType,
-                        correctAnswer: q.correctTf,
-                        hintText: q.hintText.trim() || undefined,
-                    }
-                }
-                const filledOptions = q.options.map((o) => o.text.trim()).filter(Boolean)
-                const correctOption = q.correctIndex !== null ? q.options[q.correctIndex] : undefined
-                return {
-                    prompt: q.prompt.trim(),
-                    questionType: q.questionType,
-                    options: filledOptions.join(','),
-                    correctAnswer: correctOption?.text.trim() ?? '',
-                    hintText: q.hintText.trim() || undefined,
-                }
-            }),
+        // expects (activities[].questions[]) — built here by wrapping
+        // each single question into its own one-item "activity," per
+        // this file's 2026-09-10 header note. Server contract
+        // unchanged; only this wrapping step exists to satisfy it.
+        const activitiesPayload = questions.map((q) => ({
+            questions: [
+                q.questionType === 'true_false'
+                    ? {
+                          prompt: q.prompt.trim(),
+                          questionType: q.questionType,
+                          correctAnswer: q.correctTf,
+                          hintText: q.hintText.trim() || undefined,
+                      }
+                    : {
+                          prompt: q.prompt.trim(),
+                          questionType: q.questionType,
+                          options: q.options
+                              .map((o) => o.text.trim())
+                              .filter(Boolean)
+                              .join(','),
+                          correctAnswer:
+                              (q.correctIndex !== null ? q.options[q.correctIndex]?.text.trim() : undefined) ?? '',
+                          hintText: q.hintText.trim() || undefined,
+                      },
+            ],
         }))
 
         const formData = new FormData()
@@ -288,7 +247,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
         }
     }
 
-    const totalQuestionCount = activities.reduce((sum, a) => sum + a.questions.length, 0)
+    const totalQuestionCount = questions.length
 
     return (
         <form onSubmit={handleSubmit} className="mx-auto w-full max-w-md space-y-6 py-4 sm:max-w-lg sm:py-8">
@@ -306,7 +265,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                         }}
                         placeholder="e.g. Fractions: Adding & Subtracting"
                         aria-required="true"
-                        className="clay-well w-full min-h-touch px-4 text-body-emphasis text-ink rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
+                        className="clay-well w-full min-h-touch px-4 text-body-emphasis text-ink rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                 </div>
 
@@ -320,7 +279,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="What will students practice in this mission?"
-                        className="clay-well w-full px-5 py-3 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="clay-well w-full px-5 py-3 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                 </div>
 
@@ -336,7 +295,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                             min={1}
                             value={masteryThreshold}
                             onChange={(e) => setMasteryThreshold(Number(e.target.value))}
-                            className="clay-well w-24 min-h-touch px-4 text-body-md text-ink rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                            className="clay-well w-24 min-h-touch px-4 text-body-md text-ink rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         />
                     </div>
                 </div>
@@ -348,7 +307,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                             type="checkbox"
                             checked={revealCorrectAnswer}
                             onChange={(e) => setRevealCorrectAnswer(e.target.checked)}
-                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline-strong text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         />
                         <span>
                             <span className="text-label text-ink-soft block">
@@ -369,7 +328,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                             type="checkbox"
                             checked={shuffleOptions}
                             onChange={(e) => setShuffleOptions(e.target.checked)}
-                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline-strong text-brand focus:ring-2 focus:ring-brand/30"
+                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline-strong text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         />
                         <span>
                             <span className="text-label text-ink-soft block">
@@ -383,211 +342,185 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                 </div>
             </div>
 
-            {/* ── Activities, stacked inline — no staging step ─────────── */}
-            {activities.map((activity, aIndex) => (
-                <div key={activity.key} className="space-y-4 clay-card p-5 sm:p-6">
+            {/* ── Questions, stacked inline — no activity container,
+                 no staging step ────────────────────────────────────── */}
+            {questions.map((q, qIndex) => (
+                <div key={q.key} className="space-y-4 clay-card p-5 sm:p-6">
                     <div className="flex items-center justify-between gap-3">
-                        <p className="text-label text-ink-soft">Activity {aIndex + 1}</p>
-                        {activities.length > 1 && (
+                        <p className="text-label text-ink-soft">Question {qIndex + 1}</p>
+                        {questions.length > 1 && (
                             <button
                                 type="button"
-                                aria-label={`Remove activity ${aIndex + 1}`}
-                                onClick={() => removeActivity(activity.key)}
-                                className="text-text-secondary hover:text-error p-1 rounded-md transition-colors"
+                                aria-label={`Remove question ${qIndex + 1}`}
+                                onClick={() => removeQuestion(q.key)}
+                                className="text-text-secondary hover:text-error hover:bg-error-soft/30 p-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 transition-colors"
                             >
                                 <X size={16} aria-hidden="true" />
                             </button>
                         )}
                     </div>
 
-                    {activity.questions.map((q, qIndex) => (
-                        <div key={q.key} className="space-y-4 rounded-2xl border border-hairline p-4">
-                            <div className="flex items-center justify-between gap-3">
-                                <p className="text-caption font-semibold text-text-secondary">Question {qIndex + 1}</p>
-                                {activity.questions.length > 1 && (
-                                    <button
-                                        type="button"
-                                        aria-label={`Remove question ${qIndex + 1}`}
-                                        onClick={() => removeQuestionBlock(activity.key, q.key)}
-                                        className="text-text-secondary hover:text-error p-1 rounded-md transition-colors"
+                    <div>
+                        <label
+                            htmlFor={`qtype-${q.key}`}
+                            className="text-label text-ink-soft block mb-2"
+                        >
+                            Question type
+                        </label>
+                        <select
+                            id={`qtype-${q.key}`}
+                            value={q.questionType}
+                            onChange={(e) =>
+                                updateQuestion(q.key, { questionType: e.target.value as QuestionType })
+                            }
+                            className="clay-well w-full min-h-touch px-4 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                        >
+                            <option value="multiple_choice_single">Multiple choice</option>
+                            <option value="true_false">True / False</option>
+                        </select>
+                    </div>
+
+                    <textarea
+                        aria-label={`Question ${qIndex + 1} prompt`}
+                        rows={2}
+                        required
+                        value={q.prompt}
+                        onChange={(e) => updateQuestion(q.key, { prompt: e.target.value })}
+                        className="clay-well w-full px-5 py-3 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                        placeholder="Type the question prompt here"
+                    />
+
+                    {/* ── Tactile answer tiles — this IS the
+                         student-facing look, no separate preview.
+                         Tapping a tile marks it correct. ────────── */}
+                    {q.questionType === 'multiple_choice_single' && (
+                        <div className="space-y-3">
+                            <p className="text-caption text-text-secondary">
+                                Tap a tile to mark it as the correct answer
+                            </p>
+                            {q.options.map((option, optIndex) => {
+                                const style = TILE_STYLES[optIndex % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                                const Icon = style.icon
+                                const isCorrect = q.correctIndex === optIndex
+                                return (
+                                    <div
+                                        key={option.key}
+                                        className={`relative flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
+                                            isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
+                                        }`}
                                     >
-                                        <X size={16} aria-hidden="true" />
-                                    </button>
-                                )}
-                            </div>
-
-                            <div>
-                                <label
-                                    htmlFor={`qtype-${q.key}`}
-                                    className="text-label text-ink-soft block mb-2"
-                                >
-                                    Question type
-                                </label>
-                                <select
-                                    id={`qtype-${q.key}`}
-                                    value={q.questionType}
-                                    onChange={(e) =>
-                                        updateQuestion(activity.key, q.key, { questionType: e.target.value as QuestionType })
-                                    }
-                                    className="clay-well w-full min-h-touch px-4 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
-                                >
-                                    <option value="multiple_choice_single">Multiple choice</option>
-                                    <option value="true_false">True / False</option>
-                                </select>
-                            </div>
-
-                            <textarea
-                                aria-label={`Question ${qIndex + 1} prompt`}
-                                rows={2}
-                                required
-                                value={q.prompt}
-                                onChange={(e) => updateQuestion(activity.key, q.key, { prompt: e.target.value })}
-                                className="clay-well w-full px-5 py-3 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
-                                placeholder="Type the question prompt here"
-                            />
-
-                            {/* ── Tactile answer tiles — this IS the
-                                 student-facing look, no separate preview.
-                                 Tapping a tile marks it correct. ────────── */}
-                            {q.questionType === 'multiple_choice_single' && (
-                                <div className="space-y-3">
-                                    <p className="text-caption text-text-secondary">
-                                        Tap a tile to mark it as the correct answer
-                                    </p>
-                                    {q.options.map((option, optIndex) => {
-                                        const style = TILE_STYLES[optIndex % TILE_STYLES.length] ?? TILE_STYLES[0]!
-                                        const Icon = style.icon
-                                        const isCorrect = q.correctIndex === optIndex
-                                        return (
-                                            <div
-                                                key={option.key}
-                                                className={`relative flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
-                                                    isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
-                                                }`}
-                                            >
-                                                <button
-                                                    type="button"
-                                                    aria-label={`Mark option ${optIndex + 1} as correct`}
-                                                    onClick={() => updateQuestion(activity.key, q.key, { correctIndex: optIndex })}
-                                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20"
-                                                >
-                                                    {isCorrect ? (
-                                                        <Check size={20} aria-hidden="true" />
-                                                    ) : (
-                                                        <Icon size={18} aria-hidden="true" />
-                                                    )}
-                                                </button>
-                                                <input
-                                                    type="text"
-                                                    value={option.text}
-                                                    onChange={(e) =>
-                                                        updateOptionText(activity.key, q.key, option.key, e.target.value)
-                                                    }
-                                                    placeholder={`Option ${optIndex + 1}`}
-                                                    className="min-w-0 flex-1 bg-transparent font-sans font-bold text-base text-on-ink placeholder:text-on-ink/60 outline-none"
-                                                />
-                                                {isCorrect && (
-                                                    <span className="shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
-                                                        Correct
-                                                    </span>
-                                                )}
-                                                {q.options.length > 2 && (
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Remove option ${optIndex + 1}`}
-                                                        onClick={() => removeOptionRow(activity.key, q.key, option.key)}
-                                                        className="shrink-0 text-on-ink/70 hover:text-on-ink p-1 rounded-md"
-                                                    >
-                                                        <X size={16} aria-hidden="true" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )
-                                    })}
-                                    <button
-                                        type="button"
-                                        onClick={() => addOptionRow(activity.key, q.key)}
-                                        className="text-caption font-semibold text-text-secondary hover:text-ink pl-2"
-                                    >
-                                        + Add option
-                                    </button>
-                                </div>
-                            )}
-
-                            {q.questionType === 'true_false' && (
-                                <div className="space-y-3">
-                                    <p className="text-caption text-text-secondary">
-                                        Tap a tile to mark it as the correct answer
-                                    </p>
-                                    {(['True', 'False'] as const).map((label, i) => {
-                                        const style = TILE_STYLES[i % TILE_STYLES.length] ?? TILE_STYLES[0]!
-                                        const Icon = style.icon
-                                        const isCorrect = q.correctTf === label
-                                        return (
+                                        <button
+                                            type="button"
+                                            aria-label={`Mark option ${optIndex + 1} as correct`}
+                                            onClick={() => updateQuestion(q.key, { correctIndex: optIndex })}
+                                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20 hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 transition-colors"
+                                        >
+                                            {isCorrect ? (
+                                                <Check size={20} aria-hidden="true" />
+                                            ) : (
+                                                <Icon size={18} aria-hidden="true" />
+                                            )}
+                                        </button>
+                                        <input
+                                            type="text"
+                                            value={option.text}
+                                            onChange={(e) =>
+                                                updateOptionText(q.key, option.key, e.target.value)
+                                            }
+                                            placeholder={`Option ${optIndex + 1}`}
+                                            className="min-w-0 flex-1 bg-transparent font-sans font-bold text-base text-on-ink placeholder:text-on-ink/60 outline-none"
+                                        />
+                                        {isCorrect && (
+                                            <span className="shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
+                                                Correct
+                                            </span>
+                                        )}
+                                        {q.options.length > 2 && (
                                             <button
-                                                key={label}
                                                 type="button"
-                                                onClick={() => updateQuestion(activity.key, q.key, { correctTf: label })}
-                                                className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-left text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
-                                                    isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
-                                                }`}
+                                                aria-label={`Remove option ${optIndex + 1}`}
+                                                onClick={() => removeOptionRow(q.key, option.key)}
+                                                className="shrink-0 text-on-ink/70 hover:text-on-ink hover:bg-white/10 p-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 transition-colors"
                                             >
-                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20">
-                                                    {isCorrect ? (
-                                                        <Check size={20} aria-hidden="true" />
-                                                    ) : (
-                                                        <Icon size={18} aria-hidden="true" />
-                                                    )}
-                                                </span>
-                                                <span className="font-sans font-bold text-base">{label}</span>
-                                                {isCorrect && (
-                                                    <span className="ml-auto shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
-                                                        Correct
-                                                    </span>
-                                                )}
+                                                <X size={16} aria-hidden="true" />
                                             </button>
-                                        )
-                                    })}
-                                </div>
-                            )}
-
-                            <div>
-                                <label htmlFor={`hint-${q.key}`} className="text-label text-ink-soft block mb-2">
-                                    <span className="inline-flex items-center gap-1.5">
-                                        <Lightbulb size={14} aria-hidden="true" />
-                                        Hint (optional — shown after 2 wrong attempts)
-                                    </span>
-                                </label>
-                                <textarea
-                                    id={`hint-${q.key}`}
-                                    rows={2}
-                                    value={q.hintText}
-                                    onChange={(e) => updateQuestion(activity.key, q.key, { hintText: e.target.value })}
-                                    placeholder="A nudge in the right direction, not the answer itself"
-                                    className="clay-well w-full px-5 py-3 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
-                                />
-                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                            <button
+                                type="button"
+                                onClick={() => addOptionRow(q.key)}
+                                className="h-10 inline-flex items-center text-body-sm font-semibold text-text-secondary hover:text-ink pl-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                            >
+                                + Add option
+                            </button>
                         </div>
-                    ))}
+                    )}
 
-                    <button
-                        type="button"
-                        onClick={() => addQuestionBlock(activity.key)}
-                        className="flex items-center justify-center gap-2 w-full h-11 rounded-md border-2 border-dashed border-hairline-strong text-caption font-semibold text-text-secondary hover:border-brand hover:text-brand transition-colors"
-                    >
-                        <Plus size={16} aria-hidden="true" />
-                        Add another question to this activity
-                    </button>
+                    {q.questionType === 'true_false' && (
+                        <div className="space-y-3">
+                            <p className="text-caption text-text-secondary">
+                                Tap a tile to mark it as the correct answer
+                            </p>
+                            {(['True', 'False'] as const).map((label, i) => {
+                                const style = TILE_STYLES[i % TILE_STYLES.length] ?? TILE_STYLES[0]!
+                                const Icon = style.icon
+                                const isCorrect = q.correctTf === label
+                                return (
+                                    <button
+                                        key={label}
+                                        type="button"
+                                        onClick={() => updateQuestion(q.key, { correctTf: label })}
+                                        className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-left text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand focus-visible:ring-offset-2 ${style.bg} ${style.border} ${
+                                            isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
+                                        }`}
+                                    >
+                                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20">
+                                            {isCorrect ? (
+                                                <Check size={20} aria-hidden="true" />
+                                            ) : (
+                                                <Icon size={18} aria-hidden="true" />
+                                            )}
+                                        </span>
+                                        <span className="font-sans font-bold text-base">{label}</span>
+                                        {isCorrect && (
+                                            <span className="ml-auto shrink-0 rounded-pill bg-white/20 px-2.5 py-1 text-caption">
+                                                Correct
+                                            </span>
+                                        )}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    <div>
+                        <label htmlFor={`hint-${q.key}`} className="text-label text-ink-soft block mb-2">
+                            <span className="inline-flex items-center gap-1.5">
+                                <Lightbulb size={14} aria-hidden="true" />
+                                Hint (optional — shown after 2 wrong attempts)
+                            </span>
+                        </label>
+                        <textarea
+                            id={`hint-${q.key}`}
+                            rows={2}
+                            value={q.hintText}
+                            onChange={(e) => updateQuestion(q.key, { hintText: e.target.value })}
+                            placeholder="A nudge in the right direction, not the answer itself"
+                            className="clay-well w-full px-5 py-3 rounded-2xl border-[1.5px] border-hairline-strong focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                        />
+                    </div>
                 </div>
             ))}
 
             <button
                 type="button"
-                onClick={addActivity}
-                className="flex items-center justify-center gap-2 w-full h-12 rounded-md border-2 border-dashed border-brand text-body-md font-semibold text-brand hover:bg-brand-soft transition-colors"
+                onClick={addQuestion}
+                className="flex items-center justify-center gap-2 w-full min-h-touch rounded-md border-2 border-dashed border-brand text-body-md font-semibold text-brand hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
             >
                 <Plus size={18} aria-hidden="true" />
-                Add another activity
+                Add another question
             </button>
 
             {/* ── Publish + submit ─────────────────────────────────────── */}
@@ -597,7 +530,7 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                         type="checkbox"
                         checked={publishNow}
                         onChange={(e) => setPublishNow(e.target.checked)}
-                        className="h-4 w-4 accent-brand"
+                        className="h-5 w-5 rounded border-2 border-hairline-strong text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                     Post immediately — students can see it as soon as it&apos;s created
                 </label>
@@ -611,13 +544,13 @@ export function NewMissionForm({ courseId, lessonId }: { courseId: string; lesso
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="clay-button w-full bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md disabled:opacity-60"
+                    className="clay-button w-full min-h-touch bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     {isPending
                         ? 'Creating…'
                         : publishNow
-                          ? `Create & Post mission (${activities.length} ${activities.length === 1 ? 'activity' : 'activities'}, ${totalQuestionCount} ${totalQuestionCount === 1 ? 'question' : 'questions'})`
-                          : `Create mission (${activities.length} ${activities.length === 1 ? 'activity' : 'activities'}, ${totalQuestionCount} ${totalQuestionCount === 1 ? 'question' : 'questions'})`}
+                          ? `Create & Post mission (${totalQuestionCount} ${totalQuestionCount === 1 ? 'question' : 'questions'})`
+                          : `Create mission (${totalQuestionCount} ${totalQuestionCount === 1 ? 'question' : 'questions'})`}
                 </button>
             </div>
         </form>

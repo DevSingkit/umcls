@@ -289,7 +289,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                     }}
                     placeholder="e.g. Chapter 3 Quiz"
                     aria-required="true"
-                    className="w-full h-11 px-4 text-body-emphasis text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
+                    className="w-full h-13 px-4 text-body-emphasis text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                 />
             </div>
 
@@ -308,7 +308,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                     onChange={(e) =>
                                         updateQuestion(draft.key, { questionType: e.target.value as QuestionType })
                                     }
-                                    className="min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                                    className="h-12 px-4 rounded-md border-2 border-hairline focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 text-body-md text-ink bg-surface transition-colors"
                                 >
                                     <option value="multiple_choice_single">Multiple choice</option>
                                     <option value="true_false">True or false</option>
@@ -320,7 +320,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                         type="button"
                                         aria-label={`Remove question ${index + 1}`}
                                         onClick={() => removeQuestionCard(draft.key)}
-                                        className="flex h-11 w-11 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error shrink-0"
+                                        className="flex h-12 w-12 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 shrink-0 transition-colors"
                                     >
                                         <Trash2 size={18} aria-hidden="true" />
                                     </button>
@@ -334,7 +334,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                             required
                             value={draft.questionText}
                             onChange={(e) => updateQuestion(draft.key, { questionText: e.target.value })}
-                            className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                            className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand focus-visible:outline-none text-body-md text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                             placeholder="Type the question here"
                         />
 
@@ -347,7 +347,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                             type="button"
                                             aria-label={`Mark option ${optIndex + 1} as correct`}
                                             onClick={() => updateQuestion(draft.key, { correctIndex: optIndex })}
-                                            className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
+                                            className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
                                                 draft.correctIndex === optIndex
                                                     ? 'border-brand bg-brand text-on-ink'
                                                     : 'border-hairline hover:border-brand'
@@ -368,14 +368,14 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                             value={option.text}
                                             onChange={(e) => updateOptionText(draft.key, option.key, e.target.value)}
                                             placeholder={`Option ${optIndex + 1}`}
-                                            className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                            className="flex-1 h-12 px-4 rounded-md border-2 border-hairline focus:border-brand focus-visible:outline-none text-body-md text-ink bg-surface focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                         />
                                         {draft.options.length > 2 && (
                                             <button
                                                 type="button"
                                                 aria-label={`Remove option ${optIndex + 1}`}
                                                 onClick={() => removeOptionRow(draft.key, option.key)}
-                                                className="relative flex h-8 w-8 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error shrink-0 before:absolute before:-inset-1.5 before:content-['']"
+                                                className="relative flex h-8 w-8 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 shrink-0 before:absolute before:-inset-1.5 before:content-[''] transition-colors"
                                             >
                                                 <X size={14} aria-hidden="true" />
                                             </button>
@@ -385,7 +385,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                 <button
                                     type="button"
                                     onClick={() => addOptionRow(draft.key)}
-                                    className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
+                                    className="text-caption font-semibold text-text-secondary hover:text-ink pl-8 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                 >
                                     + Add option
                                 </button>
@@ -402,21 +402,21 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                             aria-label={`Mark option ${optIndex + 1} as correct`}
                                             checked={draft.correctKeys.has(option.key)}
                                             onChange={() => toggleCorrectKey(draft.key, option.key)}
-                                            className="h-5 w-5 shrink-0 accent-brand"
+                                            className="h-5 w-5 shrink-0 accent-brand rounded border-2 border-hairline text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                         />
                                         <input
                                             type="text"
                                             value={option.text}
                                             onChange={(e) => updateOptionText(draft.key, option.key, e.target.value)}
                                             placeholder={`Option ${optIndex + 1}`}
-                                            className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                            className="flex-1 h-12 px-4 rounded-md border-2 border-hairline focus:border-brand focus-visible:outline-none text-body-md text-ink bg-surface focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                         />
                                         {draft.options.length > 2 && (
                                             <button
                                                 type="button"
                                                 aria-label={`Remove option ${optIndex + 1}`}
                                                 onClick={() => removeOptionRow(draft.key, option.key)}
-                                                className="relative flex h-8 w-8 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error shrink-0 before:absolute before:-inset-1.5 before:content-['']"
+                                                className="relative flex h-8 w-8 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 shrink-0 before:absolute before:-inset-1.5 before:content-[''] transition-colors"
                                             >
                                                 <X size={14} aria-hidden="true" />
                                             </button>
@@ -426,7 +426,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                 <button
                                     type="button"
                                     onClick={() => addOptionRow(draft.key)}
-                                    className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
+                                    className="text-caption font-semibold text-text-secondary hover:text-ink pl-8 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                 >
                                     + Add option
                                 </button>
@@ -442,7 +442,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                             type="button"
                                             aria-label={`Mark ${label} as correct`}
                                             onClick={() => updateQuestion(draft.key, { correctTf: label })}
-                                            className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${
+                                            className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
                                                 draft.correctTf === label
                                                     ? 'border-brand bg-brand text-on-ink'
                                                     : 'border-hairline hover:border-brand'
@@ -476,7 +476,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                     value={draft.referenceAnswer}
                                     onChange={(e) => updateQuestion(draft.key, { referenceAnswer: e.target.value })}
                                     placeholder="e.g. Expected answer or grading notes"
-                                    className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                    className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand focus-visible:outline-none text-body-md text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                 />
                             </div>
                         )}
@@ -486,7 +486,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                 <button
                     type="button"
                     onClick={addQuestionCard}
-                    className="flex w-full h-14 items-center justify-center gap-2 rounded-md border-2 border-dashed border-hairline-strong text-body-md font-semibold text-ink-soft hover:border-brand hover:text-brand transition-colors"
+                    className="flex w-full h-14 items-center justify-center gap-2 rounded-md border-2 border-dashed border-hairline-strong text-body-md font-semibold text-ink-soft hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                 >
                     <Plus size={18} aria-hidden="true" />
                     Add another question
@@ -501,7 +501,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                 type="checkbox"
                                 checked={timerEnabled}
                                 onChange={(e) => setTimerEnabled(e.target.checked)}
-                                className="h-4 w-4 accent-brand"
+                                className="h-4 w-4 accent-brand rounded border-2 border-hairline text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             />
                             Enable timer
                         </label>
@@ -513,7 +513,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                                     value={timeLimitMinutes}
                                     onChange={(e) => setTimeLimitMinutes(e.target.value)}
                                     placeholder="Minutes"
-                                    className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                    className="w-24 h-12 px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                 />
                                 <span className="text-caption text-text-secondary">minutes</span>
                             </div>
@@ -531,7 +531,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                         min={1}
                         value={maxAttempts}
                         onChange={(e) => setMaxAttemptsValue(Number(e.target.value))}
-                        className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="w-24 h-12 px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     />
                 </div>
 
@@ -545,7 +545,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                             type="button"
                             onClick={() => setDueAt('')}
                             disabled={!dueAt}
-                            className="text-caption font-medium text-text-secondary hover:text-error disabled:opacity-40"
+                            className="text-caption font-medium text-text-secondary hover:text-error disabled:opacity-40 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                         >
                             Clear
                         </button>
@@ -556,7 +556,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                             type="checkbox"
                             checked={allowLate}
                             onChange={(e) => setAllowLate(e.target.checked)}
-                            className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
+                            className="h-5 w-5 rounded border-2 border-hairline text-brand accent-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         />
                         <label htmlFor="newQuizAllowLate" className="text-body-md text-ink">
                             Allow late starts and submissions
@@ -572,7 +572,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                         id="newQuizVisibility"
                         value={visibility}
                         onChange={(e) => setVisibility(e.target.value as 'submission' | 'grading' | 'never')}
-                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                        className="w-full h-12 px-4 rounded-md border-2 border-hairline focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 text-body-md text-ink bg-surface transition-colors"
                     >
                         <option value="submission">Right after submitting</option>
                         <option value="grading">Only after grading is complete</option>
@@ -585,7 +585,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
                         type="checkbox"
                         checked={publishNow}
                         onChange={(e) => setPublishNow(e.target.checked)}
-                        className="h-4 w-4 accent-brand"
+                        className="h-4 w-4 accent-brand rounded border-2 border-hairline text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                     Post immediately — students can see it as soon as it&apos;s created
                 </label>
@@ -600,7 +600,7 @@ export function NewQuizForm({ courseId }: { courseId: string }) {
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+                className="w-full h-14 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
                 {isPending ? 'Creating…' : publishNow ? 'Create & Post quiz' : 'Create quiz'}
             </button>

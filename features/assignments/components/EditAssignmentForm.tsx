@@ -144,7 +144,7 @@ export function EditAssignmentForm({
                         required
                         defaultValue={initialTitle}
                         className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline text-body-md text-ink
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                   focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                 </div>
 
@@ -158,7 +158,7 @@ export function EditAssignmentForm({
                         rows={6}
                         defaultValue={initialInstructions}
                         className="clay-well w-full px-4 py-3 rounded-2xl border-2 border-hairline text-body-md text-ink leading-relaxed
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                   focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                 </div>
 
@@ -172,7 +172,7 @@ export function EditAssignmentForm({
                             type="button"
                             onClick={() => setDueAt('')}
                             disabled={!dueAt}
-                            className="text-caption font-medium text-text-secondary hover:text-error disabled:opacity-40"
+                            className="text-caption font-medium text-text-secondary hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded disabled:opacity-40"
                         >
                             Clear
                         </button>
@@ -192,7 +192,7 @@ export function EditAssignmentForm({
                         required
                         defaultValue={initialMaxScore}
                         className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline text-body-md text-ink
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                   focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                 </div>
 
@@ -202,7 +202,7 @@ export function EditAssignmentForm({
                         name="allowLate"
                         type="checkbox"
                         defaultChecked={initialAllowLate}
-                        className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
+                        className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand focus-visible:ring-offset-2"
                     />
                     <label htmlFor="allowLate" className="text-body-md text-ink">
                         Allow submissions after the due date
@@ -230,7 +230,7 @@ export function EditAssignmentForm({
                     type="submit"
                     disabled={isPending}
                     className="clay-button w-full bg-brand text-on-ink font-semibold text-body-md
-                               hover:bg-brand-hover disabled:opacity-60"
+                               hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
                 >
                     {isPending ? 'Saving…' : 'Save changes'}
                 </button>
@@ -238,7 +238,7 @@ export function EditAssignmentForm({
 
             <h2 className="text-h3 text-ink mb-4">Attachments</h2>
 
-            <div className="bg-surface rounded-md shadow-card p-6 space-y-4 mb-4">
+            <div className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-4 mb-4">
                 <form ref={fileFormRef} action={handleFileUpload} className="flex items-center gap-3 flex-wrap">
                     <input
                         type="file"
@@ -253,7 +253,7 @@ export function EditAssignmentForm({
                     <button
                         type="submit"
                         disabled={isUploading}
-                        className="h-12 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
+                        className="h-12 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
                     >
                         {isUploading ? 'Uploading…' : 'Upload file'}
                     </button>
@@ -265,7 +265,7 @@ export function EditAssignmentForm({
                         name="label"
                         placeholder="Label (optional)"
                         className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[140px]
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                   focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                     <input
                         type="url"
@@ -273,12 +273,12 @@ export function EditAssignmentForm({
                         placeholder="https://..."
                         required
                         className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[200px]
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                   focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                     <button
                         type="submit"
                         disabled={isUploading}
-                        className="h-12 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
+                        className="h-12 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
                     >
                         {isUploading ? 'Adding…' : 'Add link'}
                     </button>
@@ -314,7 +314,7 @@ function MaterialListWithDelete({
 }) {
     if (materials.length === 0) {
         return (
-            <div className="bg-surface rounded-md shadow-card p-8 text-center">
+            <div className="bg-surface rounded-md border border-hairline shadow-card p-8 text-center">
                 <p className="text-body-md text-text-secondary">No attachments added yet.</p>
             </div>
         )
@@ -327,7 +327,7 @@ function MaterialListWithDelete({
                 return (
                     <div
                         key={material.id}
-                        className={`bg-surface rounded-md shadow-card p-4 flex items-center justify-between gap-4 ${
+                        className={`bg-surface rounded-md border border-hairline shadow-card p-4 flex items-center justify-between gap-4 ${
                             isMarked ? 'opacity-50' : ''
                         }`}
                     >
@@ -342,7 +342,7 @@ function MaterialListWithDelete({
                             <button
                                 type="button"
                                 onClick={() => onUndoRemoval(material.id)}
-                                className="h-12 px-4 rounded-md border-2 border-hairline text-ink text-caption font-medium hover:bg-surface-sunken shrink-0"
+                                className="h-12 px-4 rounded-md border-2 border-hairline text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 shrink-0"
                             >
                                 Undo
                             </button>
@@ -350,7 +350,7 @@ function MaterialListWithDelete({
                             <button
                                 type="button"
                                 onClick={() => onMarkForRemoval(material.id)}
-                                className="h-12 px-4 rounded-md border-2 border-error text-error text-caption font-medium hover:bg-error-soft shrink-0"
+                                className="h-12 px-4 rounded-md border-2 border-error text-error text-caption font-medium hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 shrink-0"
                             >
                                 Remove
                             </button>

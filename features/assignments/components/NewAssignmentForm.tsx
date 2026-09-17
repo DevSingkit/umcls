@@ -105,7 +105,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     id="title"
                     name="title"
                     required
-                    className="clay-well mt-1 min-h-touch w-full px-4 rounded-2xl border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="clay-well mt-1 min-h-touch w-full px-4 rounded-2xl border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 />
             </div>
             <div>
@@ -116,7 +116,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     ref={instructionsRef}
                     rows={4}
                     onInput={resizeInstructions}
-                    className="clay-well mt-1 w-full px-4 py-3 rounded-2xl border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none overflow-hidden"
+                    className="clay-well mt-1 w-full px-4 py-3 rounded-2xl border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 resize-none overflow-hidden"
                 />
             </div>
             <div className="pt-2 border-t border-hairline space-y-6">
@@ -140,7 +140,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                         onClick={() => fileInputRef.current?.click()}
                         className="flex items-center gap-2 h-12 px-4 rounded-md border-2 border-dashed border-hairline
                                    text-body-md text-ink font-medium hover:border-brand hover:bg-surface-sunken
-                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     >
                         <Plus size={18} aria-hidden="true" className="shrink-0" />
                         Attach files
@@ -178,7 +178,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                             type="button"
                                             onClick={() => removeFile(index)}
                                             aria-label={`Remove ${file.name}`}
-                                            className="text-text-secondary hover:text-error shrink-0"
+                                            className="text-text-secondary hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded shrink-0"
                                         >
                                             <X size={16} aria-hidden="true" />
                                         </button>
@@ -195,7 +195,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                         <button
                             type="button"
                             onClick={addLinkRow}
-                            className="text-caption font-semibold text-brand hover:text-brand-hover"
+                            className="text-caption font-semibold text-brand hover:text-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
                         >
                             + Add a link
                         </button>
@@ -214,7 +214,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                         placeholder="https://..."
                                         value={row.url}
                                         onChange={(e) => updateLinkRow(row.key, 'url', e.target.value)}
-                                        className="flex-1 h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                        className="flex-1 h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                     />
                                     <input
                                         type="text"
@@ -222,13 +222,13 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                                         placeholder="Label (optional)"
                                         value={row.label}
                                         onChange={(e) => updateLinkRow(row.key, 'label', e.target.value)}
-                                        className="w-40 h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                        className="w-40 h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                     />
                                     <button
                                         type="button"
                                         aria-label="Remove link"
                                         onClick={() => removeLinkRow(row.key)}
-                                        className="flex h-9 w-9 items-center justify-center text-text-secondary hover:text-error"
+                                        className="flex h-9 w-9 items-center justify-center text-text-secondary hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded"
                                     >
                                         <X size={16} aria-hidden="true" />
                                     </button>
@@ -246,7 +246,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                         type="button"
                         onClick={() => setDueAt('')}
                         disabled={!dueAt}
-                        className="text-caption font-medium text-text-secondary hover:text-error disabled:opacity-40"
+                        className="text-caption font-medium text-text-secondary hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded disabled:opacity-40"
                     >
                         Clear
                     </button>
@@ -276,7 +276,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     min={1}
                     defaultValue={100}
                     required
-                    className="clay-well mt-1 min-h-touch w-full px-4 rounded-2xl border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    className="clay-well mt-1 min-h-touch w-full px-4 rounded-2xl border-2 border-hairline text-body-md text-ink focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 />
             </div>
 
@@ -285,7 +285,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
                     id="allowLate"
                     name="allowLate"
                     type="checkbox"
-                    className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
+                    className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand focus-visible:ring-offset-2"
                 />
                 <label htmlFor="allowLate" className="text-body-md text-ink">
                     Allow submissions after the due date
@@ -299,7 +299,7 @@ export function NewAssignmentForm({ courseId }: { courseId: string }) {
             <button
                 type="submit"
                 disabled={isPending}
-                className="clay-button w-full bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover disabled:opacity-60"
+                className="clay-button w-full bg-brand text-on-ink font-semibold text-body-md hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
                 {isPending ? 'Creating…' : 'Create assignment'}
             </button>

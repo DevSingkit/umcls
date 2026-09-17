@@ -36,7 +36,7 @@ export function CourseActivityAccordion({ courses }: { courses: AdminCourseActiv
 
     if (courses.length === 0) {
         return (
-            <div className="rounded-md bg-surface p-10 text-center shadow-card">
+            <div className="rounded-md bg-surface p-10 text-center border border-hairline shadow-card">
                 <p className="text-body-md text-ink-soft">No courses yet.</p>
             </div>
         )
@@ -50,14 +50,14 @@ export function CourseActivityAccordion({ courses }: { courses: AdminCourseActiv
                 return (
                     <div
                         key={course.courseId}
-                        className={`rounded-md shadow-card overflow-hidden ${
-                            isExpanded ? 'bg-brand-soft border border-brand' : 'bg-surface'
+                        className={`rounded-md border shadow-card overflow-hidden ${
+                            isExpanded ? 'bg-brand-soft border-brand' : 'bg-surface border-hairline'
                         }`}
                     >
                         <button
                             type="button"
                             onClick={() => setExpandedCourseId(isExpanded ? null : course.courseId)}
-                            className="flex w-full items-center gap-4 p-4 text-left"
+                            className="flex w-full items-center gap-4 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             aria-expanded={isExpanded}
                         >
                             {/* DESIGN-LMS 2.1 touch-target fix: h-11/w-11 (44px) was
@@ -97,7 +97,7 @@ export function CourseActivityAccordion({ courses }: { courses: AdminCourseActiv
                                             return (
                                                 <li
                                                     key={`${item.type}-${item.id}`}
-                                                    className="flex items-start gap-4 rounded-md bg-surface-sunken p-3"
+                                                    className="flex items-start gap-4 rounded-md bg-surface-sunken border border-hairline p-3"
                                                 >
                                                     <div
                                                         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${TYPE_ICON_BG[item.type]}`}

@@ -65,7 +65,7 @@ export function QuizStartGate({
                 {quiz.description && (
                     <p className="text-body-md text-text-secondary mb-6">{quiz.description}</p>
                 )}
-                <div className="bg-surface rounded-md shadow-card p-6">
+                <div className="bg-surface rounded-md border border-hairline shadow-card p-6">
                     <p className="text-body-md text-ink">
                         {quiz.questions.length} question{quiz.questions.length === 1 ? '' : 's'}
                     </p>
@@ -73,14 +73,14 @@ export function QuizStartGate({
             </div>
 
             <div className="mt-6 lg:mt-0 lg:sticky lg:top-6">
-                <div className="bg-surface rounded-md shadow-card p-6 space-y-4">
+                <div className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-4">
                     <span className="inline-flex items-center rounded-pill bg-hairline text-text-secondary text-caption font-semibold px-3 py-1">
                         {isResume ? 'In progress' : 'Not started'}
                     </span>
                     <button
                         type="button"
                         onClick={() => setStarted(true)}
-                        className="w-full h-14 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors"
+                        className="w-full h-14 rounded-md bg-brand hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 text-on-ink font-semibold text-body-md transition-colors"
                     >
                         {isResume ? 'Resume quiz' : 'Start quiz'}
                     </button>

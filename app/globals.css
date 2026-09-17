@@ -34,6 +34,19 @@
     outline-offset: 2px;
   }
 
+  /* Border width tokens (§3 Design System)
+     Widths were drifting per-component (border, border-[1.5px],
+     border-2 all used for conceptually similar hairlines). These pair
+     a fixed width with the existing hairline colors so both are chosen
+     together as one decision instead of independently. Prefer these
+     over ad-hoc border-[Npx] utilities for standard dividers/inputs. */
+  .border-hairline-default {
+    @apply border border-hairline;
+  }
+  .border-hairline-emphasis {
+    @apply border-[1.5px] border-hairline-strong;
+  }
+
   /* Tactile 3D Active State Depression Utility for Touch Devices (Mission Mode) */
   .active-press {
     @apply transition-transform active:translate-y-1 active:border-b-0;

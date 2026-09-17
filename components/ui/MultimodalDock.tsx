@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Mic, MicOff, Palette, Camera, X, Undo2, Eraser, Trash2, Check } from 'lucide-react'
 import Webcam from 'react-webcam'
 import { ReactSketchCanvas, type ReactSketchCanvasRef } from 'react-sketch-canvas'
+import { cn } from '@/lib/utils'
 
 // ─── Crayon color palette for the drawing canvas ────────────────────
 const CRAYON_COLORS = [
@@ -24,6 +25,12 @@ const CRAYON_COLORS = [
     { name: 'Orange', hex: '#E8963C' },
     { name: 'Pink', hex: '#8F1349' },
 ]
+
+// Caps how long a single voice note can run. Without this, a child can
+// leave the recorder running indefinitely, producing a very large file
+// with no feedback until the upload fails. 2 minutes is generous for a
+// short answer or explanation while keeping file size reasonable.
+const MAX_RECORDING_SECONDS = 120
 
 interface MultimodalDockProps {
     onFileCaptured: (file: File) => void
@@ -47,7 +54,10 @@ export function MultimodalDock({ onFileCaptured, disabled = false }: MultimodalD
                     type="button"
                     disabled={disabled}
                     onClick={() => setActiveModal('voice')}
-                    className="clay-button flex flex-col items-center justify-center gap-1.5 flex-1 py-3 bg-brand text-on-ink font-heading text-caption disabled:opacity-50"
+                    className={cn(
+                        'clay-button flex flex-col items-center justify-center gap-1.5 flex-1 py-3 min-h-touch bg-brand text-on-ink font-heading text-caption disabled:opacity-50',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
+                    )}
                 >
                     <Mic size={24} aria-hidden="true" />
                     <span>Voice</span>
@@ -56,7 +66,10 @@ export function MultimodalDock({ onFileCaptured, disabled = false }: MultimodalD
                     type="button"
                     disabled={disabled}
                     onClick={() => setActiveModal('draw')}
-                    className="clay-button flex flex-col items-center justify-center gap-1.5 flex-1 py-3 bg-gamified-purple text-on-ink font-heading text-caption disabled:opacity-50 border-gamified-purple-dark"
+                    className={cn(
+                        'clay-button flex flex-col items-center justify-center gap-1.5 flex-1 py-3 min-h-touch bg-gamified-purple text-on-ink font-heading text-caption disabled:opacity-50 border-gamified-purple-dark',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
+                    )}
                 >
                     <Palette size={24} aria-hidden="true" />
                     <span>Draw</span>
@@ -65,7 +78,10 @@ export function MultimodalDock({ onFileCaptured, disabled = false }: MultimodalD
                     type="button"
                     disabled={disabled}
                     onClick={() => setActiveModal('photo')}
-                    className="clay-button flex flex-col items-center justify-center gap-1.5 flex-1 py-3 bg-info text-on-ink font-heading text-caption disabled:opacity-50 border-gamified-pink-dark"
+                    className={cn(
+                        'clay-button flex flex-col items-center justify-center gap-1.5 flex-1 py-3 min-h-touch bg-accent-pink text-on-ink font-heading text-caption disabled:opacity-50 border-gamified-pink-dark',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
+                    )}
                 >
                     <Camera size={24} aria-hidden="true" />
                     <span>Photo</span>
@@ -117,7 +133,7 @@ function ModalOverlay({
                         type="button"
                         onClick={onClose}
                         aria-label="Close"
-                        className="flex items-center justify-center min-h-touch min-w-touch rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors"
+                        className="flex items-center justify-center min-h-touch min-w-touch rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     >
                         <X size={22} aria-hidden="true" />
                     </button>
@@ -139,9 +155,18 @@ function VoiceModal({
     const [isRecording, setIsRecording] = useState(false)
     const [audioUrl, setAudioUrl] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const [elapsedSeconds, setElapsedSeconds] = useState(0)
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
     const chunksRef = useRef<Blob[]>([])
     const blobRef = useRef<Blob | null>(null)
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+    function stopTimer() {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current)
+            intervalRef.current = null
+        }
+    }
 
     async function startRecording() {
         try {
@@ -160,11 +185,26 @@ function VoiceModal({
                 setAudioUrl(URL.createObjectURL(blob))
                 // Stop all tracks so the mic indicator goes away
                 stream.getTracks().forEach((t) => t.stop())
+                stopTimer()
             }
 
             mediaRecorderRef.current = recorder
             recorder.start()
             setIsRecording(true)
+            setElapsedSeconds(0)
+
+            intervalRef.current = setInterval(() => {
+                setElapsedSeconds((prev) => {
+                    const next = prev + 1
+                    // Auto-stop at the cap so a child can't leave the mic
+                    // running indefinitely and produce an oversized file.
+                    if (next >= MAX_RECORDING_SECONDS) {
+                        recorder.stop()
+                        setIsRecording(false)
+                    }
+                    return next
+                })
+            }, 1000)
         } catch {
             setError('Could not access microphone. Please allow microphone access.')
         }
@@ -173,6 +213,7 @@ function VoiceModal({
     function stopRecording() {
         mediaRecorderRef.current?.stop()
         setIsRecording(false)
+        stopTimer()
     }
 
     function handleSave() {
@@ -196,6 +237,7 @@ function VoiceModal({
         return () => {
             if (audioUrl) URL.revokeObjectURL(audioUrl)
             mediaRecorderRef.current?.stream?.getTracks().forEach((t) => t.stop())
+            stopTimer()
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
@@ -220,14 +262,18 @@ function VoiceModal({
                             )}
                         </div>
                         <p className="text-body-md text-ink-soft text-center">
-                            {isRecording ? 'Recording... Tap to stop' : 'Tap to start recording'}
+                            {isRecording
+                                ? `Recording... ${MAX_RECORDING_SECONDS - elapsedSeconds}s left`
+                                : 'Tap to start recording'}
                         </p>
                         <button
                             type="button"
                             onClick={isRecording ? stopRecording : startRecording}
-                            className={`clay-button px-8 py-3 font-heading text-body-emphasis text-on-ink ${
+                            className={cn(
+                                'clay-button px-8 py-3 min-h-touch font-heading text-body-emphasis text-on-ink',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
                                 isRecording ? 'bg-error border-error-border' : 'bg-brand'
-                            }`}
+                            )}
                         >
                             {isRecording ? 'Stop' : 'Record'}
                         </button>
@@ -241,14 +287,14 @@ function VoiceModal({
                             <button
                                 type="button"
                                 onClick={handleReRecord}
-                                className="flex-1 h-14 rounded-2xl border-2 border-hairline text-ink font-heading text-body-emphasis hover:bg-surface-sunken transition-colors"
+                                className="flex-1 h-14 min-h-touch rounded-2xl border-2 border-hairline text-ink font-heading text-body-emphasis hover:bg-surface-sunken transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             >
                                 Re-record
                             </button>
                             <button
                                 type="button"
                                 onClick={handleSave}
-                                className="clay-button flex-1 px-6 py-3 bg-brand text-on-ink font-heading text-body-emphasis"
+                                className="clay-button flex-1 px-6 py-3 min-h-touch bg-brand text-on-ink font-heading text-body-emphasis focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             >
                                 Use this
                             </button>
@@ -299,11 +345,13 @@ function DrawModal({
                         type="button"
                         aria-label={c.name}
                         onClick={() => { setStrokeColor(c.hex); setIsEraser(false) }}
-                        className={`w-10 h-10 rounded-full border-2 transition-transform ${
+                        className={cn(
+                            'w-10 h-10 rounded-full border-2 transition-transform',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
                             strokeColor === c.hex && !isEraser
                                 ? 'border-ink scale-110 ring-2 ring-ink ring-offset-2'
                                 : 'border-hairline'
-                        }`}
+                        )}
                         style={{ backgroundColor: c.hex }}
                     />
                 ))}
@@ -312,11 +360,13 @@ function DrawModal({
                     aria-label="Eraser"
                     aria-pressed={isEraser}
                     onClick={() => setIsEraser(!isEraser)}
-                    className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+                    className={cn(
+                        'flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
                         isEraser
                             ? 'border-ink bg-surface-sunken ring-2 ring-ink ring-offset-2'
                             : 'border-hairline bg-surface hover:bg-surface-sunken'
-                    }`}
+                    )}
                 >
                     <Eraser size={18} aria-hidden="true" />
                 </button>
@@ -340,7 +390,7 @@ function DrawModal({
                     type="button"
                     onClick={() => canvasRef.current?.undo()}
                     aria-label="Undo"
-                    className="flex items-center justify-center min-h-touch min-w-touch rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors"
+                    className="flex items-center justify-center min-h-touch min-w-touch rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     <Undo2 size={20} aria-hidden="true" />
                 </button>
@@ -348,7 +398,7 @@ function DrawModal({
                     type="button"
                     onClick={() => canvasRef.current?.clearCanvas()}
                     aria-label="Clear canvas"
-                    className="flex items-center justify-center min-h-touch min-w-touch rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors"
+                    className="flex items-center justify-center min-h-touch min-w-touch rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                     <Trash2 size={20} aria-hidden="true" />
                 </button>
@@ -356,7 +406,7 @@ function DrawModal({
                 <button
                     type="button"
                     onClick={handleDone}
-                    className="clay-button flex items-center justify-center gap-2 px-8 py-3 bg-brand text-on-ink font-heading text-body-emphasis"
+                    className="clay-button flex items-center justify-center gap-2 px-8 py-3 min-h-touch bg-brand text-on-ink font-heading text-body-emphasis focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     <Check size={20} aria-hidden="true" />
                     Done
@@ -415,7 +465,12 @@ function PhotoModal({
                             ref={webcamRef}
                             audio={false}
                             screenshotFormat="image/jpeg"
-                            videoConstraints={{ facingMode: 'environment' }}
+                            screenshotQuality={0.8}
+                            // Caps the capture resolution so photos stay a
+                            // reasonable size over school wifi instead of
+                            // uploading whatever the device's native camera
+                            // resolution happens to be.
+                            videoConstraints={{ facingMode: 'environment', width: 1280, height: 960 }}
                             onUserMediaError={() => setError('Could not access camera. Please allow camera access.')}
                             className="w-full aspect-[4/3] object-cover"
                         />
@@ -423,7 +478,7 @@ function PhotoModal({
                     <button
                         type="button"
                         onClick={handleCapture}
-                        className="clay-button w-full px-6 py-3 bg-brand text-on-ink font-heading text-body-emphasis flex items-center justify-center gap-2"
+                        className="clay-button w-full px-6 py-3 min-h-touch bg-brand text-on-ink font-heading text-body-emphasis flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         <Camera size={22} aria-hidden="true" />
                         Capture
@@ -439,14 +494,14 @@ function PhotoModal({
                         <button
                             type="button"
                             onClick={() => setCapturedUrl(null)}
-                            className="flex-1 h-14 rounded-2xl border-2 border-hairline text-ink font-heading text-body-emphasis hover:bg-surface-sunken transition-colors"
+                            className="flex-1 h-14 min-h-touch rounded-2xl border-2 border-hairline text-ink font-heading text-body-emphasis hover:bg-surface-sunken transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         >
                             Retake
                         </button>
                         <button
                             type="button"
                             onClick={handleSave}
-                            className="clay-button flex-1 px-6 py-3 bg-brand text-on-ink font-heading text-body-emphasis"
+                            className="clay-button flex-1 px-6 py-3 min-h-touch bg-brand text-on-ink font-heading text-body-emphasis focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         >
                             Use this
                         </button>

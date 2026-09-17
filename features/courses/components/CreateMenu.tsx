@@ -21,7 +21,8 @@
 // courses list page).
 import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ChevronDown, FileText, HelpCircle, ClipboardList, Plus } from 'lucide-react'
+import { ChevronDown, FileText, HelpCircle, ClipboardList } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export function CreateMenu({ courseId }: { courseId: string }) {
     const [isOpen, setIsOpen] = useState(false)
@@ -40,26 +41,26 @@ export function CreateMenu({ courseId }: { courseId: string }) {
     return (
         <div ref={containerRef} className="relative">
             <button
+                type="button"
                 onClick={() => setIsOpen((prev) => !prev)}
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
-                className="flex h-14 items-center gap-1.5 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="flex h-12 min-h-touch items-center gap-1.5 rounded-md bg-brand px-4 text-caption sm:text-body-md font-semibold text-on-ink hover:bg-brand-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
-                <Plus size={18} aria-hidden="true" />
                 Create
-                <ChevronDown size={16} aria-hidden="true" />
+                <ChevronDown size={16} aria-hidden="true" className={cn('transition-transform', isOpen && 'rotate-180')} />
             </button>
 
             {isOpen && (
                 <div
                     role="menu"
-                    className="absolute right-0 z-40 mt-2 w-52 overflow-hidden rounded-md bg-surface shadow-modal"
+                    className="absolute right-0 z-40 mt-2 w-52 overflow-hidden rounded-md bg-surface shadow-modal border border-hairline"
                 >
                     <Link
                         href={`/teacher/courses/${courseId}/lessons/new`}
                         role="menuitem"
                         onClick={() => setIsOpen(false)}
-                        className="flex h-12 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
+                        className="flex h-12 min-h-touch items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
                     >
                         <FileText size={20} aria-hidden="true" className="text-text-secondary" />
                         Lesson
@@ -68,7 +69,7 @@ export function CreateMenu({ courseId }: { courseId: string }) {
                         href={`/teacher/courses/${courseId}/quizzes/new`}
                         role="menuitem"
                         onClick={() => setIsOpen(false)}
-                        className="flex h-12 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
+                        className="flex h-12 min-h-touch items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
                     >
                         <HelpCircle size={20} aria-hidden="true" className="text-text-secondary" />
                         Quiz
@@ -77,7 +78,7 @@ export function CreateMenu({ courseId }: { courseId: string }) {
                         href={`/teacher/courses/${courseId}/assignments/new`}
                         role="menuitem"
                         onClick={() => setIsOpen(false)}
-                        className="flex h-12 items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken"
+                        className="flex h-12 min-h-touch items-center gap-3 px-4 text-body-md text-ink hover:bg-surface-sunken transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
                     >
                         <ClipboardList size={20} aria-hidden="true" className="text-text-secondary" />
                         Assignment

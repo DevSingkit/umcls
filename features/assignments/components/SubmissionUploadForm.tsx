@@ -148,7 +148,7 @@ export function SubmissionUploadForm({
     return (
         <div className="grid gap-4">
             {existing && (
-                <div className={`bg-surface rounded-md shadow-card ${cardPadding}`}>
+                <div className={`bg-surface rounded-md border border-hairline shadow-card ${cardPadding}`}>
                     {existing.files.length > 0 && (
                         <div className="grid gap-2 mb-2">
                             {existing.files.map((f) => (
@@ -159,7 +159,7 @@ export function SubmissionUploadForm({
                                             type="button"
                                             onClick={() => handleRemoveExistingFile(f.id)}
                                             disabled={isRemovingFile && removingFileId === f.id}
-                                            className="shrink-0 text-caption font-medium text-error hover:underline disabled:opacity-60"
+                                            className="shrink-0 text-caption font-medium text-error hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded-sm disabled:opacity-60"
                                         >
                                             {isRemovingFile && removingFileId === f.id ? 'Removing…' : 'Remove'}
                                         </button>
@@ -197,7 +197,7 @@ export function SubmissionUploadForm({
                             type="button"
                             onClick={handleUnsubmit}
                             disabled={isUnsubmitting}
-                            className="mt-4 text-caption font-medium text-error hover:underline disabled:opacity-60"
+                            className="mt-4 text-caption font-medium text-error hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded-sm disabled:opacity-60"
                         >
                             {isUnsubmitting ? 'Unsubmitting…' : 'Unsubmit'}
                         </button>
@@ -208,7 +208,7 @@ export function SubmissionUploadForm({
             {error && <p className="text-caption text-error">{error}</p>}
 
             {isLocked ? (
-                <div className="bg-surface-sunken rounded-md p-4">
+                <div className="bg-surface-sunken rounded-md border border-hairline p-4">
                     <p className="text-caption text-text-secondary">
                         The due date has passed and late submissions aren&apos;t allowed for this
                         assignment.
@@ -223,7 +223,7 @@ export function SubmissionUploadForm({
                         defaultValue={existing?.response_text ?? ''}
                         placeholder="Add a note (optional)"
                         className="clay-well w-full px-4 py-3 rounded-2xl border-2 border-hairline text-body-md text-ink leading-relaxed
-                                   placeholder:text-text-muted focus:border-brand focus:outline-none"
+                                   placeholder:text-text-muted focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
 
                     {pendingFiles.length > 0 && (
@@ -234,7 +234,7 @@ export function SubmissionUploadForm({
                                     <button
                                         type="button"
                                         onClick={() => removePendingFile(i)}
-                                        className="shrink-0 text-caption font-medium text-error hover:underline"
+                                        className="shrink-0 text-caption font-medium text-error hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded-sm"
                                     >
                                         Remove
                                     </button>
@@ -266,7 +266,7 @@ export function SubmissionUploadForm({
                         <button
                             type="submit"
                             disabled={isPending}
-                            className={`clay-button px-6 bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 ${
+                            className={`clay-button px-6 bg-brand text-on-ink font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60 ${
                                 compact ? 'w-full' : ''
                             }`}
                         >

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'
 
 // Classroom-style course tile. Per latest product direction, the
@@ -69,7 +70,10 @@ export function CourseCard({
     return (
         <Link
             href={href}
-            className="group block overflow-hidden rounded-md bg-surface shadow-card transition-shadow hover:shadow-card-hover"
+            className={cn(
+                'group block overflow-hidden rounded-md bg-surface border border-hairline shadow-card transition-all hover:shadow-card-hover',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
+            )}
         >
             <div className={`${band} px-5 py-4`}>
                 <div className="flex items-start gap-3">

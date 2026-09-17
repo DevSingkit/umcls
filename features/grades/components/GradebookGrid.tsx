@@ -82,11 +82,11 @@ export function GradebookGrid({
                                     return (
                                         <div
                                             key={column.id}
-                                            className="flex items-center justify-between gap-3 rounded-md bg-surface-sunken px-3 py-2.5"
+                                            className="flex items-center justify-between gap-3 rounded-md bg-surface-sunken px-3 py-2.5 border border-hairline"
                                         >
                                             <Link
                                                 href={columnHref(column)}
-                                                className="min-w-0 flex-1 text-caption text-ink hover:text-brand hover:underline truncate"
+                                                className="min-w-0 flex-1 text-caption text-ink hover:text-brand hover:underline truncate rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                             >
                                                 {column.title}
                                             </Link>
@@ -116,7 +116,10 @@ export function GradebookGrid({
                             </th>
                             {columns.map((column) => (
                                 <th key={column.id} className="px-4 py-3 text-left text-caption text-text-secondary font-semibold min-w-[140px]">
-                                    <Link href={columnHref(column)} className="text-ink hover:text-brand hover:underline">
+                                    <Link
+                                        href={columnHref(column)}
+                                        className="text-ink hover:text-brand hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
+                                    >
                                         {column.title}
                                     </Link>
                                     <span className="block text-text-muted font-normal">/{column.maxScore}</span>

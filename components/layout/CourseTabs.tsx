@@ -21,10 +21,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import type { Role } from '@/lib/navigation/nav-items'
 
-type Role = 'student' | 'teacher'
-
-export function CourseTabs({ courseId, role }: { courseId: string; role: Role }) {
+// Only student and teacher currently have a course-scoped stream view.
+// Admins browse courses through /admin/courses instead, so this
+// component is not expected to render for that role — but it now takes
+// the shared Role type rather than its own local union, so if admin
+// course access is ever added, this won't silently build a wrong URL
+// without a compile-time nudge to update it.
+export function CourseTabs({ courseId, role }: { courseId: string; role: Extract<Role, 'student' | 'teacher'> }) {
     const pathname = usePathname()
     const base = `/${role}/courses/${courseId}`
 
@@ -41,11 +47,13 @@ export function CourseTabs({ courseId, role }: { courseId: string; role: Role })
                     <li key={tab.label} className="shrink-0">
                         <Link
                             href={tab.href}
-                            className={`inline-block whitespace-nowrap py-3 text-body-md font-semibold border-b-2 -mb-px transition-colors ${
+                            className={cn(
+                                'inline-flex items-center min-h-[48px] whitespace-nowrap py-3 text-body-md font-semibold border-b-2 -mb-px transition-colors',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-ink focus-visible:rounded-sm',
                                 tab.isActive
                                     ? 'border-on-ink text-on-ink'
-                                    : 'border-transparent text-on-ink/60 hover:text-on-ink/90'
-                            }`}
+                                    : 'border-transparent text-on-ink/70 hover:text-on-ink'
+                            )}
                             aria-current={tab.isActive ? 'page' : undefined}
                         >
                             {tab.label}

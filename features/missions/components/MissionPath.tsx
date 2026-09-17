@@ -170,7 +170,16 @@ export function MissionPath({
 
                 return (
                     <li key={mission.id}>
-                        {isLocked ? content : <Link href={href}>{content}</Link>}
+                        {isLocked ? (
+                            content
+                        ) : (
+                            <Link
+                                href={href}
+                                className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                            >
+                                {content}
+                            </Link>
+                        )}
                     </li>
                 )
             })}

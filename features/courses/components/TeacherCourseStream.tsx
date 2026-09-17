@@ -54,7 +54,7 @@ export async function TeacherCourseStream({
 }) {
     if (items.length === 0) {
         return (
-            <div className="flex flex-col items-center gap-3 rounded-md bg-surface p-10 text-center shadow-card">
+            <div className="flex flex-col items-center gap-3 rounded-md bg-surface border border-hairline p-10 text-center shadow-card">
                 <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-brand-soft">
                     <Plus size={28} className="text-brand" aria-hidden="true" />
                 </div>
@@ -63,7 +63,7 @@ export async function TeacherCourseStream({
                 </p>
                 <Link
                     href={`/teacher/courses/${courseId}/lessons/new`}
-                    className="flex h-14 items-center gap-2 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover"
+                    className="flex h-14 min-h-touch items-center gap-2 rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     <Plus size={18} aria-hidden="true" />
                     Create Lesson
@@ -93,7 +93,7 @@ export async function TeacherCourseStream({
                     return (
                         <li
                             key={`${item.type}-${item.id}`}
-                            className="rounded-md bg-surface p-4 shadow-card hover:shadow-card-hover"
+                            className="rounded-md bg-surface border border-hairline p-4 shadow-card hover:shadow-card-hover transition-shadow"
                         >
                             <div className="flex items-start gap-4">
                                 <Avatar fullName={item.authorName} avatarUrl={item.authorAvatarUrl} size="md" />
@@ -109,7 +109,7 @@ export async function TeacherCourseStream({
                                     </p>
                                     <Link
                                         href={itemHref(courseId, item)}
-                                        className="block truncate text-body-md font-semibold text-ink hover:underline mt-1"
+                                        className="inline-block truncate text-body-md font-semibold text-ink hover:underline mt-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                     >
                                         {item.title}
                                     </Link>
@@ -146,28 +146,29 @@ export async function TeacherCourseStream({
                                 leaving the stream. Quizzes/assignments have
                                 no equivalent "body" to preview this way. */}
                             {item.type === 'lesson' && item.description && (
-                                <p className="text-body-md text-ink-soft whitespace-pre-wrap mt-3 pl-[60px]">
+                                <p className="text-body-md text-ink-soft whitespace-pre-wrap mt-3 pl-0 sm:pl-[60px]">
                                     {item.description}
                                 </p>
                             )}
                             {item.type === 'lesson' && item.materials && item.materials.length > 0 && (
-                                <div className="mt-3 pl-[60px]">
+                                <div className="mt-3 pl-0 sm:pl-[60px]">
                                     <MaterialList materials={item.materials} />
                                 </div>
                             )}
                             {item.type === 'lesson' && (
-                                <div className="mt-3 pl-[60px] flex items-center justify-between gap-3 rounded-md bg-surface-sunken px-4 py-3">
-                                    <p className="flex items-center gap-2 text-caption font-semibold text-text-secondary">
-                                        <Gamepad2 size={16} aria-hidden="true" />
-                                        {(item.missionsCount ?? 0) === 0
-                                            ? 'No missions yet'
-                                            : `${item.missionsCount} mission${item.missionsCount === 1 ? '' : 's'} · ${item.publishedMissionsCount} published`}
+                                <div className="mt-3 pl-0 sm:pl-[60px] flex items-center justify-between gap-3 rounded-md bg-surface-sunken px-3 py-2.5 sm:px-4 sm:py-3">
+                                    <p className="flex items-center gap-1.5 sm:gap-2 text-caption font-semibold text-text-secondary min-w-0">
+                                        <Gamepad2 size={16} className="shrink-0" aria-hidden="true" />
+                                        <span className="truncate">
+                                            {(item.missionsCount ?? 0) === 0
+                                                ? 'No missions yet'
+                                                : `${item.missionsCount} mission${item.missionsCount === 1 ? '' : 's'} · ${item.publishedMissionsCount} published`}
+                                        </span>
                                     </p>
                                     <Link
                                         href={`/teacher/courses/${courseId}/lessons/${item.id}/missions/new`}
-                                        className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover transition-colors"
+                                        className="inline-flex items-center justify-center gap-1.5 h-9 px-3 sm:px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
                                     >
-                                        <Plus size={14} aria-hidden="true" />
                                         Add mission
                                     </Link>
                                 </div>

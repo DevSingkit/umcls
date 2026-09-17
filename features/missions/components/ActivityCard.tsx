@@ -59,8 +59,23 @@
 // itself is a separate, untouched module and was NOT modified in this
 // pass pending explicit confirmation that it should be too.
 
+// ACTIVITY-TO-QUESTION UI COLLAPSE (2026-09-10): "Activity" as a
+// container a teacher had to separately create, name, and add
+// question(s) into was confusing — a leftover from before the
+// multi-question rework, with no real pedagogical payoff. Capped at
+// exactly ONE question per card here: addQuestionBlock/
+// removeQuestionBlock and the per-question header/remove-button inside
+// edit mode are all gone, since there's no longer an inner layer to
+// add a second question INTO. View mode renders activity.questions[0]
+// directly instead of mapping (there's only ever one now). User-
+// visible text renamed "activity" -> "question" throughout (headers,
+// confirm dialogs, remediation copy) — component name, props
+// (activity, allActivities), and the underlying create-activity.ts/
+// schema are all UNCHANGED, this is a UI-text-and-cardinality change
+// only, not a rename of the codebase's internal model.
+
 import { useState } from 'react'
-import { X, Plus, Check, Circle, Square, Triangle, Diamond } from 'lucide-react'
+import { X, Check, Circle, Square, Triangle, Diamond } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { updateActivity, deleteActivity } from '@/features/missions/actions/create-activity'
 import { TTSButton } from '@/components/ui/TTSButton'
@@ -198,25 +213,6 @@ export function ActivityCard({
         setQuestions((prev) => prev.map((q) => (q.key === key ? { ...q, ...patch } : q)))
     }
 
-    function addQuestionBlock() {
-        setQuestions((prev) => [
-            ...prev,
-            {
-                key: nextKey('question'),
-                questionType: 'multiple_choice_single' as QuestionType,
-                prompt: '',
-                options: [makeEmptyOption(), makeEmptyOption()],
-                correctIndex: null,
-                correctTf: 'True' as const,
-                hintText: '',
-            },
-        ])
-    }
-
-    function removeQuestionBlock(key: string) {
-        setQuestions((prev) => (prev.length > 1 ? prev.filter((q) => q.key !== key) : prev))
-    }
-
     function updateOptionText(questionKey: string, optionKey: string, text: string) {
         setQuestions((prev) =>
             prev.map((q) =>
@@ -310,7 +306,7 @@ export function ActivityCard({
     }
 
     async function handleDelete() {
-        const confirmed = window.confirm('Delete this activity? This cannot be undone.')
+        const confirmed = window.confirm('Delete this question? This cannot be undone.')
         if (!confirmed) return
 
         setIsDeleting(true)
@@ -326,18 +322,19 @@ export function ActivityCard({
     }
 
     if (!isEditing) {
+        // Exactly one question per card now — see this file's header
+        // note. `question` is just activity.questions[0].
+        const question = activity.questions[0]
+
         return (
             <div className="clay-card mx-auto w-full max-w-md sm:max-w-lg p-5 sm:p-6 space-y-5">
                 <div className="flex items-center justify-between mb-1 gap-3">
-                    <p className="text-caption text-text-secondary">
-                        Activity {index + 1} · {activity.questions.length} question
-                        {activity.questions.length === 1 ? '' : 's'}
-                    </p>
+                    <p className="text-caption text-text-secondary">Question {index + 1}</p>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={openEdit}
-                            className="text-caption font-semibold text-brand hover:underline px-2 py-1"
+                            className="h-9 px-3 rounded-md border border-hairline text-body-sm font-semibold text-brand hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                         >
                             Edit
                         </button>
@@ -345,22 +342,22 @@ export function ActivityCard({
                             type="button"
                             onClick={handleDelete}
                             disabled={isDeleting}
-                            className="text-caption font-semibold text-error hover:underline px-2 py-1 disabled:opacity-60"
+                            className="h-9 px-3 rounded-md border border-hairline text-body-sm font-semibold text-error hover:bg-surface-sunken disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 transition-colors"
                         >
                             {isDeleting ? 'Deleting…' : 'Delete'}
                         </button>
                     </div>
                 </div>
 
-                {activity.questions.map((q, qIndex) => (
-                    <div key={q.id} className={qIndex > 0 ? 'pt-4 border-t border-hairline' : ''}>
+                {question && (
+                    <div>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-caption font-semibold text-text-secondary bg-surface-sunken rounded-pill px-3 py-1">
-                                {QUESTION_TYPE_LABEL[q.question_type] ?? q.question_type}
+                                {QUESTION_TYPE_LABEL[question.question_type] ?? question.question_type}
                             </span>
                         </div>
-                        <p className="text-body-emphasis text-ink mb-3">{q.prompt}</p>
-                        <TTSButton text={q.prompt} className="mb-2" />
+                        <p className="text-body-emphasis text-ink mb-3">{question.prompt}</p>
+                        <TTSButton text={question.prompt} className="mb-2" />
 
                         {/* Tactile tiles — non-interactive here (view
                             mode is a summary, nothing to tap), but
@@ -369,7 +366,7 @@ export function ActivityCard({
                             gameplay tiles. Correct option is highlighted
                             with the same green ring + check badge. */}
                         <div className="space-y-2">
-                            {q.options.map((option, optIndex) => {
+                            {question.options.map((option, optIndex) => {
                                 const style = TILE_STYLES[optIndex % TILE_STYLES.length] ?? TILE_STYLES[0]!
                                 const Icon = style.icon
                                 return (
@@ -397,11 +394,11 @@ export function ActivityCard({
                             })}
                         </div>
 
-                        {q.hint_text && (
-                            <p className="text-caption text-text-secondary italic mt-3">Hint: {q.hint_text}</p>
+                        {question.hint_text && (
+                            <p className="text-caption text-text-secondary italic mt-3">Hint: {question.hint_text}</p>
                         )}
                     </div>
-                ))}
+                )}
 
                 {remediationTarget && (
                     <p className="text-caption text-info pt-3 border-t border-hairline">
@@ -421,41 +418,28 @@ export function ActivityCard({
             onSubmit={handleSave}
             className="clay-card mx-auto w-full max-w-md sm:max-w-lg p-5 sm:p-6 space-y-6"
         >
-            <h2 className="text-body-emphasis text-ink">Editing activity {index + 1}</h2>
+            <h2 className="text-body-emphasis text-ink">Editing question {index + 1}</h2>
 
-            {questions.map((q, qIndex) => (
-                <div key={q.key} className="space-y-4 rounded-md border border-hairline p-4">
-                    <div className="flex items-center justify-between gap-3">
-                        <p className="text-label text-ink-soft">Question {qIndex + 1}</p>
-                        {questions.length > 1 && (
-                            <button
-                                type="button"
-                                aria-label={`Remove question ${qIndex + 1}`}
-                                onClick={() => removeQuestionBlock(q.key)}
-                                className="text-text-secondary hover:text-error p-1 rounded-md transition-colors"
-                            >
-                                <X size={16} aria-hidden="true" />
-                            </button>
-                        )}
-                    </div>
+            {questions.map((q) => (
+                <div key={q.key} className="space-y-4">
 
                     <select
-                        aria-label={`Question ${qIndex + 1} type`}
+                        aria-label="Question type"
                         value={q.questionType}
                         onChange={(e) => updateQuestion(q.key, { questionType: e.target.value as QuestionType })}
-                        className="min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                        className="min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         <option value="multiple_choice_single">Multiple choice</option>
                         <option value="true_false">True or false</option>
                     </select>
 
                     <textarea
-                        aria-label={`Question ${qIndex + 1} prompt`}
+                        aria-label="Question prompt"
                         rows={2}
                         required
                         value={q.prompt}
                         onChange={(e) => updateQuestion(q.key, { prompt: e.target.value })}
-                        className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         placeholder="Type the question prompt here"
                     />
 
@@ -482,7 +466,7 @@ export function ActivityCard({
                                             type="button"
                                             aria-label={`Mark option ${optIndex + 1} as correct`}
                                             onClick={() => updateQuestion(q.key, { correctIndex: optIndex })}
-                                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20"
+                                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20 hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 transition-colors"
                                         >
                                             {isCorrect ? (
                                                 <Check size={20} aria-hidden="true" />
@@ -507,7 +491,7 @@ export function ActivityCard({
                                                 type="button"
                                                 aria-label={`Remove option ${optIndex + 1}`}
                                                 onClick={() => removeOptionRow(q.key, option.key)}
-                                                className="shrink-0 text-on-ink/70 hover:text-on-ink p-1 rounded-md"
+                                                className="shrink-0 text-on-ink/70 hover:text-on-ink hover:bg-white/10 p-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 transition-colors"
                                             >
                                                 <X size={16} aria-hidden="true" />
                                             </button>
@@ -518,7 +502,7 @@ export function ActivityCard({
                             <button
                                 type="button"
                                 onClick={() => addOptionRow(q.key)}
-                                className="text-caption font-semibold text-text-secondary hover:text-ink pl-2"
+                                className="h-10 inline-flex items-center text-body-sm font-semibold text-text-secondary hover:text-ink pl-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             >
                                 + Add option
                             </button>
@@ -539,7 +523,7 @@ export function ActivityCard({
                                         key={label}
                                         type="button"
                                         onClick={() => updateQuestion(q.key, { correctTf: label })}
-                                        className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-left text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
+                                        className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-left text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand focus-visible:ring-offset-2 ${style.bg} ${style.border} ${
                                             isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                         }`}
                                     >
@@ -571,20 +555,11 @@ export function ActivityCard({
                             rows={2}
                             value={q.hintText}
                             onChange={(e) => updateQuestion(q.key, { hintText: e.target.value })}
-                            className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                            className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         />
                     </div>
                 </div>
             ))}
-
-            <button
-                type="button"
-                onClick={addQuestionBlock}
-                className="flex items-center justify-center gap-2 w-full h-11 rounded-md border-2 border-dashed border-hairline text-caption font-semibold text-brand hover:border-brand hover:bg-brand-soft transition-colors"
-            >
-                <Plus size={16} aria-hidden="true" />
-                Add another question to this activity
-            </button>
 
             <div>
                 <label htmlFor={`editActivityRemediation-${activity.id}`} className="text-label text-ink-soft block mb-2">
@@ -592,14 +567,14 @@ export function ActivityCard({
                 </label>
                 {siblingActivities.length === 0 ? (
                     <p className="text-caption text-text-secondary">
-                        Add another activity to this mission before setting one up as a remediation.
+                        Add another question to this mission before setting one up as a remediation.
                     </p>
                 ) : (
                     <select
                         id={`editActivityRemediation-${activity.id}`}
                         value={remediatesActivityId}
                         onChange={(e) => setRemediatesActivityId(e.target.value)}
-                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         <option value="">None</option>
                         {siblingActivities.map((sibling) => (
@@ -623,7 +598,7 @@ export function ActivityCard({
                 <button
                     type="submit"
                     disabled={isSaving}
-                    className="flex-1 min-h-touch rounded-2xl bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60 clay-button"
+                    className="flex-1 min-h-touch rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     {isSaving ? 'Saving…' : 'Save changes'}
                 </button>
@@ -631,7 +606,7 @@ export function ActivityCard({
                     type="button"
                     onClick={cancelEdit}
                     disabled={isSaving}
-                    className="h-11 px-6 rounded-md border-2 border-hairline text-ink font-semibold text-body-md hover:bg-surface-sunken transition-colors disabled:opacity-60"
+                    className="min-h-touch h-11 px-6 rounded-md border-2 border-hairline text-ink font-semibold text-body-md hover:bg-surface-sunken transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     Cancel
                 </button>

@@ -84,7 +84,7 @@ export default function AcademicsPage() {
           </p>
 
           {/* Key Academic Metadata */}
-          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-border bg-surface p-6 shadow-sm md:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-hairline bg-surface p-6 shadow-card md:grid-cols-4">
             <div>
               <p className="text-caption text-text-secondary">Grade Levels</p>
               <p className="mt-1 text-body-md font-bold text-ink">Nursery – Grade 6</p>
@@ -121,9 +121,9 @@ export default function AcademicsPage() {
             {earlyChildhoodFocus.map((item) => (
               <div
                 key={item}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm"
+                className="rounded-xl border border-hairline bg-surface p-6 shadow-card"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 text-brand">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft text-brand">
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <p className="mt-4 text-body-md font-medium text-ink">{item}</p>
@@ -147,7 +147,7 @@ export default function AcademicsPage() {
             {elementarySubjects.map((subject) => (
               <span
                 key={subject}
-                className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-4 py-2 text-caption font-semibold text-brand"
+                className="inline-flex items-center gap-2 rounded-full bg-brand-soft border border-brand/20 px-4 py-2 text-caption font-semibold text-brand"
               >
                 <BookOpen className="h-4 w-4" />
                 {subject}
@@ -168,7 +168,7 @@ export default function AcademicsPage() {
             {depEdQuarterlyCycle.map((item) => (
               <div
                 key={item.term}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm"
+                className="rounded-xl border border-hairline bg-surface p-6 shadow-card"
               >
                 <div className="flex items-center gap-2 text-brand">
                   <Calendar className="h-5 w-5" />
@@ -193,7 +193,7 @@ export default function AcademicsPage() {
             {methodology.map((item) => (
               <div
                 key={item.title}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all hover:shadow-md"
+                className="rounded-xl border border-hairline bg-surface p-6 shadow-card transition-all hover:shadow-card-hover"
               >
                 <h3 className="text-body-md font-bold text-ink">{item.title}</h3>
                 <p className="mt-2 text-caption leading-relaxed text-text-secondary">{item.description}</p>
@@ -214,7 +214,7 @@ export default function AcademicsPage() {
             {coCurriculars.map((activity) => (
               <span
                 key={activity}
-                className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-4 py-2 text-caption font-semibold text-brand"
+                className="inline-flex items-center gap-2 rounded-full bg-brand-soft border border-brand/20 px-4 py-2 text-caption font-semibold text-brand"
               >
                 <School className="h-4 w-4" />
                 {activity}
@@ -236,7 +236,7 @@ export default function AcademicsPage() {
             {handbookHighlights.map((item) => (
               <div
                 key={item.title}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm"
+                className="rounded-xl border border-hairline bg-surface p-6 shadow-card"
               >
                 <h3 className="text-body-md font-bold text-ink">{item.title}</h3>
                 <p className="mt-2 text-caption leading-relaxed text-text-secondary">{item.description}</p>

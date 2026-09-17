@@ -260,16 +260,6 @@ export async function createMissionWithFirstActivity(formData: FormData): Promis
             .from('activities')
             .insert({
                 mission_id: mission.id,
-                // prompt/activity_type are still NOT NULL columns on
-                // `activities` per the existing schema — the container
-                // itself has no real prompt anymore in this model, so
-                // these are set from the activity's first question
-                // purely to satisfy the columns, same as
-                // create-activity.ts's addActivity does, never read
-                // back anywhere that matters.
-                prompt: firstQuestion.prompt,
-                activity_type: firstQuestion.questionType,
-                points: activity.questions.length,
                 order_index: activityIndex,
                 remediates_activity_id: activity.remediatesActivityId ?? null,
             })

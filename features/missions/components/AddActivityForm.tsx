@@ -30,9 +30,22 @@
 // handlers, validation, and questionsPayload construction are all
 // byte-for-byte identical to before.
 
+// ACTIVITY-TO-QUESTION UI COLLAPSE (2026-09-10): "Activity" as a
+// container concept was confusing teachers — the same authoring
+// process (name a container, then separately add a question inside
+// it) existed for zero real pedagogical reason; it was a leftover
+// from before the multi-question rework. Capped at exactly ONE
+// question per card here — "Add another question to this activity"
+// and its handler are gone, since there's no longer an "activity"
+// layer to add a second question INTO. This component now adds one
+// question directly to the mission; the button reads "Add question."
+// No server-side change: the payload still wraps into activities[].
+// questions[] exactly as before (see handleSubmit) — addActivity
+// itself, create-activity.ts, and the schema are all untouched.
+
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Lightbulb, Plus, Check, Circle, Square, Triangle, Diamond } from 'lucide-react'
+import { X, Lightbulb, Check, Circle, Square, Triangle, Diamond } from 'lucide-react'
 import { addActivity } from '@/features/missions/actions/create-activity'
 
 type QuestionType = 'multiple_choice_single' | 'true_false'
@@ -98,14 +111,6 @@ export function AddActivityForm({
 
     function updateQuestion(key: string, patch: Partial<QuestionDraft>) {
         setQuestions((prev) => prev.map((q) => (q.key === key ? { ...q, ...patch } : q)))
-    }
-
-    function addQuestionBlock() {
-        setQuestions((prev) => [...prev, makeEmptyQuestion()])
-    }
-
-    function removeQuestionBlock(key: string) {
-        setQuestions((prev) => (prev.length > 1 ? prev.filter((q) => q.key !== key) : prev))
     }
 
     function updateOptionText(questionKey: string, optionKey: string, text: string) {
@@ -215,24 +220,11 @@ export function AddActivityForm({
             onSubmit={handleSubmit}
             className="mx-auto w-full max-w-md sm:max-w-lg space-y-6 clay-card p-5 sm:p-6"
         >
-                {questions.map((q, qIndex) => (
+                {questions.map((q) => (
                     <div
                         key={q.key}
-                        className="space-y-4 rounded-2xl border border-hairline p-4"
+                        className="space-y-4"
                     >
-                        <div className="flex items-center justify-between gap-3">
-                            <p className="text-label text-ink-soft">Question {qIndex + 1}</p>
-                            {questions.length > 1 && (
-                                <button
-                                    type="button"
-                                    aria-label={`Remove question ${qIndex + 1}`}
-                                    onClick={() => removeQuestionBlock(q.key)}
-                                    className="text-text-secondary hover:text-error p-1 rounded-md transition-colors"
-                                >
-                                    <X size={16} aria-hidden="true" />
-                                </button>
-                            )}
-                        </div>
 
                         <div>
                             <label htmlFor={`questionType-${q.key}`} className="text-label text-ink-soft block mb-2">
@@ -242,7 +234,7 @@ export function AddActivityForm({
                                 id={`questionType-${q.key}`}
                                 value={q.questionType}
                                 onChange={(e) => updateQuestion(q.key, { questionType: e.target.value as QuestionType })}
-                                className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                                className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             >
                                 <option value="multiple_choice_single">Multiple choice</option>
                                 <option value="true_false">True / False</option>
@@ -250,12 +242,12 @@ export function AddActivityForm({
                         </div>
 
                         <textarea
-                            aria-label={`Question ${qIndex + 1} prompt`}
+                            aria-label="Question prompt"
                             rows={2}
                             required
                             value={q.prompt}
                             onChange={(e) => updateQuestion(q.key, { prompt: e.target.value })}
-                            className="clay-well w-full px-5 py-3 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                            className="clay-well w-full px-5 py-3 rounded-2xl border-2 border-hairline focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             placeholder="Type the question prompt here"
                         />
 
@@ -279,7 +271,7 @@ export function AddActivityForm({
                                                 type="button"
                                                 aria-label={`Mark option ${optIndex + 1} as correct`}
                                                 onClick={() => updateQuestion(q.key, { correctIndex: optIndex })}
-                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20"
+                                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-white/20 hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 transition-colors"
                                             >
                                                 {isCorrect ? (
                                                     <Check size={20} aria-hidden="true" />
@@ -304,7 +296,7 @@ export function AddActivityForm({
                                                     type="button"
                                                     aria-label={`Remove option ${optIndex + 1}`}
                                                     onClick={() => removeOptionRow(q.key, option.key)}
-                                                    className="shrink-0 text-on-ink/70 hover:text-on-ink p-1 rounded-md"
+                                                    className="shrink-0 text-on-ink/70 hover:text-on-ink hover:bg-white/10 p-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 transition-colors"
                                                 >
                                                     <X size={16} aria-hidden="true" />
                                                 </button>
@@ -315,7 +307,7 @@ export function AddActivityForm({
                                 <button
                                     type="button"
                                     onClick={() => addOptionRow(q.key)}
-                                    className="text-caption font-semibold text-text-secondary hover:text-ink pl-2"
+                                    className="h-10 inline-flex items-center text-body-sm font-semibold text-text-secondary hover:text-ink pl-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                 >
                                     + Add option
                                 </button>
@@ -336,7 +328,7 @@ export function AddActivityForm({
                                             key={label}
                                             type="button"
                                             onClick={() => updateQuestion(q.key, { correctTf: label })}
-                                            className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-left text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none ${style.bg} ${style.border} ${
+                                            className={`flex min-h-touch w-full items-center gap-3 rounded-2xl p-4 text-left text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand focus-visible:ring-offset-2 ${style.bg} ${style.border} ${
                                                 isCorrect ? 'ring-4 ring-success ring-offset-2' : ''
                                             }`}
                                         >
@@ -369,20 +361,11 @@ export function AddActivityForm({
                                 value={q.hintText}
                                 onChange={(e) => updateQuestion(q.key, { hintText: e.target.value })}
                                 placeholder="A nudge in the right direction, not the answer itself"
-                                className="clay-well w-full px-5 py-3 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                                className="clay-well w-full px-5 py-3 rounded-2xl border-2 border-hairline focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             />
                         </div>
                     </div>
                 ))}
-
-                <button
-                    type="button"
-                    onClick={addQuestionBlock}
-                    className="flex items-center justify-center gap-2 w-full h-11 rounded-md border-2 border-dashed border-hairline text-caption font-semibold text-brand hover:border-brand hover:bg-brand-soft transition-colors"
-                >
-                    <Plus size={16} aria-hidden="true" />
-                    Add another question to this activity
-                </button>
 
                 {existingActivities.length > 0 && (
                     <div>
@@ -393,7 +376,7 @@ export function AddActivityForm({
                             id="addActivityRemediation"
                             value={remediatesActivityId}
                             onChange={(e) => setRemediatesActivityId(e.target.value)}
-                            className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                            className="clay-well w-full min-h-touch px-4 rounded-2xl border-2 border-hairline focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         >
                             <option value="">None</option>
                             {existingActivities.map((a) => {
@@ -417,9 +400,9 @@ export function AddActivityForm({
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="clay-button w-full bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md disabled:opacity-60"
+                    className="clay-button w-full min-h-touch bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
-                    {isPending ? 'Adding…' : 'Add activity'}
+                    {isPending ? 'Adding…' : 'Add question'}
                 </button>
             </form>
     )

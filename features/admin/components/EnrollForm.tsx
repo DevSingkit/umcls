@@ -91,7 +91,7 @@ export function EnrollForm({
     const availableCourses = courses.filter((course) => !enrolledCourseIds.has(course.id))
 
     return (
-        <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
+        <form action={formAction} className="bg-surface rounded-md border border-hairline shadow-card p-8 space-y-6">
             <div>
                 <label htmlFor="studentId-search" className="text-label text-text-secondary block mb-2">
                     Student

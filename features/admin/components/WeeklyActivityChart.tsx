@@ -17,7 +17,7 @@ export function WeeklyActivityChart({ data }: { data: DailyLoginCount[] }) {
             '#128630'
             : '#128630'
     return (
-        <div className="bg-surface rounded-md shadow-card p-6">
+        <div className="bg-surface rounded-md border border-hairline shadow-card p-6">
             <p className="text-label text-text-secondary mb-4">
                 Logins this week
             </p>

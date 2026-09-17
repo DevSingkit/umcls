@@ -1,21 +1,13 @@
 // features/dashboard/components/CoursesPreview.tsx
-// A short preview grid (not the full list), used on both teacher and
-// student dashboards. No longer shows a "View all" link — the full
-// course list is already reachable from the sidebar/nav, so a second
-// link to the same destination was redundant. The top-right slot is
-// now used for a "+ Create course" action on the teacher dashboard
-// instead (see createCourseHref), and stays empty on the student
-// dashboard.
 //
-// Low-count handling per DESIGN-LMS.md §8.6 (v1.1 correction): a single
-// course stays left-aligned, same as any other count — verified against
-// real Google Classroom behavior, which never centers a sparse grid.
+// Encapsulated Card Architecture: Wraps class tiles in SectionCard,
+// eliminating the floating <h2> on the outer page canvas.
 //
-// "Create class" buttons sized to DESIGN-LMS 2.1 §1.4's touch-target
-// floor (56px primary / 48px secondary), confirmed 2026-08-31 —
-// previously 44px/36px, both under the floor.
+// Responsive grid matches Google Classroom (1 to 3 columns depending on breakpoint).
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { CourseCard } from '@/features/courses/components/CourseCard'
+import { SectionCard } from '@/components/ui/SectionCard'
 
 type CourseItem = {
     id: string
@@ -43,34 +35,54 @@ export function CoursesPreview({
 }: CoursesPreviewProps) {
     if (courses.length === 0) {
         return (
-            <div className="bg-surface rounded-md shadow-card p-8 text-center">
-                <p className="text-body-md text-text-secondary mb-4">{emptyMessage}</p>
-                {createCourseHref && (
-                    <Link
-                        href={createCourseHref}
-                        className="inline-flex items-center justify-center h-14 px-6 rounded-md bg-brand text-on-ink text-body-md font-semibold hover:bg-brand-hover"
-                    >
-                        Create class
-                    </Link>
-                )}
-            </div>
+            <SectionCard
+                title="Your classes"
+                badge={0}
+                action={
+                    createCourseHref ? (
+                        <Link
+                            href={createCourseHref}
+                            className="inline-flex items-center gap-1.5 justify-center min-h-touch-secondary px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover transition-colors"
+                        >
+                            <Plus size={16} aria-hidden="true" />
+                            Create class
+                        </Link>
+                    ) : undefined
+                }
+            >
+                <div className="border border-dashed border-hairline-strong rounded-md p-8 text-center bg-surface-sunken/20">
+                    <p className="text-body-md text-text-secondary mb-4">{emptyMessage}</p>
+                    {createCourseHref && (
+                        <Link
+                            href={createCourseHref}
+                            className="inline-flex items-center gap-1.5 justify-center min-h-touch px-6 rounded-md bg-brand text-on-ink text-body-md font-semibold hover:bg-brand-hover transition-colors"
+                        >
+                            <Plus size={18} aria-hidden="true" />
+                            Create class
+                        </Link>
+                    )}
+                </div>
+            </SectionCard>
         )
     }
 
     return (
-        <div>
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-h2 text-ink">Your classes</h2>
-                {createCourseHref && (
+        <SectionCard
+            title="Your classes"
+            badge={courses.length}
+            action={
+                createCourseHref ? (
                     <Link
                         href={createCourseHref}
-                        className="inline-flex items-center justify-center h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
+                        className="inline-flex items-center gap-1.5 justify-center min-h-touch-secondary px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover transition-colors"
                     >
+                        <Plus size={16} aria-hidden="true" />
                         Create class
                     </Link>
-                )}
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                ) : undefined
+            }
+        >
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {courses.map((course) => (
                     <CourseCard
                         key={course.id}
@@ -85,6 +97,6 @@ export function CoursesPreview({
                     />
                 ))}
             </div>
-        </div>
+        </SectionCard>
     )
 }

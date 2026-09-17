@@ -63,14 +63,14 @@ export default function AdmissionsPage() {
           <div className="mt-6 flex flex-wrap gap-4">
             <Link
               href="/contact"
-              className="inline-flex items-center rounded-lg bg-brand px-6 py-3 text-caption font-semibold text-white transition-all hover:bg-brand-hover"
+              className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-body-md font-semibold text-white shadow-clay-sm hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
             >
               Start an Inquiry
             </Link>
           </div>
 
           {/* Enrollment Status Bar */}
-          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-border bg-surface p-6 shadow-sm md:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-hairline bg-surface p-6 shadow-card md:grid-cols-4">
             <div>
               <p className="text-caption text-text-secondary">Levels Open</p>
               <p className="mt-1 text-body-md font-bold text-ink">Nursery to Grade 6</p>
@@ -101,7 +101,7 @@ export default function AdmissionsPage() {
 
           <div className="mt-8 grid gap-8 md:grid-cols-2">
             {/* New Students & Kindergarten */}
-            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <div className="rounded-xl border border-hairline bg-surface p-6 shadow-card">
               <div className="flex items-center gap-2 text-brand">
                 <FileText className="h-5 w-5" />
                 <span className="text-caption font-semibold uppercase tracking-wider">
@@ -119,7 +119,7 @@ export default function AdmissionsPage() {
             </div>
 
             {/* Transferees */}
-            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <div className="rounded-xl border border-hairline bg-surface p-6 shadow-card">
               <div className="flex items-center gap-2 text-brand">
                 <FileText className="h-5 w-5" />
                 <span className="text-caption font-semibold uppercase tracking-wider">
@@ -147,7 +147,7 @@ export default function AdmissionsPage() {
           </p>
           <h2 className="mt-2 text-2xl font-bold text-ink">How to Complete Enrollment</h2>
 
-          <div className="mt-8 relative border-l-2 border-border pl-6 space-y-8 md:pl-8 md:space-y-10">
+          <div className="mt-8 relative border-l-2 border-hairline pl-6 space-y-8 md:pl-8 md:space-y-10">
             {steps.map((step, index) => (
               <div key={step.title} className="relative">
                 {/* Node badge */}
@@ -169,7 +169,7 @@ export default function AdmissionsPage() {
       {/* Tuition & Financial Support */}
       <section className="px-4 py-10 sm:px-6 md:py-12">
         <div className="mx-auto max-w-[1280px]">
-          <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
+          <div className="rounded-xl border border-hairline bg-surface p-8 shadow-card">
             <p className="text-caption font-semibold uppercase tracking-wider text-brand">
               Financial Information
             </p>
@@ -180,7 +180,7 @@ export default function AdmissionsPage() {
             <div className="mt-6 flex flex-wrap gap-4">
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3 text-caption font-semibold text-white transition-all hover:bg-brand-hover"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-body-md font-semibold text-white shadow-clay-sm hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
               >
                 Inquire About Tuition Schedule
               </Link>

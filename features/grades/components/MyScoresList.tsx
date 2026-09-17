@@ -28,7 +28,7 @@ export function MyScoresList({ courseId, scores }: { courseId: string; scores: M
                 <Link
                     key={`${row.kind}-${row.id}`}
                     href={href(row)}
-                    className="flex items-center justify-between gap-4 rounded-md bg-surface p-4 shadow-card hover:shadow-card-hover"
+                    className="flex items-center justify-between gap-4 rounded-md bg-surface p-4 border border-hairline shadow-card hover:shadow-card-hover hover:border-brand/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
                 >
                     <span className="text-body-emphasis text-ink">{row.title}</span>
                     <span className="text-body-md text-text-secondary shrink-0">

@@ -48,13 +48,19 @@ export function SiteFooter() {
               </li>
               <li className="flex items-center gap-2 text-caption text-on-ink/70">
                 <Phone className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                <a href="tel:+639945849446" className="hover:underline">
+                <a
+                  href="tel:+639945849446"
+                  className="inline-flex min-h-[44px] items-center hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:rounded-sm"
+                >
                   0994 584 9446
                 </a>
               </li>
               <li className="flex items-center gap-2 text-caption text-on-ink/70">
                 <Mail className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                <a href="mailto:umcls20educ@gmail.com" className="hover:underline">
+                <a
+                  href="mailto:umcls20educ@gmail.com"
+                  className="inline-flex min-h-[44px] items-center hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:rounded-sm"
+                >
                   umcls20educ@gmail.com
                 </a>
               </li>
@@ -67,7 +73,7 @@ export function SiteFooter() {
                   href="https://facebook.com/p/United-Methodist-Cooperative-Learning-System-Inc-61576554814851"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center gap-1 text-on-ink hover:underline"
+                  className="inline-flex min-h-[44px] items-center gap-1 text-on-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:rounded-sm"
                 >
                   Facebook page
                   <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />

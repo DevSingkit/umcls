@@ -7,6 +7,7 @@
 
 import { Volume2, VolumeX } from 'lucide-react'
 import { useTTS } from '@/lib/utils/useTTS'
+import { cn } from '@/lib/utils'
 
 interface TTSButtonProps {
     /** The text content to speak aloud */
@@ -15,10 +16,11 @@ interface TTSButtonProps {
     className?: string
 }
 
-export function TTSButton({ text, className = '' }: TTSButtonProps) {
+export function TTSButton({ text, className }: TTSButtonProps) {
     const { speak, stop, isSpeaking } = useTTS()
 
-    function handleClick() {
+    function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
+        e.stopPropagation()
         if (isSpeaking) {
             stop()
         } else {
@@ -31,12 +33,14 @@ export function TTSButton({ text, className = '' }: TTSButtonProps) {
             type="button"
             onClick={handleClick}
             aria-label={isSpeaking ? 'Stop reading' : 'Read aloud'}
-            className={`inline-flex items-center justify-center min-h-touch min-w-touch
-                        rounded-pill transition-colors shrink-0
-                        ${isSpeaking
+            className={cn(
+                'inline-flex items-center justify-center min-h-touch min-w-touch rounded-pill transition-colors shrink-0',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
+                isSpeaking
                     ? 'bg-brand text-on-ink shadow-card'
-                    : 'bg-surface-sunken text-ink-soft hover:bg-hairline hover:text-ink'
-                } ${className}`}
+                    : 'bg-surface-sunken text-ink-soft hover:bg-hairline hover:text-ink',
+                className
+            )}
         >
             {isSpeaking ? (
                 <VolumeX size={22} aria-hidden="true" />

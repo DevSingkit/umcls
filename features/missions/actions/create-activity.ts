@@ -18,6 +18,7 @@
 import { z } from 'zod'
 import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const questionTypeSchema = z.enum(['multiple_choice_single', 'true_false'])
 
@@ -148,13 +149,6 @@ export async function addActivity(formData: FormData): Promise<AddActivityResult
         .from('activities')
         .insert({
             mission_id: missionId,
-            // prompt is still NOT NULL on `activities` per the existing
-            // schema — the container itself has no real prompt anymore,
-            // so this is set to the first question's prompt purely to
-            // satisfy the column, not read anywhere in the new model.
-            prompt: firstQuestion.prompt,
-            activity_type: firstQuestion.questionType,
-            points: questions.length,
             order_index: count ?? 0,
             remediates_activity_id: remediatesActivityId ?? null,
         })
@@ -214,6 +208,7 @@ export type UpdateActivityResult = { ok: true; missionPublished: boolean } | { o
 export async function updateActivity(formData: FormData): Promise<UpdateActivityResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
+    const supabaseAdmin = createAdminClient()
 
     const parsedActivity = updateActivitySchema.safeParse({
         activityId: formData.get('activityId'),
@@ -285,9 +280,6 @@ export async function updateActivity(formData: FormData): Promise<UpdateActivity
     const { error: updateError } = await supabase
         .from('activities')
         .update({
-            prompt: firstQuestion.prompt,
-            activity_type: firstQuestion.questionType,
-            points: questions.length,
             remediates_activity_id: remediatesActivityId,
         })
         .eq('id', activityId)
@@ -310,26 +302,37 @@ export async function updateActivity(formData: FormData): Promise<UpdateActivity
 
     const existingQuestionIds = (existingQuestions ?? []).map((q) => q.id)
 
-    if (existingQuestionIds.length > 0) {
-        const { error: deleteOptionsError } = await supabase
+            if (existingQuestionIds.length > 0) {
+        const { error: deleteOptionsError } = await supabaseAdmin
             .from('activity_question_options')
             .delete()
             .in('question_id', existingQuestionIds)
 
         if (deleteOptionsError) {
+            console.error(
+                'updateActivity: failed to delete activity_question_options:',
+                deleteOptionsError.message,
+                deleteOptionsError.code,
+                deleteOptionsError.details
+            )
             return { ok: false, error: 'Could not update the answer options.' }
         }
 
-        const { error: deleteQuestionsError } = await supabase
+        const { error: deleteQuestionsError } = await supabaseAdmin
             .from('activity_questions')
             .delete()
             .eq('activity_id', activityId)
 
         if (deleteQuestionsError) {
+            console.error(
+                'updateActivity: failed to delete activity_questions:',
+                deleteQuestionsError.message,
+                deleteQuestionsError.code,
+                deleteQuestionsError.details
+            )
             return { ok: false, error: 'Could not update the questions.' }
         }
     }
-
     for (let i = 0; i < questions.length; i++) {
         const q = questions[i]
         if (!q) continue
@@ -378,6 +381,7 @@ export type DeleteActivityResult = { ok: true; missionPublished: boolean } | { o
 export async function deleteActivity(activityId: string): Promise<DeleteActivityResult> {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
+    const supabaseAdmin = createAdminClient()
 
     const parsedId = z.string().uuid().safeParse(activityId)
     if (!parsedId.success) {
@@ -401,8 +405,8 @@ export async function deleteActivity(activityId: string): Promise<DeleteActivity
 
     const existingQuestionIds = (existingQuestions ?? []).map((q) => q.id)
 
-    if (existingQuestionIds.length > 0) {
-        const { error: deleteOptionsError } = await supabase
+            if (existingQuestionIds.length > 0) {
+        const { error: deleteOptionsError } = await supabaseAdmin
             .from('activity_question_options')
             .delete()
             .in('question_id', existingQuestionIds)
@@ -411,7 +415,7 @@ export async function deleteActivity(activityId: string): Promise<DeleteActivity
             return { ok: false, error: 'Could not delete the activity. Please try again.' }
         }
 
-        const { error: deleteQuestionsError } = await supabase
+        const { error: deleteQuestionsError } = await supabaseAdmin
             .from('activity_questions')
             .delete()
             .eq('activity_id', activityId)

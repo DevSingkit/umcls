@@ -219,12 +219,12 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by name or email…"
-                    className="flex-1 h-12 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="flex-1 h-12 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 />
                 <select
                     value={role}
                     onChange={(e) => setRole(e.target.value as typeof role)}
-                    className="h-12 px-4 rounded-md border-2 border-hairline bg-surface outline-none focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-12 px-4 rounded-md border-2 border-hairline bg-surface outline-none focus:border-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     <option value="all">All roles</option>
                     <option value="admin">Admin</option>
@@ -234,7 +234,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                 <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as typeof status)}
-                    className="h-12 px-4 rounded-md border-2 border-hairline bg-surface outline-none focus:border-brand focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-12 px-4 rounded-md border-2 border-hairline bg-surface outline-none focus:border-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     <option value="all">All statuses</option>
                     <option value="active">Active</option>
@@ -243,7 +243,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
             </div>
 
             {users.length === 0 ? (
-                <div className="bg-surface rounded-md shadow-card p-8 text-center">
+                <div className="bg-surface rounded-md border border-hairline shadow-card p-8 text-center">
                     <p className="text-body-md text-text-secondary">No users match these filters.</p>
                 </div>
             ) : (
@@ -251,7 +251,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                     {users.map((user) => (
                         <div
                             key={user.id}
-                            className="bg-surface rounded-md shadow-card p-5 flex flex-col gap-3"
+                            className="bg-surface rounded-md border border-hairline shadow-card p-5 flex flex-col gap-3"
                         >
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div className="flex items-center gap-3 flex-wrap">
@@ -286,7 +286,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                             aria-haspopup="menu"
                                             aria-expanded={openMenuId === user.id}
                                             aria-label={`Actions for ${user.full_name}`}
-                                            className={`relative flex h-9 w-9 items-center justify-center rounded-md border-2 before:absolute before:-inset-2 before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                                            className={`relative flex h-9 w-9 items-center justify-center rounded-md border-2 before:absolute before:-inset-2 before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
                                                 openMenuId === user.id
                                                     ? 'border-brand bg-brand-soft'
                                                     : 'border-hairline-strong bg-surface hover:bg-surface-sunken'
@@ -298,7 +298,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                         {openMenuId === user.id && (
                                             <div
                                                 role="menu"
-                                                className="absolute right-0 z-20 mt-1 w-56 overflow-hidden rounded-md border border-hairline-strong bg-surface shadow-card-hover"
+                                                className="absolute right-0 z-20 mt-1 w-56 max-w-[calc(100vw-2rem)] overflow-hidden rounded-md border border-hairline-strong bg-surface shadow-card-hover"
                                             >
                                                 <button
                                                     role="menuitem"
@@ -307,7 +307,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                         setEditError(null)
                                                         setOpenMenuId(null)
                                                     }}
-                                                    className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken"
+                                                    className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
                                                 >
                                                     Edit
                                                 </button>
@@ -318,7 +318,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                         setOpenMenuId(null)
                                                         await handleOpenRoleChange(user.id)
                                                     }}
-                                                    className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken disabled:opacity-60"
+                                                    className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand disabled:opacity-60"
                                                 >
                                                     {roleCheckPending ? 'Checking…' : 'Change role'}
                                                 </button>
@@ -329,7 +329,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                             setOpenMenuId(null)
                                                             await handleOpenEnrollments(user.id)
                                                         }}
-                                                        className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken"
+                                                        className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
                                                     >
                                                         Classes
                                                     </button>
@@ -340,7 +340,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                         togglePanel('reset', user.id)
                                                         setOpenMenuId(null)
                                                     }}
-                                                    className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken"
+                                                    className="block w-full px-4 py-2.5 text-left text-caption text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
                                                 >
                                                     Reset password
                                                 </button>
@@ -353,7 +353,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                             setOpenMenuId(null)
                                                             setDeactivateConfirmUser(user)
                                                         }}
-                                                        className="block w-full px-4 py-2.5 text-left text-caption font-medium text-error hover:bg-error-soft disabled:opacity-60"
+                                                        className="block w-full px-4 py-2.5 text-left text-caption font-medium text-error hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-error disabled:opacity-60"
                                                     >
                                                         Deactivate
                                                     </button>
@@ -365,7 +365,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                             setOpenMenuId(null)
                                                             handleReactivate(user.id)
                                                         }}
-                                                        className="block w-full px-4 py-2.5 text-left text-caption font-medium text-brand hover:bg-brand-soft disabled:opacity-60"
+                                                        className="block w-full px-4 py-2.5 text-left text-caption font-medium text-brand hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand disabled:opacity-60"
                                                     >
                                                         Reactivate
                                                     </button>
@@ -376,7 +376,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                         setOpenMenuId(null)
                                                         setEraseConfirmUser(user)
                                                     }}
-                                                    className="block w-full px-4 py-2.5 text-left text-caption font-medium text-error hover:bg-error-soft"
+                                                    className="block w-full px-4 py-2.5 text-left text-caption font-medium text-error hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-error"
                                                 >
                                                     Erase User Data
                                                 </button>
@@ -395,11 +395,11 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                         required
                                         minLength={12}
                                         placeholder="New temporary password (12+ chars)"
-                                        className="flex-1 h-12 px-4 rounded-md border border-hairline-strong bg-surface focus:border-2 focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="flex-1 h-12 px-4 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                     />
                                     <button
                                         type="submit"
-                                        className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                     >
                                         Set password
                                     </button>
@@ -414,7 +414,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                         required
                                         defaultValue={user.full_name}
                                         placeholder="Full name"
-                                        className="flex-1 h-12 px-4 rounded-md border border-hairline-strong bg-surface focus:border-2 focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="flex-1 h-12 px-4 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                     />
                                     <input
                                         type="email"
@@ -422,11 +422,11 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                         required
                                         defaultValue={user.email}
                                         placeholder="Email"
-                                        className="flex-1 h-12 px-4 rounded-md border border-hairline-strong bg-surface focus:border-2 focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="flex-1 h-12 px-4 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                     />
                                     <button
                                         type="submit"
-                                        className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                        className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                     >
                                         Save
                                     </button>
@@ -441,7 +441,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                             handleChangeRole(user.id, e.target.value as 'admin' | 'teacher' | 'student')
                                         }
                                         disabled={isPending}
-                                        className="h-12 px-4 rounded-md border border-hairline-strong bg-surface outline-none focus:border-2 focus:border-brand focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                                        className="h-12 px-4 rounded-md border-2 border-hairline bg-surface outline-none focus:border-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
                                     >
                                         <option value="student">Student</option>
                                         <option value="teacher">Teacher</option>
@@ -454,7 +454,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                             )}
 
                             {enrollTargetId === user.id && (
-                                <div className="rounded-md border border-hairline-strong p-4">
+                                <div className="rounded-md border border-hairline p-4">
                                     {enrollLoading ? (
                                         <p className="text-caption text-text-secondary">Loading classes…</p>
                                     ) : enrollments.length === 0 ? (
@@ -472,7 +472,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                     <button
                                                         onClick={() => handleUnenroll(e.enrollmentId)}
                                                         disabled={unenrollPendingId === e.enrollmentId}
-                                                        className="h-12 px-3 rounded-md border-2 border-error bg-surface text-error text-caption font-medium hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                                                        className="h-12 px-3 rounded-md border-2 border-error bg-surface text-error text-caption font-medium hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 disabled:opacity-60 shrink-0"
                                                     >
                                                         {unenrollPendingId === e.enrollmentId ? 'Unenrolling…' : 'Unenroll'}
                                                     </button>
@@ -511,7 +511,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                     className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
                     onClick={() => setDeactivateConfirmUser(null)}
                 >
-                    <div className="w-full max-w-sm rounded-md bg-surface p-6 shadow-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="w-full max-w-sm rounded-md bg-surface border border-hairline p-6 shadow-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-start gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-error-soft">
                                 <AlertTriangle className="h-5 w-5 text-error" strokeWidth={2} aria-hidden="true" />
@@ -531,14 +531,14 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                         <div className="mt-6 flex justify-end gap-2">
                             <button
                                 onClick={() => setDeactivateConfirmUser(null)}
-                                className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDeactivate}
                                 disabled={isPending}
-                                className="h-12 px-4 rounded-md bg-error text-on-ink text-caption font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                                className="h-12 px-4 rounded-md bg-error text-on-ink text-caption font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 disabled:opacity-60"
                             >
                                 {isPending ? 'Deactivating…' : 'Deactivate'}
                             </button>

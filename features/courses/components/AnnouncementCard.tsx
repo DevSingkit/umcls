@@ -34,6 +34,7 @@
 import { useState, useRef, useTransition, useOptimistic } from 'react'
 import { useRouter } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { postAnnouncementComment, deleteAnnouncementComment } from '@/features/courses/actions/announcement-comments'
 import { editAnnouncement } from '@/features/courses/actions/announcements'
 import { AnnouncementItemMenu } from '@/features/courses/components/AnnouncementItemMenu'
@@ -131,7 +132,7 @@ export function AnnouncementCard({
     }
 
     return (
-        <div className="rounded-md bg-surface p-5 shadow-card">
+        <div className="rounded-md bg-surface border border-hairline p-5 shadow-card">
             <div className="flex items-start gap-3">
                 <Avatar
                     fullName={announcement.authorName}
@@ -165,7 +166,7 @@ export function AnnouncementCard({
                                 rows={3}
                                 maxLength={5000}
                                 defaultValue={announcement.body}
-                                className="w-full px-4 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="w-full px-4 py-3 rounded-md border-2 border-hairline bg-surface text-body-md text-ink outline-none focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
                             />
                             {editError && <p className="text-caption text-error">{editError}</p>}
                             <div className="flex justify-end gap-3">
@@ -175,14 +176,14 @@ export function AnnouncementCard({
                                         setEditError(null)
                                         setIsEditing(false)
                                     }}
-                                    className="h-12 px-5 rounded-md text-body-md font-semibold text-text-secondary hover:bg-surface-sunken transition-colors"
+                                    className="h-12 min-h-touch px-5 rounded-md text-body-md font-semibold text-text-secondary hover:bg-surface-sunken transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isPending}
-                                    className="h-12 px-5 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+                                    className="h-12 min-h-touch px-5 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                 >
                                     {isPending ? 'Saving…' : 'Save'}
                                 </button>
@@ -193,32 +194,32 @@ export function AnnouncementCard({
                     )}
 
                     <button
+                        type="button"
                         onClick={() => setIsExpanded((prev) => !prev)}
-                        className="flex items-center gap-1.5 text-caption font-semibold text-text-secondary hover:text-ink mt-3"
+                        className="inline-flex min-h-[44px] items-center gap-1.5 text-caption font-semibold text-text-secondary hover:text-ink mt-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:rounded-sm"
                     >
                         <MessageCircle size={16} aria-hidden="true" />
                         {optimisticComments.length === 0
-                            ? 'Add class comment'
+                            ? 'Add comment'
                             : `${optimisticComments.length} comment${optimisticComments.length === 1 ? '' : 's'}`}
                     </button>
                 </div>
             </div>
 
             {isExpanded && (
-                <div className="mt-4 pl-14 grid gap-4">
+                <div className="mt-4 pl-0 sm:pl-14 grid gap-4">
                     <form ref={formRef} action={handlePostComment} className="flex items-center gap-3">
                         <input
                             type="text"
                             name="body"
-                            placeholder="Add a class comment..."
+                            placeholder="Add comment..."
                             required
                             maxLength={2000}
-                            className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1
-                                       focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                            className="h-11 px-4 rounded-md border-2 border-hairline bg-surface text-body-md text-ink flex-1 outline-none focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
                         />
                         <button
                             type="submit"
-                            className="h-12 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover transition-colors"
+                            className="h-12 min-h-touch px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         >
                             Post
                         </button>
@@ -245,8 +246,9 @@ export function AnnouncementCard({
                                             </span>
                                             {canDeleteComment && (
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleDeleteComment(comment.id)}
-                                                    className="text-caption text-error font-medium hover:underline"
+                                                    className="text-caption text-error font-medium hover:underline p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:rounded-sm"
                                                 >
                                                     Delete
                                                 </button>

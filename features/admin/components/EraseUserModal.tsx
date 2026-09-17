@@ -58,7 +58,7 @@ export function EraseUserModal({
             onClick={handleClose}
         >
             <div
-                className="bg-surface rounded-md shadow-modal p-6 max-w-md w-full"
+                className="bg-surface rounded-md border border-hairline shadow-modal p-6 max-w-md w-full"
                 onClick={(e) => e.stopPropagation()}
             >
                 <p id="erase-user-title" className="text-body-emphasis text-ink mb-2">
@@ -78,14 +78,14 @@ export function EraseUserModal({
                 <div className="flex gap-3 justify-end">
                     <button
                         onClick={handleClose}
-                        className="h-12 px-6 flex items-center rounded-md border-2 border-hairline bg-surface text-ink font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="h-12 px-6 flex items-center rounded-md border-2 border-hairline bg-surface text-ink font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleErase}
                         disabled={isSubmitting}
-                        className="h-12 px-6 flex items-center rounded-md bg-error text-on-ink font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
+                        className="h-12 px-6 flex items-center rounded-md bg-error text-on-ink font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 disabled:opacity-40"
                     >
                         {isSubmitting ? 'Erasing…' : 'Erase User Data'}
                     </button>

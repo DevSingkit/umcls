@@ -104,7 +104,7 @@ export function LessonReader({
             <h1 className="font-document font-bold text-lg md:text-2xl text-ink mt-1 mb-8">{title}</h1>
 
             {videoId && (
-                <div className="mb-6 rounded-md overflow-hidden shadow-card aspect-video">
+                <div className="mb-6 rounded-md overflow-hidden border border-hairline shadow-card aspect-video">
                     <iframe
                         src={toYoutubeEmbedUrl(videoId)}
                         title={`${title} — video`}
@@ -118,7 +118,7 @@ export function LessonReader({
 
             <div className="space-y-4">
                 {splitIntoParagraphs(body).map((paragraph, index) => (
-                    <div key={index} className="bg-surface rounded-md shadow-card p-8">
+                    <div key={index} className="bg-surface rounded-md border border-hairline shadow-card p-8">
                         <p className="text-body-lg text-ink-soft whitespace-pre-wrap">{paragraph}</p>
                     </div>
                 ))}

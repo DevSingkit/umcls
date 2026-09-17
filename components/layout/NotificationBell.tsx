@@ -1,7 +1,7 @@
-'use client'
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useNotifications } from '@/features/notifications/hooks/useNotifications'
 
 export function NotificationBell({ userId }: { userId: string }) {
@@ -40,20 +40,22 @@ export function NotificationBell({ userId }: { userId: string }) {
     return (
         <div ref={containerRef} className="relative">
             <button
+                type="button"
                 aria-label="Notifications"
+                aria-expanded={isOpen}
                 onClick={handleBellClick}
-                className="relative flex h-11 w-11 items-center justify-center rounded-pill bg-white/10 shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="relative flex h-12 w-12 min-h-touch min-w-touch items-center justify-center rounded-pill bg-white/10 shadow-card transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
             >
                 <Bell size={20} className="text-on-ink" aria-hidden="true" />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-pill bg-amber px-1 text-caption font-semibold text-on-ink">
+                    <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-pill bg-warning px-1 text-caption font-semibold text-on-ink shadow-sm">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 z-40 mt-2 max-h-96 w-80 overflow-y-auto rounded-md bg-surface shadow-modal">
+                <div className="absolute right-0 z-40 mt-2 max-h-96 w-[calc(100vw-2rem)] max-w-80 overflow-y-auto rounded-md bg-surface shadow-modal border border-hairline">
                     <div className="border-b border-hairline px-4 py-3">
                         <p className="text-body-emphasis text-ink">Notifications</p>
                     </div>
@@ -65,9 +67,13 @@ export function NotificationBell({ userId }: { userId: string }) {
                         notifications.map((n) => (
                             <button
                                 key={n.id}
+                                type="button"
                                 onClick={() => handleNotificationClick(n.id, n.link)}
-                                className={`block w-full border-b border-hairline px-4 py-3 text-left last:border-0 hover:bg-surface-sunken ${n.is_read ? '' : 'bg-brand-soft/60'
-                                    }`}
+                                className={cn(
+                                    'block w-full border-b border-hairline px-4 py-3 text-left transition-colors last:border-0 hover:bg-surface-sunken',
+                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset',
+                                    !n.is_read && 'bg-brand-soft/60'
+                                )}
                             >
                                 <p className="text-caption font-semibold text-ink">{n.title}</p>
                                 {n.body && <p className="mt-0.5 text-caption text-text-secondary">{n.body}</p>}

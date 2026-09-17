@@ -61,7 +61,7 @@ export function ShortAnswerGradeList({
                         )}
                     </div>
 
-                    <p className="text-body-md text-ink-soft bg-surface-sunken rounded-md px-4 py-3 mb-4 whitespace-pre-wrap">
+                    <p className="text-body-md text-ink-soft bg-surface-sunken rounded-md border border-hairline px-4 py-3 mb-4 whitespace-pre-wrap">
                         {response.textResponse || '(no answer submitted)'}
                     </p>
 
@@ -85,7 +85,7 @@ export function ShortAnswerGradeList({
                                             },
                                         }))
                                     }
-                                    className="w-20 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                    className="w-20 h-12 px-3 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                 />
                                 <span className="text-caption text-text-secondary">/ {response.maxPoints}</span>
                             </div>
@@ -107,7 +107,7 @@ export function ShortAnswerGradeList({
                                         },
                                     }))
                                 }
-                                className="w-full min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                className="w-full h-12 px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                 placeholder="Optional note for the student"
                             />
                         </div>
@@ -115,7 +115,7 @@ export function ShortAnswerGradeList({
                         <button
                             onClick={() => handleSave(response.questionId)}
                             disabled={savingId === response.questionId}
-                            className="h-11 px-5 rounded-md bg-brand hover:bg-brand-hover text-on-ink text-body-md font-semibold transition-colors disabled:opacity-60"
+                            className="h-12 px-5 rounded-md bg-brand hover:bg-brand-hover text-on-ink text-body-md font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
                         >
                             {savingId === response.questionId ? 'Saving…' : 'Save changes'}
                         </button>

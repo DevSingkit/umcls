@@ -3,7 +3,6 @@ import { requireRole } from '@/lib/auth/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 import { getCourseStream } from '@/features/courses/actions/get-course-stream'
 import { CourseStream } from '@/features/courses/components/CourseStream'
-import { CourseStreamHeader } from '@/components/layout/CourseStreamHeader'
 
 export default async function StudentCourseDetailPage({
     params,
@@ -43,15 +42,6 @@ export default async function StudentCourseDetailPage({
 
     return (
         <div>
-            {/* Title + tabs now live in the sticky TopNav (UMCLSI > title)
-                per design system v3 rule 3 — no standalone h1 on canvas. */}
-            <CourseStreamHeader
-                courseId={courseId}
-                role="student"
-                title={course.title}
-                subtitle={course.subject || undefined}
-            />
-
             {course.description && (
                 <p className="text-body-md text-text-secondary mb-8">{course.description}</p>
             )}

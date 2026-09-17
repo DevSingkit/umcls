@@ -192,7 +192,7 @@ export function MissionProgressOverride({
                                                             type="button"
                                                             disabled={isPending}
                                                             onClick={() => handleAction(row.studentId, 'unlock')}
-                                                            className="relative h-9 px-3 rounded-md before:absolute before:-inset-1 before:content-[''] border-2 border-hairline text-caption font-medium text-ink hover:bg-surface-sunken disabled:opacity-60"
+                                                            className="h-10 min-h-[40px] px-3.5 rounded-md border-2 border-hairline text-body-sm font-medium text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
                                                         >
                                                             {rowPending ? '…' : 'Unlock'}
                                                         </button>
@@ -202,7 +202,7 @@ export function MissionProgressOverride({
                                                             type="button"
                                                             disabled={isPending}
                                                             onClick={() => handleAction(row.studentId, 'lock')}
-                                                            className="relative h-9 px-3 rounded-md before:absolute before:-inset-1 before:content-[''] border-2 border-hairline text-caption font-medium text-ink hover:bg-surface-sunken disabled:opacity-60"
+                                                            className="h-10 min-h-[40px] px-3.5 rounded-md border-2 border-hairline text-body-sm font-medium text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
                                                         >
                                                             {rowPending ? '…' : 'Lock'}
                                                         </button>
@@ -212,7 +212,7 @@ export function MissionProgressOverride({
                                                             type="button"
                                                             disabled={isPending}
                                                             onClick={() => handleAction(row.studentId, 'mark_mastered')}
-                                                            className="relative h-9 px-3 rounded-md before:absolute before:-inset-1 before:content-[''] border-2 border-brand text-caption font-medium text-brand hover:bg-brand-soft disabled:opacity-60"
+                                                            className="h-10 min-h-[40px] px-3.5 rounded-md border-2 border-brand text-body-sm font-medium text-brand hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
                                                         >
                                                             {rowPending ? '…' : 'Mark mastered'}
                                                         </button>
@@ -222,7 +222,7 @@ export function MissionProgressOverride({
                                                             type="button"
                                                             disabled={isPending}
                                                             onClick={() => handleAction(row.studentId, 'reset_streak')}
-                                                            className="relative h-9 px-3 rounded-md before:absolute before:-inset-1 before:content-[''] border-2 border-hairline text-caption font-medium text-ink hover:bg-surface-sunken disabled:opacity-60"
+                                                            className="h-10 min-h-[40px] px-3.5 rounded-md border-2 border-hairline text-body-sm font-medium text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
                                                         >
                                                             {rowPending ? '…' : 'Reset streak'}
                                                         </button>
@@ -276,7 +276,7 @@ export function MissionProgressOverride({
                                                                             onClick={() =>
                                                                                 handleResetQuestion(row.studentId, fq.questionId, fq.snapshotId)
                                                                             }
-                                                                            className="h-9 px-3 rounded-md border-2 border-warning text-caption font-medium text-warning hover:bg-warning-soft disabled:opacity-60 whitespace-nowrap"
+                                                                            className="h-10 min-h-[40px] px-3.5 rounded-md border-2 border-warning text-body-sm font-medium text-warning hover:bg-warning-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning focus-visible:ring-offset-2 transition-colors disabled:opacity-60 whitespace-nowrap"
                                                                         >
                                                                             {resetPending ? '…' : 'Reset — let them re-earn it'}
                                                                         </button>

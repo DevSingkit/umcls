@@ -535,7 +535,7 @@ export function ActivityRunner({
                 <button
                     type="button"
                     onClick={exitToLesson}
-                    className="font-sans text-body-emphasis text-brand hover:underline"
+                    className="font-sans text-body-emphasis text-brand hover:underline min-h-[44px] inline-flex items-center px-3 py-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     ← Back to lesson
                 </button>
@@ -567,7 +567,7 @@ export function ActivityRunner({
                 <button
                     type="button"
                     onClick={exitToLesson}
-                    className="clay-button mt-2 px-10 bg-surface text-brand font-heading text-lg uppercase tracking-wide border-hairline-strong shadow-modal hover:scale-105"
+                    className="clay-button mt-2 px-10 min-h-touch bg-surface text-brand font-heading text-lg uppercase tracking-wide border-hairline-strong shadow-modal hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     Back to missions
                 </button>
@@ -582,7 +582,7 @@ export function ActivityRunner({
                 <button
                     type="button"
                     onClick={exitToLesson}
-                    className="font-sans text-body-emphasis text-brand hover:underline"
+                    className="font-sans text-body-emphasis text-brand hover:underline min-h-[44px] inline-flex items-center px-3 py-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     ← Back to lesson
                 </button>
@@ -626,7 +626,7 @@ export function ActivityRunner({
                             onClick={() => setHintRevealed(true)}
                             aria-label="Show hint"
                             aria-pressed={hintRevealed}
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-pill transition-colors ${
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-pill focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 transition-colors ${
                                 hintRevealed
                                     ? 'bg-info text-white'
                                     : 'bg-info-soft text-info hover:bg-info/20'
@@ -639,7 +639,7 @@ export function ActivityRunner({
                         type="button"
                         onClick={() => setShowPauseMenu(true)}
                         aria-label="Pause mission"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline transition-colors"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-surface-sunken text-ink-soft hover:bg-hairline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     >
                         <Pause size={18} aria-hidden="true" />
                     </button>
@@ -748,7 +748,7 @@ export function ActivityRunner({
                                 disabled={Boolean(feedback) || isSubmitting}
                                 onClick={() => handleSelectOption(option.id)}
                                 className={[
-                                    `flex ${gridLayout.tileMinH} lg:min-h-[140px] w-full items-center gap-3 lg:gap-4 rounded-2xl ${gridLayout.padding} lg:p-6 text-left font-sans font-bold ${gridLayout.textSize} lg:text-xl text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none`,
+                                    `flex ${gridLayout.tileMinH} lg:min-h-[140px] w-full items-center gap-3 lg:gap-4 rounded-2xl ${gridLayout.padding} lg:p-6 text-left font-sans font-bold ${gridLayout.textSize} lg:text-xl text-on-ink shadow-clay-button border-b-[6px] transition-all active:border-b-0 active:translate-y-1 active:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand focus-visible:ring-offset-2`,
                                     style.bg,
                                     style.border,
                                     spanFull ? 'col-span-2' : '',
@@ -800,7 +800,7 @@ export function ActivityRunner({
                     <button
                         type="button"
                         onClick={handleGoToRemediation}
-                        className="clay-button w-full lg:min-h-[80px] bg-brand hover:bg-brand-hover text-white font-heading text-lg lg:text-2xl uppercase tracking-wide flex items-center justify-center"
+                        className="clay-button w-full min-h-touch lg:min-h-[80px] bg-brand hover:bg-brand-hover text-white font-heading text-lg lg:text-2xl uppercase tracking-wide flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         Try a related question first
                     </button>
@@ -828,14 +828,14 @@ export function ActivityRunner({
                         <button
                             type="button"
                             onClick={() => setShowPauseMenu(false)}
-                            className="clay-button w-full bg-brand hover:bg-brand-hover text-white font-heading text-lg uppercase tracking-wide flex items-center justify-center"
+                            className="clay-button w-full min-h-touch bg-brand hover:bg-brand-hover text-white font-heading text-lg uppercase tracking-wide flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         >
                             Resume
                         </button>
                         <button
                             type="button"
                             onClick={exitToLesson}
-                            className="clay-button w-full bg-surface-sunken hover:bg-hairline text-ink font-heading text-lg uppercase tracking-wide border-hairline-strong flex items-center justify-center"
+                            className="clay-button w-full min-h-touch bg-surface-sunken hover:bg-hairline text-ink font-heading text-lg uppercase tracking-wide border-hairline-strong flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         >
                             Quit mission
                         </button>

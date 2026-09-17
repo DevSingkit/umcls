@@ -153,7 +153,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
             <h1 className="text-h1 text-ink mb-6">
                 Create a new lesson
             </h1>
-            <form action={formAction} className="bg-surface rounded-md shadow-card px-8 pb-8 pt-5">
+            <form action={formAction} className="bg-surface rounded-md border border-hairline shadow-card px-8 pb-8 pt-5">
                 <input type="hidden" name="courseId" value={courseId} />
 
                 <div className="space-y-8">
@@ -167,8 +167,8 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                         type="text"
                         required
                         placeholder="e.g. Cell structure"
-                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline text-body-md text-ink
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="w-full h-13 px-4 rounded-md border-2 border-hairline text-body-emphasis text-ink
+                                   focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     />
                 </div>
 
@@ -185,7 +185,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                         placeholder="Write the lesson here"
                         onInput={resizeContent}
                         className="w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink leading-relaxed
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none overflow-hidden"
+                                   focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 resize-none overflow-hidden transition-colors"
                     />
                 </div>
 
@@ -212,7 +212,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                         onClick={() => fileInputRef.current?.click()}
                         className="flex items-center gap-2 h-12 px-4 rounded-md border-2 border-dashed border-hairline
                                    text-body-md text-ink font-medium hover:border-brand hover:bg-surface-sunken
-                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     >
                         <Plus size={18} className="shrink-0" aria-hidden="true" />
                         Attach files
@@ -231,13 +231,13 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                 return (
                                     <li
                                         key={`${file.name}-${file.size}-${index}`}
-                                        className={`flex items-center gap-3 h-11 px-3 rounded-md border bg-surface shadow-card
+                                        className={`flex items-center gap-3 h-12 px-3 rounded-md border bg-surface shadow-card
                                                     ${tooLarge ? 'border-error' : 'border-hairline'}`}
                                     >
                                         <button
                                             type="button"
                                             onClick={() => openPreview(file)}
-                                            className="flex items-center gap-3 flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-sm"
+                                            className="flex items-center gap-3 flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded-sm"
                                             title={`View ${file.name}`}
                                         >
                                             {previewUrl ? (
@@ -271,7 +271,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                         <button
                                             type="button"
                                             onClick={() => removeFile(index)}
-                                            className="shrink-0 text-caption font-medium text-error hover:underline"
+                                            className="shrink-0 text-caption font-medium text-error hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 transition-colors"
                                         >
                                             Remove
                                         </button>
@@ -302,8 +302,8 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                             value={link.url}
                                             onChange={(e) => updateLinkUrl(link.id, e.target.value)}
                                             placeholder="https://..."
-                                            className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[200px]
-                                                       focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                            className="h-12 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[200px]
+                                                       focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                         />
                                         <input type="hidden" name="linkLabel" value={label} />
                                         <input type="hidden" name="linkUrl" value={link.url} />
@@ -312,7 +312,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                         <button
                                             type="button"
                                             onClick={() => removeLinkRow(link.id)}
-                                            className="shrink-0 text-caption font-medium text-error hover:underline"
+                                            className="shrink-0 text-caption font-medium text-error hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 transition-colors"
                                         >
                                             Remove
                                         </button>
@@ -323,7 +323,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                             <button
                                                 type="button"
                                                 onClick={() => setViewingYoutubeId(videoId)}
-                                                className="flex items-center gap-3 h-11 px-3 rounded-md border border-hairline bg-surface shadow-card w-full text-left hover:border-brand hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
+                                                className="flex items-center gap-3 h-12 px-3 rounded-md border border-hairline bg-surface shadow-card w-full text-left hover:border-brand hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                             >
                                                 <span className="relative shrink-0 h-8 w-11 rounded-sm overflow-hidden bg-surface">
                                                     {/* eslint-disable-next-line @next/next/no-img-element -- external YouTube thumbnail URL, plain <img> is simplest, no next/image domain config needed */}
@@ -345,7 +345,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center gap-3 h-11 px-3 rounded-md border border-hairline bg-surface shadow-card hover:border-brand hover:shadow-card-hover transition-colors"
+                                                className="flex items-center gap-3 h-12 px-3 rounded-md border border-hairline bg-surface shadow-card hover:border-brand hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                                             >
                                                 <span className="shrink-0 flex h-8 w-8 items-center justify-center rounded-sm bg-surface-sunken text-text-secondary">
                                                     <Link2 size={16} aria-hidden="true" />
@@ -367,7 +367,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                     <button
                         type="button"
                         onClick={addLinkRow}
-                        className="mt-3 flex items-center gap-2 h-12 px-4 rounded-md text-caption text-brand font-semibold hover:bg-surface-sunken transition-colors"
+                        className="mt-3 flex items-center gap-2 h-12 px-4 rounded-md text-caption text-brand font-semibold hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     >
                         <Plus size={16} aria-hidden="true" />
                         Add another link
@@ -385,7 +385,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                     type="submit"
                     disabled={isPending}
                     className="w-full h-14 rounded-md bg-brand text-on-ink font-semibold text-body-md
-                               hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                               hover:bg-brand-hover disabled:opacity-60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     {isPending ? 'Creating lesson…' : 'Create lesson'}
                 </button>
@@ -404,7 +404,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                         type="button"
                         onClick={() => setViewingYoutubeId(null)}
                         aria-label="Close preview"
-                        className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-ink shadow-card hover:bg-surface-sunken"
+                        className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-ink shadow-card hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     >
                         <X size={20} aria-hidden="true" />
                     </button>
@@ -435,7 +435,7 @@ export function NewLessonForm({ courseId }: { courseId: string }) {
                         type="button"
                         onClick={closePreview}
                         aria-label="Close preview"
-                        className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-ink shadow-card hover:bg-surface-sunken"
+                        className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-ink shadow-card hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     >
                         <X size={20} aria-hidden="true" />
                     </button>

@@ -24,7 +24,7 @@ export function CourseReassignment({
     const [state, formAction, isPending] = useActionState(assignAction, initialState)
 
     return (
-        <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
+        <form action={formAction} className="bg-surface rounded-md border border-hairline shadow-card p-8 space-y-6">
             <div>
                 <label htmlFor="courseId-search" className="text-label text-text-secondary block mb-2">
                     Class

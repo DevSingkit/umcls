@@ -54,7 +54,7 @@ export function EditCourseForm({
                     id="title"
                     name="title"
                     defaultValue={initialTitle}
-                    className="h-11 w-full rounded-md border-2 border-hairline px-4 text-body-md outline-none focus:border-brand"
+                    className="h-13 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink outline-none focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
                     required
                 />
             </div>
@@ -64,7 +64,7 @@ export function EditCourseForm({
                     id="subject"
                     name="subject"
                     defaultValue={initialSubject ?? ''}
-                    className="h-11 w-full rounded-md border-2 border-hairline px-4 text-body-md outline-none focus:border-brand"
+                    className="h-13 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink outline-none focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
                 />
             </div>
             <div>
@@ -74,7 +74,7 @@ export function EditCourseForm({
                     name="description"
                     defaultValue={initialDescription ?? ''}
                     rows={4}
-                    className="w-full rounded-md border-2 border-hairline px-4 py-3 text-body-md outline-none focus:border-brand"
+                    className="w-full rounded-md border-2 border-hairline bg-surface px-4 py-3 text-body-md text-ink outline-none focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
                 />
             </div>
             <ClassmatesVisibilityToggle courseId={courseId} initialShowClassmates={initialShowClassmates} />
@@ -82,7 +82,7 @@ export function EditCourseForm({
             <button
                 type="submit"
                 disabled={isPending}
-                className="h-14 justify-self-start rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover disabled:opacity-60"
+                className="h-14 min-h-touch justify-self-start rounded-md bg-brand px-6 text-body-md font-semibold text-on-ink hover:bg-brand-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
                 {isPending ? 'Saving…' : 'Save changes'}
             </button>

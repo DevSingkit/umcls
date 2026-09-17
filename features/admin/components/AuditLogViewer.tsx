@@ -78,18 +78,18 @@ export function AuditLogViewer({
 
     return (
         <div>
-            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-6">
+            <div className="flex flex-nowrap gap-3 mb-6 overflow-x-auto no-scrollbar pb-1">
                 <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by actor or action"
-                    className="h-12 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption placeholder:text-text-muted focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-56"
+                    className="h-12 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption placeholder:text-text-muted focus:border-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 shrink-0 w-48 sm:w-56"
                 />
                 <select
                     value={actorId}
                     onChange={(e) => updateFilter(setActorId, e.target.value)}
-                    className="h-12 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
+                    className="h-12 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 shrink-0 w-36 sm:w-44"
                 >
                     <option value="">All actors</option>
                     {actors.map((actor) => (
@@ -101,7 +101,7 @@ export function AuditLogViewer({
                 <select
                     value={actionType}
                     onChange={(e) => updateFilter(setActionType, e.target.value)}
-                    className="h-12 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand w-full sm:w-44"
+                    className="h-12 px-3 rounded-md border-2 border-hairline bg-surface outline-none text-caption focus:border-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 shrink-0 w-36 sm:w-44"
                 >
                     <option value="">All actions</option>
                     {actionTypes.map((type) => (
@@ -111,12 +111,12 @@ export function AuditLogViewer({
                     ))}
                 </select>
 
-                <div className="h-12 flex items-center gap-2 rounded-md border-2 border-hairline bg-surface px-3 focus-within:border-brand w-full sm:w-auto">
+                <div className="h-12 flex items-center gap-2 rounded-md border-2 border-hairline bg-surface px-3 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand focus-within:ring-offset-2 shrink-0">
                     <input
                         type="date"
                         value={dateFrom}
                         onChange={(e) => updateFilter(setDateFrom, e.target.value)}
-                        className="h-full min-w-[130px] flex-1 sm:flex-none bg-transparent outline-none text-caption"
+                        className="h-full w-[120px] bg-transparent outline-none text-caption"
                         aria-label="From date"
                     />
                     <span className="text-text-muted shrink-0">–</span>
@@ -124,13 +124,13 @@ export function AuditLogViewer({
                         type="date"
                         value={dateTo}
                         onChange={(e) => updateFilter(setDateTo, e.target.value)}
-                        className="h-full min-w-[130px] flex-1 sm:flex-none bg-transparent outline-none text-caption"
+                        className="h-full w-[120px] bg-transparent outline-none text-caption"
                         aria-label="To date"
                     />
                 </div>
             </div>
 
-            <div className="bg-surface rounded-md shadow-card overflow-hidden">
+            <div className="bg-surface rounded-md border border-hairline shadow-card overflow-hidden">
                 {/* Mobile: stacked card list (no horizontal scroll, §1.5) */}
                 <div className="sm:hidden divide-y divide-hairline">
                     {visibleRows.length === 0 ? (
@@ -207,14 +207,14 @@ export function AuditLogViewer({
                     <button
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={isPending || data.page <= 1}
-                        className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
+                        className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-40"
                     >
                         Previous
                     </button>
                     <button
                         onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                         disabled={isPending || data.page >= data.totalPages}
-                        className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40"
+                        className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-40"
                     >
                         Next
                     </button>

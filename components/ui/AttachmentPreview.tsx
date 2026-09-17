@@ -25,6 +25,7 @@
 // stopPropagation.
 
 import { Link as LinkIcon, Image as ImageIcon, Paperclip, Play } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export type AttachmentKind = 'image' | 'youtube' | 'link' | 'file'
 
@@ -58,12 +59,14 @@ export function AttachmentPreview({
                       }
                     : undefined
             }
-            className={`flex w-full items-center gap-4 rounded-md bg-surface border border-hairline shadow-card hover:shadow-card-hover p-3 transition-shadow ${
-                onClick ? 'cursor-pointer' : ''
-            }`}
+            className={cn(
+                'flex w-full items-center gap-4 rounded-2xl bg-surface border border-hairline shadow-card hover:shadow-card-hover p-3 transition-shadow min-h-touch',
+                onClick &&
+                    'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
+            )}
         >
             {thumbnailUrl ? (
-                <span className="relative shrink-0 w-16 h-16 rounded-md overflow-hidden bg-surface-sunken">
+                <span className="relative shrink-0 w-16 h-16 rounded-2xl overflow-hidden bg-surface-sunken">
                     {/* eslint-disable-next-line @next/next/no-img-element -- external/public thumbnail URL (YouTube CDN or public storage), plain <img> is simplest */}
                     <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
                     {kind === 'youtube' && (
@@ -73,7 +76,7 @@ export function AttachmentPreview({
                     )}
                 </span>
             ) : (
-                <span className="shrink-0 w-10 h-10 rounded-md bg-surface-sunken text-text-secondary flex items-center justify-center">
+                <span className="shrink-0 w-10 h-10 rounded-2xl bg-surface-sunken text-text-secondary flex items-center justify-center">
                     {kind === 'image' ? (
                         <ImageIcon size={18} aria-hidden="true" />
                     ) : kind === 'link' ? (

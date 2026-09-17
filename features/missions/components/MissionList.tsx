@@ -51,7 +51,7 @@ export function MissionList({
                 >
                     <Link
                         href={`/teacher/courses/${courseId}/lessons/${lessonId}/missions/${mission.id}/edit`}
-                        className="min-w-0 hover:opacity-80 transition-opacity"
+                        className="min-w-0 hover:opacity-80 transition-opacity rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         <p className="text-body-emphasis text-ink truncate">{mission.title}</p>
                         <p className="text-caption text-text-secondary">
@@ -68,13 +68,13 @@ export function MissionList({
                         </span>
                         <Link
                             href={`/teacher/courses/${courseId}/lessons/${lessonId}/missions/${mission.id}/edit`}
-                            className="h-8 px-3 flex items-center rounded-md border-2 border-hairline text-caption font-medium text-ink hover:bg-surface-sunken transition-colors"
+                            className="h-10 px-3.5 flex items-center rounded-md border-2 border-hairline text-body-sm font-medium text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                         >
                             Settings
                         </Link>
                         <Link
                             href={`/teacher/courses/${courseId}/lessons/${lessonId}/missions/${mission.id}/progress`}
-                            className="h-8 px-3 flex items-center rounded-md border-2 border-hairline text-caption font-medium text-ink hover:bg-surface-sunken transition-colors"
+                            className="h-10 px-3.5 flex items-center rounded-md border-2 border-hairline text-body-sm font-medium text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                         >
                             Progress
                         </Link>
@@ -83,7 +83,7 @@ export function MissionList({
             ))}
             <Link
                 href={`/teacher/courses/${courseId}/lessons/${lessonId}/missions/new`}
-                className="flex items-center justify-center gap-2 rounded-md border-2 border-dashed border-hairline p-4 text-caption font-semibold text-brand hover:border-brand hover:bg-brand-soft transition-colors"
+                className="flex items-center justify-center gap-2 min-h-touch rounded-md border-2 border-dashed border-hairline p-4 text-body-md font-semibold text-brand hover:border-brand hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
             >
                 <Plus size={18} aria-hidden="true" />
                 New mission

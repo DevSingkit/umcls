@@ -141,8 +141,8 @@ export function DateTimePicker({
                 aria-haspopup="dialog"
                 aria-expanded={isOpen}
                 className={cn(
-                    'flex h-13 items-center gap-2 px-4 rounded-md border-[1.5px] border-hairline-strong bg-surface text-body-md',
-                    'focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30',
+                    'flex h-13 items-center gap-2 px-4 rounded-md border-hairline-emphasis bg-surface text-body-md transition-colors',
+                    'focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
                     selectedDate ? 'text-ink' : 'text-text-muted'
                 )}
             >
@@ -159,7 +159,7 @@ export function DateTimePicker({
             {isOpen && (
                 <div
                     role="dialog"
-                    className="absolute left-0 z-30 mt-2 w-[320px] rounded-md border border-hairline bg-surface p-4 shadow-modal"
+                    className="absolute left-0 z-30 mt-2 w-[320px] max-w-[calc(100vw-2rem)] rounded-md border border-hairline bg-surface p-4 shadow-modal"
                 >
                     <div className="flex items-center justify-between mb-3">
                         <button
@@ -168,7 +168,7 @@ export function DateTimePicker({
                             onClick={() =>
                                 setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))
                             }
-                            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-sunken text-ink"
+                            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-sunken text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                         >
                             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                         </button>
@@ -181,7 +181,7 @@ export function DateTimePicker({
                             onClick={() =>
                                 setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))
                             }
-                            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-sunken text-ink"
+                            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-sunken text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                         >
                             <ChevronRight className="h-4 w-4" aria-hidden="true" />
                         </button>
@@ -215,6 +215,7 @@ export function DateTimePicker({
                                     onClick={() => commitDate(thisDate)}
                                     className={cn(
                                         'h-8 rounded-md text-caption font-medium transition-colors',
+                                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
                                         isSelected
                                             ? 'bg-brand text-on-ink'
                                             : isPast
@@ -238,7 +239,7 @@ export function DateTimePicker({
                                 aria-label="Hour"
                                 value={hour12}
                                 onChange={(e) => commitHour12(Number(e.target.value))}
-                                className="h-10 px-3 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                className="h-10 px-3 rounded-md border-hairline-emphasis text-body-md text-ink focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                             >
                                 {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
                                     <option key={h} value={h}>
@@ -251,7 +252,7 @@ export function DateTimePicker({
                                 aria-label="Minute"
                                 value={minute}
                                 onChange={(e) => commitMinute(Number(e.target.value))}
-                                className="h-10 px-3 rounded-md border-[1.5px] border-hairline-strong text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                className="h-10 px-3 rounded-md border-hairline-emphasis text-body-md text-ink focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                             >
                                 {Array.from(
                                     new Set([...Array.from({ length: 12 }, (_, i) => i * 5), minute])
@@ -263,12 +264,12 @@ export function DateTimePicker({
                                         </option>
                                     ))}
                             </select>
-                            <div className="flex rounded-md border-[1.5px] border-hairline-strong overflow-hidden shrink-0">
+                            <div className="flex rounded-md border-hairline-emphasis overflow-hidden shrink-0">
                                 <button
                                     type="button"
                                     onClick={() => commitPeriod('AM')}
                                     className={cn(
-                                        'h-10 px-3 text-caption font-semibold transition-colors',
+                                        'h-10 px-3 text-caption font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
                                         period === 'AM' ? 'bg-brand text-on-ink' : 'bg-surface text-ink hover:bg-surface-sunken'
                                     )}
                                 >
@@ -278,7 +279,7 @@ export function DateTimePicker({
                                     type="button"
                                     onClick={() => commitPeriod('PM')}
                                     className={cn(
-                                        'h-10 px-3 text-caption font-semibold transition-colors',
+                                        'h-10 px-3 text-caption font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
                                         period === 'PM' ? 'bg-brand text-on-ink' : 'bg-surface text-ink hover:bg-surface-sunken'
                                     )}
                                 >
@@ -292,7 +293,7 @@ export function DateTimePicker({
                         <button
                             type="button"
                             onClick={() => setIsOpen(false)}
-                            className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover"
+                            className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                         >
                             Done
                         </button>

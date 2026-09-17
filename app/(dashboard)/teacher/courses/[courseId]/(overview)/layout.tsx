@@ -74,7 +74,7 @@ export default async function TeacherCourseOverviewLayout({
                         </p>
                     )}
                 </div>
-                <div className="flex flex-wrap items-center gap-3 sm:shrink-0">
+                                <div className="flex items-center gap-2 sm:gap-3">
                     <EnrollStudentForm courseId={courseId} students={enrollableStudents} />
                     <CreateMenu courseId={courseId} />
                     <CourseMenu courseId={course.id} isPublished={course.is_published} />

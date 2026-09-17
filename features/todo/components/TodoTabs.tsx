@@ -38,21 +38,29 @@ export function TodoTabs({
 
     return (
         <div>
-            <div role="tablist" aria-label="To-do status" className="flex gap-1 mb-6 border-b border-hairline">
+            <div role="tablist" aria-label="To-do status" className="flex gap-2 mb-6 border-b border-hairline">
                 {tabs.map((t) => (
                     <button
                         key={t.id}
                         role="tab"
                         aria-selected={tab === t.id}
                         onClick={() => setTab(t.id)}
-                        className={`px-4 py-3 text-body-md font-semibold border-b-2 -mb-px transition-colors ${
+                        className={`flex items-center min-h-touch-secondary px-4 py-3 text-body-md font-semibold border-b-2 -mb-px transition-colors rounded-t-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
                             tab === t.id
                                 ? 'border-brand text-brand'
                                 : 'border-transparent text-text-secondary hover:text-ink'
                         }`}
                     >
-                        {t.label}
-                        {t.count > 0 && <span className="ml-2 text-caption text-text-muted">{t.count}</span>}
+                        <span>{t.label}</span>
+                        {t.count > 0 && (
+                            <span
+                                className={`ml-2 inline-flex items-center justify-center text-caption font-semibold px-2 py-0.5 rounded-pill ${
+                                    tab === t.id ? 'bg-brand-soft text-brand' : 'bg-surface-sunken text-text-muted'
+                                }`}
+                            >
+                                {t.count}
+                            </span>
+                        )}
                     </button>
                 ))}
             </div>

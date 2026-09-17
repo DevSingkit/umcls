@@ -62,7 +62,7 @@ export default function OurStoryPage() {
           </p>
 
           {/* Institutional Fast Facts */}
-          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-border bg-surface p-6 shadow-sm md:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-hairline bg-surface p-6 shadow-card md:grid-cols-4">
             <div>
               <p className="text-caption text-text-secondary">School Type</p>
               <p className="mt-1 text-body-md font-bold text-ink">Private Basic Education</p>
@@ -91,7 +91,7 @@ export default function OurStoryPage() {
           </p>
           <h2 className="mt-2 text-2xl font-bold text-ink">How UMCLSI Was Built</h2>
 
-          <div className="mt-8 relative border-l-2 border-border pl-6 space-y-8 md:pl-8 md:space-y-10">
+          <div className="mt-8 relative border-l-2 border-hairline pl-6 space-y-8 md:pl-8 md:space-y-10">
             {timeline.map((step) => (
               <div key={step.era} className="relative">
                 {/* Timeline node badge */}
@@ -127,9 +127,9 @@ export default function OurStoryPage() {
             {pillarsOfCooperation.map((pillar) => (
               <div
                 key={pillar.title}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all hover:shadow-md"
+                className="rounded-xl border border-hairline bg-surface p-6 shadow-card transition-all hover:shadow-card-hover"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft">
                   <pillar.icon className="h-6 w-6 text-brand" strokeWidth={2} aria-hidden="true" />
                 </div>
                 <h3 className="mt-4 text-body-md font-bold text-ink">{pillar.title}</h3>
@@ -145,7 +145,7 @@ export default function OurStoryPage() {
       {/* Community & Church Impact */}
       <section className="px-4 py-10 sm:px-6 md:py-12">
         <div className="mx-auto max-w-[1280px]">
-          <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
+          <div className="rounded-xl border border-hairline bg-surface p-8 shadow-card">
             <p className="text-caption font-semibold uppercase tracking-wider text-brand">
               Community & Church Outreach
             </p>

@@ -29,14 +29,14 @@ export function LessonStreamComments({
     const [isExpanded, setIsExpanded] = useState(false)
 
     return (
-        <div className="mt-3 pl-[60px]">
+        <div className="mt-3 pl-[5px]">
             <button
                 type="button"
                 onClick={() => setIsExpanded((prev) => !prev)}
-                className="flex items-center gap-1.5 text-caption font-semibold text-text-secondary hover:text-ink"
+                className="flex items-center gap-1.5 text-caption font-semibold text-text-secondary hover:text-ink rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
             >
-                <MessageCircle size={16} aria-hidden="true" />
-                {comments.length === 0 ? 'Add class comment' : `${comments.length} comment${comments.length === 1 ? '' : 's'}`}
+                <MessageCircle size={14} aria-hidden="true" />
+                {comments.length === 0 ? 'Add comment' : `${comments.length} comment${comments.length === 1 ? '' : 's'}`}
             </button>
 
             {isExpanded && (

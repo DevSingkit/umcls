@@ -187,7 +187,7 @@ export function MissionSettingsForm({
                         id="missionSettingsTitle"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="clay-well w-full min-h-touch px-4 text-body-emphasis text-ink rounded-2xl border-2 border-hairline focus:border-brand outline-none focus:ring-2 focus:ring-brand/30"
+                        className="clay-well w-full min-h-touch px-4 text-body-emphasis text-ink rounded-2xl border-2 border-hairline focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                 </div>
 
@@ -200,7 +200,7 @@ export function MissionSettingsForm({
                         rows={2}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="clay-well w-full px-5 py-3 rounded-2xl border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="clay-well w-full px-5 py-3 rounded-2xl border-2 border-hairline focus:border-brand text-body-md text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                 </div>
 
@@ -215,7 +215,7 @@ export function MissionSettingsForm({
                             min={1}
                             value={masteryThreshold}
                             onChange={(e) => setMasteryThreshold(Number(e.target.value))}
-                            className="clay-well w-24 min-h-touch px-4 text-body-md text-ink rounded-2xl border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                            className="clay-well w-24 min-h-touch px-4 text-body-md text-ink rounded-2xl border-2 border-hairline focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         />
                         <span className="text-body-md text-text-secondary">
                             A student unlocks the next mission after {masteryThreshold} correct answer
@@ -231,7 +231,7 @@ export function MissionSettingsForm({
                             type="checkbox"
                             checked={revealCorrectAnswer}
                             onChange={(e) => setRevealCorrectAnswer(e.target.checked)}
-                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
+                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         />
                         <span>
                             <span className="text-label text-ink-soft block">
@@ -252,7 +252,7 @@ export function MissionSettingsForm({
                             type="checkbox"
                             checked={shuffleOptions}
                             onChange={(e) => setShuffleOptions(e.target.checked)}
-                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
+                            className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-hairline text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                         />
                         <span>
                             <span className="text-label text-ink-soft block">
@@ -289,7 +289,7 @@ export function MissionSettingsForm({
                                 type="button"
                                 onClick={handleSave}
                                 disabled={isPending}
-                                className="clay-button px-6 bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
+                                className="clay-button min-h-touch px-6 bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             >
                                 {isPending ? 'Saving…' : 'Update'}
                             </button>
@@ -300,7 +300,7 @@ export function MissionSettingsForm({
                                 type="button"
                                 onClick={handleSave}
                                 disabled={isPending || !hasActivities}
-                                className="clay-button px-6 bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60"
+                                className="clay-button min-h-touch px-6 bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             >
                                 {isPending ? 'Posting…' : 'Save & Post'}
                             </button>
@@ -333,7 +333,7 @@ export function MissionSettingsForm({
                             <button
                                 type="button"
                                 onClick={() => setIsResetConfirming(true)}
-                                className="min-h-touch px-6 rounded-2xl border-2 border-error text-error font-semibold hover:bg-error-soft disabled:opacity-60"
+                                className="min-h-touch px-6 rounded-2xl border-2 border-error text-error font-semibold hover:bg-error-soft disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
                             >
                                 Reset student progress…
                             </button>
@@ -352,7 +352,7 @@ export function MissionSettingsForm({
                                         type="button"
                                         onClick={() => setIsResetConfirming(false)}
                                         disabled={isResetting}
-                                        className="h-10 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken disabled:opacity-60"
+                                        className="min-h-[44px] px-4 rounded-md border-2 border-hairline bg-surface text-ink text-body-sm font-medium hover:bg-surface-sunken disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                                     >
                                         Cancel
                                     </button>
@@ -360,7 +360,7 @@ export function MissionSettingsForm({
                                         type="button"
                                         onClick={handleResetProgress}
                                         disabled={isResetting}
-                                        className="h-10 px-4 rounded-md bg-error text-on-ink text-caption font-semibold hover:opacity-90 disabled:opacity-60"
+                                        className="min-h-[44px] px-4 rounded-md bg-error text-on-ink text-body-sm font-semibold hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
                                     >
                                         {isResetting ? 'Resetting…' : 'Reset progress'}
                                     </button>

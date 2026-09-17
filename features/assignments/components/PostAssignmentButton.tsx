@@ -36,7 +36,7 @@ export function PostAssignmentButton({
 
     if (published) {
         return (
-            <div className="flex items-center justify-between gap-4 bg-brand-soft rounded-md p-5">
+            <div className="flex items-center justify-between gap-4 bg-brand-soft rounded-md border border-brand/20 p-5">
                 <div>
                     <p className="text-body-emphasis text-brand">Posted</p>
                     <p className="text-caption text-text-secondary mt-0.5">
@@ -46,7 +46,7 @@ export function PostAssignmentButton({
                 <button
                     onClick={() => handleToggle(false)}
                     disabled={isPending}
-                    className="h-12 px-5 rounded-md border-2 border-hairline text-body-md font-semibold text-ink hover:bg-surface-sunken disabled:opacity-60 shrink-0"
+                    className="h-12 px-5 rounded-md border-2 border-hairline text-body-md font-semibold text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60 shrink-0"
                 >
                     {isPending ? 'Working…' : 'Unpost'}
                 </button>
@@ -55,7 +55,7 @@ export function PostAssignmentButton({
     }
 
     return (
-        <div className="bg-surface rounded-md shadow-card p-5">
+        <div className="bg-surface rounded-md border border-hairline shadow-card p-5">
             <div className="flex items-center justify-between gap-4">
                 <div>
                     <p className="text-body-emphasis text-ink">Not posted yet</p>
@@ -66,7 +66,7 @@ export function PostAssignmentButton({
                 <button
                     onClick={() => handleToggle(true)}
                     disabled={isPending}
-                    className="h-14 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
+                    className="h-14 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60 shrink-0"
                 >
                     {isPending ? 'Posting…' : 'Post'}
                 </button>

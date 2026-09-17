@@ -87,9 +87,31 @@ const config: Config = {
           DEFAULT: "#E8963C",
           soft: "#FBEBD6",
         },
+        // Renamed from `info`. This is the brand pink used for informational
+        // callouts, not a neutral or blue "info" tone — the old name read as
+        // a semantic color and misled engineers expecting blue. Same values,
+        // clearer intent.
+        "accent-pink": {
+          DEFAULT: "#8F1349",
+          soft: "#FDF2F8",
+        },
+        // BACKWARD-COMPAT ALIAS (2026-09-10): the rename above (info ->
+        // accent-pink) left every existing bg-info/text-info/border-info/
+        // ring-info reference across the app compiling to NOTHING — Tailwind
+        // silently generates no output for a utility referencing a color
+        // that doesn't exist, rather than erroring. Confirmed as the root
+        // cause of a real bug: a tile in the mission builder rendered with
+        // zero background at all (see the TILE_STYLES entry using bg-info in
+        // NewMissionForm.tsx/ActivityCard.tsx/AddActivityForm.tsx). Rather
+        // than hunting down and editing every file across the whole codebase
+        // that might still reference the old name (higher risk, easy to miss
+        // one), this alias restores `info` with the SAME values as
+        // accent-pink, fixing every broken reference app-wide in one place.
+        // Safe to remove later once every real usage is confirmed migrated
+        // to accent-pink — not assumed done here.
         info: {
-          DEFAULT: "#8F1349",       // Swapped out blue alert for UMCLSI Pink
-          soft: "#FDF2F8",          // Soft light pink card background
+          DEFAULT: "#8F1349",
+          soft: "#FDF2F8",
         },
       },
       fontFamily: {

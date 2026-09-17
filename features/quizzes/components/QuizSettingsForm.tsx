@@ -174,7 +174,7 @@ export function QuizSettingsForm({
                             type="checkbox"
                             checked={timerEnabled}
                             onChange={(e) => setTimerEnabled(e.target.checked)}
-                            className="h-4 w-4 accent-brand"
+                            className="h-4 w-4 rounded text-brand focus:ring-2 focus:ring-brand focus-visible:ring-offset-2"
                         />
                         Enable timer
                     </label>
@@ -186,7 +186,7 @@ export function QuizSettingsForm({
                                 value={timeLimitMinutes}
                                 onChange={(e) => setTimeLimitMinutes(e.target.value)}
                                 placeholder="Minutes"
-                                className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                className="w-24 h-12 px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             />
                             <span className="text-caption text-text-secondary">minutes</span>
                         </div>
@@ -205,7 +205,7 @@ export function QuizSettingsForm({
                         min={1}
                         value={maxAttempts}
                         onChange={(e) => setMaxAttemptsValue(Number(e.target.value))}
-                        className="w-24 min-h-[44px] px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="w-24 h-12 px-4 text-body-md text-ink bg-surface rounded-md border-2 border-hairline focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                     <span className="text-body-md text-text-secondary">
                         {maxAttempts === 1
@@ -228,7 +228,7 @@ export function QuizSettingsForm({
                         type="button"
                         onClick={() => setDueAt('')}
                         disabled={!dueAt}
-                        className="text-caption font-medium text-text-secondary hover:text-error disabled:opacity-40"
+                        className="text-caption font-medium text-text-secondary hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded disabled:opacity-40"
                     >
                         Clear
                     </button>
@@ -239,7 +239,7 @@ export function QuizSettingsForm({
                         type="checkbox"
                         checked={allowLate}
                         onChange={(e) => setAllowLate(e.target.checked)}
-                        className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand/30"
+                        className="h-5 w-5 rounded border-2 border-hairline text-brand focus:ring-2 focus:ring-brand focus-visible:ring-offset-2"
                     />
                     <label htmlFor={`allowLate-${quizId}`} className="text-body-md text-ink">
                         Allow late starts and submissions
@@ -255,7 +255,7 @@ export function QuizSettingsForm({
                     id="resultsVisibilitySetting"
                     value={visibility}
                     onChange={(e) => setVisibility(e.target.value as ResultsVisibility)}
-                    className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                    className="w-full h-12 px-4 rounded-md border-2 border-hairline focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 text-body-md text-ink bg-surface"
                 >
                     {VISIBILITY_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -277,7 +277,7 @@ export function QuizSettingsForm({
 
             <div className="border-t border-hairline pt-6">
                 {published ? (
-                    <div className="flex items-center justify-between gap-4 bg-brand-soft rounded-md p-5">
+                    <div className="flex items-center justify-between gap-4 bg-brand-soft rounded-md border border-brand/20 p-5">
                         <div>
                             <p className="text-body-emphasis text-brand">Posted</p>
                             <p className="text-caption text-text-secondary mt-0.5">
@@ -289,7 +289,7 @@ export function QuizSettingsForm({
                             type="button"
                             onClick={handleSave}
                             disabled={isPending}
-                            className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60 shrink-0"
+                            className="h-12 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60 shrink-0"
                         >
                             {isPending ? 'Saving…' : 'Update'}
                         </button>
@@ -300,7 +300,7 @@ export function QuizSettingsForm({
                             type="button"
                             onClick={handleSave}
                             disabled={isPending || !hasQuestions}
-                            className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover disabled:opacity-60"
+                            className="h-14 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
                         >
                             {isPending ? 'Posting…' : 'Save & Post'}
                         </button>

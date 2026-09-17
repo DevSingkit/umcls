@@ -28,7 +28,7 @@ export function DeletedUsersList({ initialUsers }: { initialUsers: ArchivedUserR
 
     if (users.length === 0) {
         return (
-            <div className="bg-surface rounded-md shadow-card p-8 text-center">
+            <div className="bg-surface rounded-md border border-hairline shadow-card p-8 text-center">
                 <p className="text-body-md text-text-secondary">No deleted accounts.</p>
             </div>
         )
@@ -39,7 +39,7 @@ export function DeletedUsersList({ initialUsers }: { initialUsers: ArchivedUserR
             {users.map((user) => (
                 <div
                     key={user.id}
-                    className="bg-surface rounded-md shadow-card p-5 flex flex-col gap-3"
+                    className="bg-surface rounded-md border border-hairline shadow-card p-5 flex flex-col gap-3"
                 >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-3 flex-wrap">
@@ -57,7 +57,7 @@ export function DeletedUsersList({ initialUsers }: { initialUsers: ArchivedUserR
                         <button
                             onClick={() => handleRestore(user.id)}
                             disabled={isPending}
-                            className="h-14 px-6 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                            className="h-14 px-6 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60 shrink-0"
                         >
                             Restore
                         </button>

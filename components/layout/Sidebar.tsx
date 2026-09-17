@@ -39,6 +39,11 @@ export function Sidebar({ role }: SidebarProps) {
     });
   }
 
+  // Hover-to-expand only makes sense with a mouse, so it's gated to lg
+  // in the className below. Below that, from md up, the rail is visible
+  // but stays collapsed at 72px — tablets get persistent navigation
+  // instead of relying only on MobileBottomNav, without a hover
+  // interaction that can't fire on touch.
   const isExpanded = isPinned || isHovering;
 
   return (
@@ -47,7 +52,7 @@ export function Sidebar({ role }: SidebarProps) {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className={cn(
-        "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:flex-col lg:bg-sidebar border-r border-white/10",
+        "hidden md:fixed md:inset-y-0 md:left-0 md:z-40 md:flex md:flex-col md:w-[72px] md:bg-sidebar border-r border-white/10",
         "transition-[width] duration-200 ease-out",
         isExpanded ? "lg:w-[240px] lg:shadow-xl" : "lg:w-[72px]"
       )}

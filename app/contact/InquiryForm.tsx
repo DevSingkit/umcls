@@ -42,7 +42,7 @@ export function InquiryForm() {
 
   if (submitted) {
     return (
-      <div className="mt-8 rounded-xl border border-border bg-surface p-6 text-body-md text-ink-soft shadow-sm">
+      <div className="mt-8 rounded-xl border border-hairline bg-surface p-6 text-body-md text-ink-soft shadow-card">
         This form isn&apos;t connected to anything yet, so your message wasn&apos;t
         actually sent. Please call or email us directly for now using the
         details on this page.
@@ -53,7 +53,7 @@ export function InquiryForm() {
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-5">
       <div>
-        <label htmlFor="guardianName" className="mb-2 block text-caption font-medium text-ink-soft">
+        <label htmlFor="guardianName" className="mb-2 block text-label text-ink-soft">
           Parent or guardian name
         </label>
         <input
@@ -61,12 +61,12 @@ export function InquiryForm() {
           name="guardianName"
           type="text"
           required
-          className="h-11 w-full rounded-lg border border-border bg-canvas px-4 text-caption text-ink focus:border-brand focus:outline-none"
+          className="h-12 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
         />
       </div>
 
       <div>
-        <label htmlFor="email" className="mb-2 block text-caption font-medium text-ink-soft">
+        <label htmlFor="email" className="mb-2 block text-label text-ink-soft">
           Email
         </label>
         <input
@@ -74,42 +74,42 @@ export function InquiryForm() {
           name="email"
           type="email"
           required
-          className="h-11 w-full rounded-lg border border-border bg-canvas px-4 text-caption text-ink focus:border-brand focus:outline-none"
+          className="h-12 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
         />
       </div>
 
       <div>
-        <label htmlFor="phone" className="mb-2 block text-caption font-medium text-ink-soft">
+        <label htmlFor="phone" className="mb-2 block text-label text-ink-soft">
           Phone
         </label>
         <input
           id="phone"
           name="phone"
           type="tel"
-          className="h-11 w-full rounded-lg border border-border bg-canvas px-4 text-caption text-ink focus:border-brand focus:outline-none"
+          className="h-12 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
         />
       </div>
 
       <div>
-        <label htmlFor="studentName" className="mb-2 block text-caption font-medium text-ink-soft">
+        <label htmlFor="studentName" className="mb-2 block text-label text-ink-soft">
           Student name
         </label>
         <input
           id="studentName"
           name="studentName"
           type="text"
-          className="h-11 w-full rounded-lg border border-border bg-canvas px-4 text-caption text-ink focus:border-brand focus:outline-none"
+          className="h-12 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
         />
       </div>
 
       <div>
-        <label htmlFor="gradeLevel" className="mb-2 block text-caption font-medium text-ink-soft">
+        <label htmlFor="gradeLevel" className="mb-2 block text-label text-ink-soft">
           Grade level of interest
         </label>
         <select
           id="gradeLevel"
           name="gradeLevel"
-          className="h-11 w-full rounded-lg border border-border bg-canvas px-4 text-caption text-ink focus:border-brand focus:outline-none"
+          className="h-12 w-full rounded-md border-2 border-hairline bg-surface px-4 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
         >
           <option value="">Select a grade level</option>
           <option value="nursery">Nursery</option>
@@ -124,20 +124,20 @@ export function InquiryForm() {
       </div>
 
       <div>
-        <label htmlFor="message" className="mb-2 block text-caption font-medium text-ink-soft">
+        <label htmlFor="message" className="mb-2 block text-label text-ink-soft">
           Message
         </label>
         <textarea
           id="message"
           name="message"
           rows={4}
-          className="w-full rounded-lg border border-border bg-canvas px-4 py-3 text-caption text-ink focus:border-brand focus:outline-none"
+          className="w-full rounded-md border-2 border-hairline bg-surface px-4 py-3 text-body-md text-ink focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
         />
       </div>
 
       <button
         type="submit"
-        className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand px-6 text-caption font-semibold text-white transition-all hover:bg-brand-hover sm:w-auto"
+        className="inline-flex h-14 w-full items-center justify-center rounded-xl bg-brand px-8 text-body-md font-bold text-white shadow-clay-sm hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all sm:w-auto"
       >
         Send inquiry
       </button>

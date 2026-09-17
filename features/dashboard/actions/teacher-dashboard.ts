@@ -304,7 +304,10 @@ export async function getTeacherDashboardData() {
                   .eq('status', 'unlocked'),
         missionIds.length === 0
             ? Promise.resolve({ data: [] as any[], error: null })
-            : supabase.from('activities').select('id, mission_id, prompt').in('mission_id', missionIds),
+            : supabase
+                  .from('activities')
+                  .select('id, mission_id, activity_questions(prompt, order_index)')
+                  .in('mission_id', missionIds),
     ])
 
     if (missionProgressResult.error) {
@@ -315,7 +318,14 @@ export async function getTeacherDashboardData() {
     }
 
     const activityMissionId = new Map((activitiesResult.data ?? []).map((a) => [a.id, a.mission_id]))
-    const activityPromptById = new Map((activitiesResult.data ?? []).map((a) => [a.id, a.prompt as string]))
+    const activityPromptById = new Map(
+    (activitiesResult.data ?? []).map((a: any) => {
+        const sortedQuestions = [...(a.activity_questions ?? [])].sort(
+            (x: any, y: any) => x.order_index - y.order_index
+        )
+        return [a.id, (sortedQuestions[0]?.prompt as string) ?? 'Activity']
+    })
+)
     const activityIds = [...activityMissionId.keys()]
 
     const { data: wrongEvents, error: wrongEventsError } =

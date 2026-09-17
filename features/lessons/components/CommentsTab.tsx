@@ -157,7 +157,7 @@ export function CommentsTab({
                             <button
                                 type="button"
                                 onClick={() => setReplyingToId(isReplying ? null : comment.id)}
-                                className="text-caption font-medium text-text-secondary hover:text-ink"
+                                className="text-caption font-medium text-text-secondary hover:text-ink rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                             >
                                 Reply
                             </button>
@@ -165,7 +165,7 @@ export function CommentsTab({
                         {canDelete && (
                             <button
                                 onClick={() => handleDelete(comment.id)}
-                                className="text-caption text-error font-medium hover:underline"
+                                className="text-caption text-error font-medium hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 transition-colors"
                             >
                                 Delete
                             </button>
@@ -184,12 +184,12 @@ export function CommentsTab({
                                 required
                                 maxLength={2000}
                                 autoFocus
-                                className="h-10 px-3 rounded-md bg-surface border-2 border-hairline text-body-md text-ink flex-1
-                                           placeholder:text-text-muted focus:border-brand focus:outline-none"
+                                className="h-12 px-3 rounded-md bg-surface border-2 border-hairline text-body-md text-ink flex-1
+                                           placeholder:text-text-muted focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                             />
                             <button
                                 type="submit"
-                                className="h-10 px-5 rounded-md bg-brand text-on-ink font-semibold text-caption hover:bg-brand-hover transition-colors"
+                                className="h-12 px-5 rounded-md bg-brand text-on-ink font-semibold text-caption hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                             >
                                 Reply
                             </button>
@@ -208,19 +208,19 @@ export function CommentsTab({
 
     return (
         <div className="grid gap-4">
-            <form ref={formRef} action={handleSubmit} className="flex gap-3">
+            <form ref={formRef} action={handleSubmit} className="flex gap-2 w-full min-w-0">
                 <input
                     type="text"
                     name="body"
-                    placeholder="Add a class comment..."
+                    placeholder="Add a comment..."
                     required
                     maxLength={2000}
-                    className="h-11 px-4 rounded-md bg-surface border-2 border-hairline text-body-md text-ink flex-1
-                               placeholder:text-text-muted focus:border-brand focus:outline-none"
+                    className="h-12 px-4 rounded-md bg-surface border-2 border-hairline text-body-md text-ink flex-1 min-w-0
+                               placeholder:text-text-muted focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                 />
                 <button
                     type="submit"
-                    className="h-11 px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover transition-colors"
+                    className="h-12 px-4 sm:px-6 rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors shrink-0"
                 >
                     Post
                 </button>
@@ -230,7 +230,7 @@ export function CommentsTab({
             {optimisticComments.length === 0 ? (
                 <p className="text-body-md text-text-secondary">No comments yet.</p>
             ) : (
-                <div className="bg-surface rounded-md shadow-card p-4 space-y-5">
+                <div className="bg-surface rounded-md border border-hairline shadow-card p-4 space-y-5">
                     {topLevelComments.map((comment) => renderComment(comment, false))}
                 </div>
             )}

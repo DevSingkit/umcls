@@ -374,7 +374,7 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
 
             <div className="grid gap-4 mb-8">
                 {displayQuestions.map((question, index) => (
-                    <div key={question.id} className="bg-surface rounded-md shadow-card p-6">
+                    <div key={question.id} className="bg-surface rounded-md border border-hairline shadow-card p-6">
                         <p className="text-caption text-text-secondary mb-2">Question {index + 1}</p>
                         <p className="text-body-emphasis text-ink mb-4">{question.question_text}</p>
 
@@ -384,7 +384,7 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
                                 onChange={(e) => setTextAnswer(question.id, e.target.value)}
                                 placeholder="Type your answer here"
                                 disabled={isLocked}
-                                className="w-full rounded-md border-[1.5px] border-hairline-strong px-4 py-3 text-body-md text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:opacity-60"
+                                className="w-full rounded-md border-2 border-hairline px-4 py-3 text-body-md text-ink focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
                                 rows={3}
                             />
                         ) : question.question_type === 'checklist' ? (
@@ -392,14 +392,14 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
                                 {question.options.map((option) => (
                                     <label
                                         key={option.id}
-                                        className="flex items-center gap-3 rounded-md border-[1.5px] border-hairline-strong px-4 py-3 cursor-pointer has-[:checked]:border-brand has-[:checked]:bg-brand-soft"
+                                        className="flex items-center gap-3 rounded-md border-2 border-hairline px-4 py-3 cursor-pointer transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand-soft focus-within:ring-2 focus-within:ring-brand focus-within:ring-offset-2"
                                     >
                                         <input
                                             type="checkbox"
                                             checked={(answers[question.id]?.selectedOptionIds ?? []).includes(option.id)}
                                             onChange={() => toggleChecklistAnswer(question.id, option.id)}
                                             disabled={isLocked}
-                                            className="h-5 w-5 accent-brand"
+                                            className="h-5 w-5 rounded text-brand focus:ring-2 focus:ring-brand focus-visible:ring-offset-2"
                                         />
                                         <span className="text-body-md text-ink">{option.option_text}</span>
                                     </label>
@@ -410,7 +410,7 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
                                 {question.options.map((option) => (
                                     <label
                                         key={option.id}
-                                        className="flex items-center gap-3 rounded-md border-[1.5px] border-hairline-strong px-4 py-3 cursor-pointer has-[:checked]:border-brand has-[:checked]:bg-brand-soft"
+                                        className="flex items-center gap-3 rounded-md border-2 border-hairline px-4 py-3 cursor-pointer transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand-soft focus-within:ring-2 focus-within:ring-brand focus-within:ring-offset-2"
                                     >
                                         <input
                                             type="radio"
@@ -418,7 +418,7 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
                                             checked={(answers[question.id]?.selectedOptionIds ?? [])[0] === option.id}
                                             onChange={() => selectSingleAnswer(question.id, option.id, question.question_type)}
                                             disabled={isLocked}
-                                            className="h-5 w-5 accent-brand"
+                                            className="h-5 w-5 text-brand focus:ring-2 focus:ring-brand focus-visible:ring-offset-2"
                                         />
                                         <span className="text-body-md text-ink">{option.option_text}</span>
                                     </label>
@@ -453,7 +453,7 @@ export function TakeQuizForm({ quiz, courseId }: { quiz: Quiz; courseId: string 
             <button
                 onClick={() => handleSubmit()}
                 disabled={isSubmitting}
-                className="w-full h-14 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+                className="w-full h-14 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
                 {isSubmitting ? 'Submitting…' : 'Submit quiz'}
             </button>

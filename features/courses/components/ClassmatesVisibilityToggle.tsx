@@ -22,13 +22,13 @@ export function ClassmatesVisibilityToggle({
     }
 
     return (
-        <label className="flex items-center gap-3 text-body-md text-ink">
+        <label className="flex items-center gap-3 text-body-md text-ink cursor-pointer select-none py-2 min-h-touch">
             <input
                 type="checkbox"
                 checked={show}
                 disabled={isPending}
                 onChange={handleToggle}
-                className="h-5 w-5 accent-brand"
+                className="h-5 w-5 rounded accent-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             />
             Let students see who else is enrolled in this course
         </label>

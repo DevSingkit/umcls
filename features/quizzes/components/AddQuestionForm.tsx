@@ -185,7 +185,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                     aria-label="Question type"
                     value={questionType}
                     onChange={(e) => setQuestionType(e.target.value as QuestionType)}
-                    className="min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink"
+                    className="h-12 px-4 rounded-md border-2 border-hairline focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 text-body-md text-ink bg-surface"
                 >
                     <option value="multiple_choice_single">Multiple choice</option>
                     <option value="true_false">True or false</option>
@@ -200,7 +200,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                 required
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
-                className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 placeholder="Type the question here"
             />
 
@@ -213,7 +213,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                 type="button"
                                 aria-label={`Mark option ${index + 1} as correct`}
                                 onClick={() => setCorrectIndex(index)}
-                                className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctIndex === index
+                                className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${correctIndex === index
                                         ? 'border-brand bg-brand text-on-ink'
                                         : 'border-hairline hover:border-brand'
                                     }`}
@@ -233,14 +233,14 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${index + 1}`}
-                                className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="flex-1 h-12 px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             />
                             {options.length > 2 && (
                                 <button
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="text-text-secondary hover:text-error text-body-md px-2"
+                                    className="text-text-secondary hover:text-error text-body-md px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 rounded"
                                 >
                                     <X size={14} aria-hidden="true" />
                                 </button>
@@ -250,7 +250,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                     <button
                         type="button"
                         onClick={addOptionRow}
-                        className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
+                        className="text-caption font-semibold text-text-secondary hover:text-ink pl-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
                     >
                         + Add option
                     </button>
@@ -267,21 +267,21 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                 aria-label={`Mark option ${index + 1} as correct`}
                                 checked={correctKeys.has(option.key)}
                                 onChange={() => toggleCorrectKey(option.key)}
-                                className="h-5 w-5 shrink-0 accent-brand"
+                                className="h-5 w-5 shrink-0 rounded text-brand focus:ring-2 focus:ring-brand focus-visible:ring-offset-2"
                             />
                             <input
                                 type="text"
                                 value={option.text}
                                 onChange={(e) => updateOptionText(option.key, e.target.value)}
                                 placeholder={`Option ${index + 1}`}
-                                className="flex-1 min-h-[44px] px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                                className="flex-1 h-12 px-4 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             />
                             {options.length > 2 && (
                                 <button
                                     type="button"
                                     aria-label={`Remove option ${index + 1}`}
                                     onClick={() => removeOptionRow(option.key)}
-                                    className="relative flex h-8 w-8 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error shrink-0 before:absolute before:-inset-1.5 before:content-['']"
+                                    className="relative flex h-8 w-8 items-center justify-center rounded-md border-2 border-hairline text-text-secondary hover:border-error hover:text-error shrink-0 before:absolute before:-inset-1.5 before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
                                 >
                                     <X size={14} aria-hidden="true" />
                                 </button>
@@ -291,7 +291,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                     <button
                         type="button"
                         onClick={addOptionRow}
-                        className="text-caption font-semibold text-text-secondary hover:text-ink pl-8"
+                        className="text-caption font-semibold text-text-secondary hover:text-ink pl-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
                     >
                         + Add option
                     </button>
@@ -307,7 +307,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                                 type="button"
                                 aria-label={`Mark ${label} as correct`}
                                 onClick={() => setCorrectTf(label)}
-                                className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors ${correctTf === label
+                                className={`flex items-center justify-center w-5 h-5 rounded-pill border-2 shrink-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${correctTf === label
                                         ? 'border-brand bg-brand text-on-ink'
                                         : 'border-hairline hover:border-brand'
                                     }`}
@@ -340,7 +340,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
                         value={referenceAnswer}
                         onChange={(e) => setReferenceAnswer(e.target.value)}
                         placeholder="e.g. Expected answer or grading notes"
-                        className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus:ring-2 focus:ring-brand/30"
+                        className="w-full px-5 py-3 rounded-md border-2 border-hairline focus:border-brand outline-none text-body-md text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     />
                 </div>
             )}
@@ -354,7 +354,7 @@ export function AddQuestionForm({ quizId }: { quizId: string }) {
             <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors disabled:opacity-60"
+                className="w-full h-14 rounded-md bg-brand hover:bg-brand-hover text-on-ink font-semibold text-body-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
             >
                 {isPending ? 'Adding…' : 'Add question'}
             </button>

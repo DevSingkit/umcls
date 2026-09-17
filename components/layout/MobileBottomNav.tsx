@@ -40,7 +40,7 @@ export function MobileBottomNav({ role }: MobileBottomNavProps) {
             role="navigation"
             aria-label="Main navigation"
             className={cn(
-                "fixed inset-x-0 bottom-0 z-30 grid border-t border-hairline bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden",
+                "fixed inset-x-0 bottom-0 z-30 grid border-t border-hairline bg-surface pb-[env(safe-area-inset-bottom)] md:hidden",
                 gridColsClass
             )}
         >

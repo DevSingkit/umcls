@@ -131,14 +131,14 @@ export default function LandingPage() {
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <Link
                   href="/admissions"
-                  className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset transition-all"
+                  className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
                 >
                   Admissions
                   <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-surface px-8 text-xl font-bold text-ink shadow-card hover:shadow-card-hover transition-all"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-surface px-8 text-xl font-bold text-ink border border-hairline shadow-card hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
                 >
                   Log in
                 </Link>
@@ -150,7 +150,7 @@ export default function LandingPage() {
                   <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
                   DepEd Recognized
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-base font-bold text-ink-soft shadow-clay-sm">
+                <span className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-base font-bold text-ink-soft border border-hairline shadow-clay-sm">
                   <MapPin className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
                   847 Sampaguita Street, Tala, Caloocan City
                 </span>
@@ -158,7 +158,7 @@ export default function LandingPage() {
             </div>
 
             {/* Hero visual slot */}
-            <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface shadow-card">
+            <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface border border-hairline shadow-card">
               <img 
                 src="/hero.jpe" 
                 alt="United Methodist Cooperative Learning System Hero Visual" 
@@ -169,7 +169,7 @@ export default function LandingPage() {
         </section>
 
         {/* ── Trust & credentials bar ─────────────────────────────────────── */}
-        <section className="bg-surface px-6 py-8 shadow-clay-sm">
+        <section className="bg-surface px-6 py-8 border-y border-hairline shadow-clay-sm">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6">
             <ul className="flex flex-wrap gap-x-10 gap-y-3">
               {trustStats.map((stat) => (
@@ -184,7 +184,7 @@ export default function LandingPage() {
 
         {/* ── Welcome message ──────────────────────────────────────────────── */}
         <section className="px-6 py-16 md:py-20">
-          <div className="mx-auto max-w-4xl bg-surface rounded-2xl p-8 md:p-12 shadow-card">
+          <div className="mx-auto max-w-4xl bg-surface rounded-2xl p-8 md:p-12 border border-hairline shadow-card">
             <span className="text-base font-bold uppercase tracking-wider text-brand">Our Educational Philosophy</span>
             <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Welcome to UMCLSI</h2>
             <p className="mt-6 text-xl leading-relaxed text-ink-soft">
@@ -213,7 +213,7 @@ export default function LandingPage() {
               {programs.map((program) => (
                 <div
                   key={program.title}
-                  className="rounded-2xl bg-surface p-8 shadow-card hover:shadow-card-hover transition-all flex flex-col justify-between"
+                  className="rounded-2xl bg-surface p-8 border border-hairline shadow-card hover:shadow-card-hover transition-all flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-soft shadow-clay-sm">
@@ -238,7 +238,7 @@ export default function LandingPage() {
               {advantages.map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-2xl bg-surface p-8 shadow-card hover:shadow-card-hover transition-all"
+                  className="rounded-2xl bg-surface p-8 border border-hairline shadow-card hover:shadow-card-hover transition-all"
                 >
                   <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-soft shadow-clay-sm">
                     <item.icon className="h-7 w-7 text-brand" strokeWidth={2} aria-hidden="true" />
@@ -252,14 +252,14 @@ export default function LandingPage() {
         </section>
 
         {/* ── Educational Commitments ──────────────────────────────────────── */}
-        <section className="bg-surface px-6 py-16 md:py-20 shadow-clay-sm">
+        <section className="bg-surface px-6 py-16 md:py-20 border-y border-hairline shadow-clay-sm">
           <div className="mx-auto max-w-7xl">
             <span className="text-base font-bold uppercase tracking-wider text-brand">What drives our mission</span>
             <h2 className="mt-2 text-3xl md:text-4xl font-extrabold text-ink">Our Core Commitments</h2>
 
             <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {corePillars.map((item) => (
-                <div key={item.title} className="rounded-2xl bg-surface-sunken p-8 shadow-clay-inset">
+                <div key={item.title} className="rounded-2xl bg-surface-sunken p-8 border border-hairline shadow-clay-inset">
                   <Quote className="h-8 w-8 text-brand" strokeWidth={2} aria-hidden="true" />
                   <h3 className="mt-4 text-2xl font-bold text-ink">{item.title}</h3>
                   <p className="mt-3 text-lg leading-relaxed text-ink-soft">{item.quote}</p>
@@ -279,7 +279,7 @@ export default function LandingPage() {
               </div>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 text-xl font-bold text-brand hover:underline"
+                className="inline-flex items-center gap-2 text-xl font-bold text-brand hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
               >
                 Contact us for details
                 <ArrowUpRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
@@ -290,7 +290,7 @@ export default function LandingPage() {
               {announcements.map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-2xl bg-surface p-8 shadow-card hover:shadow-card-hover transition-all"
+                  className="rounded-2xl bg-surface p-8 border border-hairline shadow-card hover:shadow-card-hover transition-all"
                 >
                   <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-4 py-1.5 text-base font-bold text-brand shadow-clay-sm">
                     <CalendarDays className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
@@ -303,7 +303,7 @@ export default function LandingPage() {
             </div>
 
             {/* Portal Callout Banner */}
-            <div className="mt-12 flex flex-col items-start justify-between gap-6 rounded-2xl bg-surface p-8 md:p-10 lg:flex-row lg:items-center shadow-card">
+            <div className="mt-12 flex flex-col items-start justify-between gap-6 rounded-2xl bg-surface p-8 md:p-10 lg:flex-row lg:items-center border border-hairline shadow-card">
               <div>
                 <h3 className="text-2xl md:text-3xl font-extrabold text-ink">
                   Students and parents: access the LMS portal
@@ -314,7 +314,7 @@ export default function LandingPage() {
               </div>
               <Link
                 href="/login"
-                className="inline-flex h-14 shrink-0 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset transition-all"
+                className="inline-flex h-14 shrink-0 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
               >
                 Go to LMS Portal
                 <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />

@@ -32,7 +32,7 @@ export function CreateUserForm() {
     }, [state]);
 
     return (
-        <form action={formAction} className="bg-surface rounded-md shadow-card p-8 space-y-6">
+        <form action={formAction} className="bg-surface rounded-md border border-hairline shadow-card p-8 space-y-6">
             <div>
                 <label htmlFor="fullName" className="text-label text-text-secondary block mb-2">
                     Full name
@@ -44,7 +44,7 @@ export function CreateUserForm() {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     placeholder="e.g. Maria Santos"
                 />
             </div>
@@ -62,7 +62,7 @@ export function CreateUserForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     aria-describedby={!state.ok && state.error ? 'create-user-error' : undefined}
                     aria-invalid={!state.ok && state.error ? true : undefined}
-                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     placeholder="name@school.edu"
                 />
             </div>
@@ -77,7 +77,7 @@ export function CreateUserForm() {
                     required
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     <option value="teacher">Teacher</option>
                     <option value="student">Student</option>
@@ -97,7 +97,7 @@ export function CreateUserForm() {
                     minLength={12}
                     value={temporaryPassword}
                     onChange={(e) => setTemporaryPassword(e.target.value)}
-                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="w-full h-13 px-5 rounded-md border-2 border-hairline bg-surface focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     placeholder="At least 12 characters, with upper, lower, and a number"
                 />
             </div>

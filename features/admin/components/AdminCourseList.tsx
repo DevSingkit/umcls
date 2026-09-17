@@ -80,7 +80,7 @@ export function AdminCourseList({ initialCourses }: { initialCourses: AdminCours
                 {courses.map((course) => (
                     <div
                         key={course.id}
-                        className="bg-surface rounded-md shadow-card p-5 flex flex-col gap-3"
+                        className="bg-surface rounded-md border border-hairline shadow-card p-5 flex flex-col gap-3"
                     >
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
@@ -98,7 +98,7 @@ export function AdminCourseList({ initialCourses }: { initialCourses: AdminCours
                                 <button
                                     onClick={() => handleUnarchive(course.id)}
                                     disabled={isPending}
-                                    className="h-14 px-6 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                                    className="h-14 px-6 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60 shrink-0"
                                 >
                                     Unarchive
                                 </button>
@@ -106,7 +106,7 @@ export function AdminCourseList({ initialCourses }: { initialCourses: AdminCours
                                 <button
                                     onClick={() => setArchiveConfirmCourse(course)}
                                     disabled={isPending}
-                                    className="h-12 px-6 rounded-md border-2 border-error bg-surface text-error font-medium hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 shrink-0"
+                                    className="h-12 px-6 rounded-md border-2 border-error bg-surface text-error font-medium hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 disabled:opacity-60 shrink-0"
                                 >
                                     Archive
                                 </button>
@@ -152,14 +152,14 @@ export function AdminCourseList({ initialCourses }: { initialCourses: AdminCours
                         <div className="mt-6 flex justify-end gap-2">
                             <button
                                 onClick={() => setArchiveConfirmCourse(null)}
-                                className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="h-12 px-4 rounded-md border-2 border-hairline bg-surface text-ink text-caption font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmArchive}
                                 disabled={isPending}
-                                className="h-14 px-4 rounded-md bg-error text-on-ink text-caption font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                                className="h-14 px-4 rounded-md bg-error text-on-ink text-caption font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 disabled:opacity-60"
                             >
                                 {isPending ? 'Archiving…' : 'Archive'}
                             </button>

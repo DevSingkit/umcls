@@ -65,13 +65,19 @@ export default function ContactPage() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 shrink-0 text-brand" strokeWidth={1.5} aria-hidden="true" />
-                <Link href="tel:+639945849446" className="text-caption text-ink-soft hover:underline">
+                <Link
+                  href="tel:+639945849446"
+                  className="text-caption text-ink-soft hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
+                >
                   0994 584 9446
                 </Link>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 shrink-0 text-brand" strokeWidth={1.5} aria-hidden="true" />
-                <Link href="mailto:umcls20educ@gmail.com" className="text-caption text-ink-soft hover:underline">
+                <Link
+                  href="mailto:umcls20educ@gmail.com"
+                  className="text-caption text-ink-soft hover:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
+                >
                   umcls20educ@gmail.com
                 </Link>
               </li>
@@ -86,7 +92,7 @@ export default function ContactPage() {
             </ul>
 
             {/* Campus Map Embed */}
-            <div className="mt-8 aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+            <div className="mt-8 aspect-video w-full overflow-hidden rounded-xl border border-hairline bg-surface shadow-card">
               <iframe
                 title="UMCLSI campus location"
                 className="h-full w-full border-0"
@@ -97,7 +103,7 @@ export default function ContactPage() {
           </div>
 
           {/* Form Side */}
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+          <div className="rounded-xl border border-hairline bg-surface p-6 shadow-card sm:p-8">
             <h2 className="text-xl font-bold text-ink">Send an Inquiry</h2>
             <InquiryForm />
           </div>

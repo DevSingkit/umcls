@@ -123,7 +123,7 @@ export default function AboutPage() {
           </p>
 
           {/* Quick Institutional Summary */}
-          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-border bg-surface p-6 shadow-sm md:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-hairline bg-surface p-6 shadow-card md:grid-cols-4">
             <div>
               <p className="text-caption text-text-secondary">Institution Type</p>
               <p className="mt-1 text-body-md font-bold text-ink">Private Basic Education</p>
@@ -148,7 +148,7 @@ export default function AboutPage() {
       <section className="px-4 py-10 sm:px-6 md:py-12">
         <div className="mx-auto grid max-w-[1280px] gap-8 lg:grid-cols-2">
           {/* Vision Card */}
-          <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
+          <div className="rounded-xl border border-hairline bg-surface p-8 shadow-card">
             <p className="text-caption font-semibold uppercase tracking-wider text-brand">
               Vision
             </p>
@@ -161,7 +161,7 @@ export default function AboutPage() {
           </div>
 
           {/* Mission Card */}
-          <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
+          <div className="rounded-xl border border-hairline bg-surface p-8 shadow-card">
             <p className="text-caption font-semibold uppercase tracking-wider text-brand">
               Mission
             </p>
@@ -180,7 +180,7 @@ export default function AboutPage() {
             {missionPillars.map((item) => (
               <div
                 key={item.title}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all hover:shadow-md"
+                className="rounded-xl border border-hairline bg-surface p-6 shadow-card transition-all hover:shadow-card-hover"
               >
                 <h3 className="text-body-md font-bold text-ink">{item.title}</h3>
                 <p className="mt-2 text-caption leading-relaxed text-text-secondary">{item.description}</p>
@@ -205,7 +205,7 @@ export default function AboutPage() {
             {historyMilestones.map((milestone) => (
               <div
                 key={milestone.title}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm"
+                className="rounded-xl border border-hairline bg-surface p-6 shadow-card"
               >
                 <span className="text-caption font-semibold uppercase text-brand">
                   {milestone.year}
@@ -232,9 +232,9 @@ export default function AboutPage() {
             {coreValues.map((value) => (
               <div
                 key={value.title}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all hover:shadow-md"
+                className="rounded-xl border border-hairline bg-surface p-6 shadow-card transition-all hover:shadow-card-hover"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft">
                   <value.icon className="h-6 w-6 text-brand" strokeWidth={2} aria-hidden="true" />
                 </div>
                 <h3 className="mt-4 text-body-md font-bold text-ink">{value.title}</h3>
@@ -259,15 +259,15 @@ export default function AboutPage() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-4 py-2 text-caption font-semibold text-brand">
+            <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft border border-brand/20 px-4 py-2 text-caption font-semibold text-brand">
               <Award className="h-4 w-4" />
               DepEd Division of Caloocan City Recognized
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-4 py-2 text-caption font-semibold text-brand">
+            <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft border border-brand/20 px-4 py-2 text-caption font-semibold text-brand">
               <Landmark className="h-4 w-4" />
               United Methodist Church Ministry Partner
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-4 py-2 text-caption font-semibold text-brand">
+            <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft border border-brand/20 px-4 py-2 text-caption font-semibold text-brand">
               <GraduationCap className="h-4 w-4" />
               K to 12 Curriculum Compliant
             </span>
@@ -290,9 +290,9 @@ export default function AboutPage() {
             {facilities.map((item) => (
               <div
                 key={item.title}
-                className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-all hover:shadow-md"
+                className="rounded-xl border border-hairline bg-surface p-6 shadow-card transition-all hover:shadow-card-hover"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft">
                   <item.icon className="h-6 w-6 text-brand" strokeWidth={2} aria-hidden="true" />
                 </div>
                 <h3 className="mt-4 text-body-md font-bold text-ink">{item.title}</h3>

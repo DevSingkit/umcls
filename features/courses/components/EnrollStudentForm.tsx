@@ -63,15 +63,14 @@ export function EnrollStudentForm({
                 type="button"
                 onClick={() => setIsOpen((v) => !v)}
                 aria-expanded={isOpen}
-                className="inline-flex h-12 items-center gap-2 px-5 rounded-md border-[1.5px] border-hairline-strong bg-surface text-ink font-medium text-body-md
-                           hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand transition-colors"
+                className="inline-flex h-12 min-h-touch items-center gap-2 px-5 rounded-md border-2 border-hairline bg-surface text-ink font-medium text-body-md hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
             >
                 <UserPlus size={18} className="shrink-0" aria-hidden="true" />
                 Add a student
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 z-20 mt-2 w-80 rounded-md border border-hairline bg-surface p-5 shadow-card">
+                <div className="absolute right-0 z-20 mt-2 w-80 rounded-md border border-hairline bg-surface p-5 shadow-modal">
                     <form action={formAction} className="space-y-4">
                         <input type="hidden" name="courseId" value={courseId} />
 
@@ -83,7 +82,7 @@ export function EnrollStudentForm({
                                 id="studentId"
                                 name="studentId"
                                 required
-                                className="w-full h-11 px-4 rounded-md border border-hairline-strong bg-surface focus:border-[1.5px] focus:border-brand outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                className="w-full h-13 px-4 rounded-md border-2 border-hairline bg-surface text-body-md text-ink outline-none focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
                             >
                                 <option value="">Choose a student</option>
                                 {students.map((student) => (
@@ -114,7 +113,7 @@ export function EnrollStudentForm({
                         <button
                             type="submit"
                             disabled={isPending || students.length === 0}
-                            className="w-full h-14 rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
+                            className="w-full h-14 min-h-touch rounded-md bg-brand text-on-ink font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors disabled:opacity-60"
                         >
                             {isPending ? 'Enrolling…' : 'Enroll student'}
                         </button>

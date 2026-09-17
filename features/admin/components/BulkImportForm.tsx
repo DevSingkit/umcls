@@ -68,7 +68,7 @@ export function BulkImportForm() {
     }
 
     return (
-        <div className="bg-surface rounded-md shadow-card p-6">
+        <div className="bg-surface rounded-md border border-hairline shadow-card p-6">
             <p className="text-body-emphasis text-ink mb-2">Add many accounts at once</p>
             <p className="text-body-md text-text-secondary mb-6">
                 Download the template, fill in one row per person, then upload it here. If
@@ -79,7 +79,7 @@ export function BulkImportForm() {
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <button
                     onClick={downloadTemplate}
-                    className="h-12 px-6 flex items-center justify-center rounded-md border-2 border-hairline bg-surface text-ink font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-12 px-6 flex items-center justify-center rounded-md border-2 border-hairline bg-surface text-ink font-medium hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     Download template
                 </button>
@@ -123,7 +123,7 @@ export function BulkImportForm() {
 
                     <button
                         onClick={() => downloadCredentials(result.created)}
-                        className="h-14 px-6 mb-4 flex items-center justify-center rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        className="h-14 px-6 mb-4 flex items-center justify-center rounded-md bg-brand text-on-ink font-medium hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                     >
                         Download credentials (Excel)
                     </button>

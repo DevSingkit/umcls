@@ -103,7 +103,7 @@ export function EditLessonForm({
         <div className="max-w-2xl mx-auto pb-16">
             <h1 className="text-h1 text-ink mb-8">Edit lesson</h1>
 
-            <form action={handleSave} className="bg-surface rounded-md shadow-card p-8 space-y-6 mb-8">
+            <form action={handleSave} className="bg-surface rounded-md border border-hairline shadow-card p-8 space-y-6 mb-8">
                 <input type="hidden" name="lessonId" value={lessonId} />
 
                 <div>
@@ -116,8 +116,8 @@ export function EditLessonForm({
                         type="text"
                         required
                         defaultValue={initialTitle}
-                        className="w-full min-h-[44px] px-4 rounded-md border-2 border-hairline text-body-md text-ink
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="w-full h-13 px-4 rounded-md border-2 border-hairline text-body-emphasis text-ink
+                                   focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     />
                 </div>
 
@@ -134,7 +134,7 @@ export function EditLessonForm({
                         defaultValue={initialContent}
                         onInput={resizeContent}
                         className="w-full px-4 py-3 rounded-md border-2 border-hairline text-body-md text-ink leading-relaxed
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none overflow-hidden"
+                                   focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 resize-none overflow-hidden transition-colors"
                     />
                 </div>
 
@@ -147,8 +147,8 @@ export function EditLessonForm({
                 <button
                     type="submit"
                     disabled={isSaving}
-                    className="w-full h-11 rounded-md bg-brand text-on-ink font-semibold text-body-md
-                               hover:bg-brand-hover disabled:opacity-60 transition-colors"
+                    className="w-full h-14 rounded-md bg-brand text-on-ink font-semibold text-body-md
+                               hover:bg-brand-hover disabled:opacity-60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                     {isSaving ? 'Saving…' : 'Save changes'}
                 </button>
@@ -161,7 +161,7 @@ export function EditLessonForm({
                 MaterialList's own cards below with a gap between).
                 Matches NewLessonForm's one-card-holds-everything feel
                 instead of looking like separate sections. */}
-            <div className="bg-surface rounded-md shadow-card p-6 space-y-4">
+            <div className="bg-surface rounded-md border border-hairline shadow-card p-6 space-y-4">
                 <form
                     ref={fileFormRef}
                     action={handleFileUpload}
@@ -180,7 +180,7 @@ export function EditLessonForm({
                     <button
                         type="submit"
                         disabled={isUploading}
-                        className="h-11 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
+                        className="h-12 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     >
                         {isUploading ? 'Uploading…' : 'Upload file'}
                     </button>
@@ -195,21 +195,21 @@ export function EditLessonForm({
                         type="text"
                         name="label"
                         placeholder="Label (optional)"
-                        className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[140px]
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="h-12 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[140px]
+                                   focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     />
                     <input
                         type="url"
                         name="url"
                         placeholder="https://..."
                         required
-                        className="h-11 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[200px]
-                                   focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                        className="h-12 px-4 rounded-md border-2 border-hairline text-body-md text-ink flex-1 min-w-[200px]
+                                   focus:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     />
                     <button
                         type="submit"
                         disabled={isUploading}
-                        className="h-11 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60"
+                        className="h-12 px-6 rounded-md border-2 border-hairline text-ink font-semibold hover:bg-surface-sunken disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-colors"
                     >
                         {isUploading ? 'Adding…' : 'Add link'}
                     </button>

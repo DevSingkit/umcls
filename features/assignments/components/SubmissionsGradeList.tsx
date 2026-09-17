@@ -82,108 +82,113 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
     return (
         <div className="grid gap-3">
             {error && <p className="text-caption text-error">{error}</p>}
-            {rows.map((row) => (
-                <div
-                    key={row.studentId}
-                    className="bg-surface rounded-md shadow-card p-4"
-                >
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1">
-                            <p className="text-body-emphasis text-ink">{row.studentName}</p>
-                            {row.submission ? (
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    {row.submission.files.length > 0 ? (
-                                        row.submission.files.map((f) => (
+            {rows.length === 0 ? (
+                <div className="bg-surface rounded-md border border-hairline shadow-card p-8 text-center">
+                    <p className="text-body-md text-text-secondary">No enrolled students in this course yet.</p>
+                </div>
+            ) : (
+                rows.map((row) => (
+                    <div
+                        key={row.studentId}
+                        className="bg-surface rounded-md border border-hairline shadow-card p-4"
+                    >
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1">
+                                <p className="text-body-emphasis text-ink">{row.studentName}</p>
+                                {row.submission ? (
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {row.submission.files.length > 0 ? (
+                                            row.submission.files.map((f) => (
+                                                <button
+                                                    key={f.id}
+                                                    onClick={() => handleDownload(f.id)}
+                                                    className="text-caption text-brand underline hover:text-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded-sm"
+                                                >
+                                                    {f.file_name}
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <span className="text-caption text-text-secondary">No files attached</span>
+                                        )}
+                                        {row.submission.response_text && (
                                             <button
-                                                key={f.id}
-                                                onClick={() => handleDownload(f.id)}
-                                                className="text-caption text-brand underline hover:text-brand-hover"
+                                                onClick={() =>
+                                                    setExpandedId((prev) => (prev === row.submission!.id ? null : row.submission!.id))
+                                                }
+                                                className="text-caption text-text-secondary underline hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded-sm"
                                             >
-                                                {f.file_name}
+                                                {expandedId === row.submission.id ? 'Hide note' : 'View note'}
                                             </button>
-                                        ))
-                                    ) : (
-                                        <span className="text-caption text-text-secondary">No files attached</span>
-                                    )}
-                                    {row.submission.response_text && (
-                                        <button
-                                            onClick={() =>
-                                                setExpandedId((prev) => (prev === row.submission!.id ? null : row.submission!.id))
-                                            }
-                                            className="text-caption text-text-secondary underline hover:text-ink"
-                                        >
-                                            {expandedId === row.submission.id ? 'Hide note' : 'View note'}
-                                        </button>
-                                    )}
-                                    {row.submission.is_late && <StatusBadge tone="slate">Late</StatusBadge>}
-                                    {row.submission.status === 'resubmitted' && (
-                                        <StatusBadge tone="warning">Resubmitted</StatusBadge>
-                                    )}
-                                </div>
-                            ) : (
-                                <p className="text-caption text-text-secondary">No submission yet</p>
-                            )}
-                        </div>
-
-                        {row.submission && (
-                            <div className="flex items-center gap-3 shrink-0">
-                                {editingId === row.submission.id ? (
-                                    <form
-                                        action={(fd) => handleGrade(row.submission!.id, fd)}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <input
-                                            type="number"
-                                            name="score"
-                                            min={0}
-                                            max={maxScore}
-                                            defaultValue={row.submission.score ?? ''}
-                                            required
-                                            className="h-11 w-20 px-2 rounded-md border-2 border-hairline text-body-md text-ink"
-                                        />
-                                        <span className="text-caption text-text-secondary">/ {maxScore}</span>
-                                        <button
-                                            type="submit"
-                                            disabled={isPending}
-                                            className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover disabled:opacity-60"
-                                        >
-                                            Save
-                                        </button>
-                                    </form>
+                                        )}
+                                        {row.submission.is_late && <StatusBadge tone="slate">Late</StatusBadge>}
+                                        {row.submission.status === 'resubmitted' && (
+                                            <StatusBadge tone="warning">Resubmitted</StatusBadge>
+                                        )}
+                                    </div>
                                 ) : (
-                                    <>
-                                        <span className="text-caption text-ink">
-                                            {row.submission.status === 'graded' || row.submission.status === 'returned'
-                                                ? `${row.submission.score} / ${maxScore}`
-                                                : row.submission.status === 'resubmitted'
-                                                    ? 'Needs re-grading'
-                                                    : 'Ungraded'}
-                                        </span>
-                                        <button
-                                            onClick={() => setEditingId(row.submission!.id)}
-                                            className="h-12 px-4 rounded-md border-2 border-hairline text-caption font-semibold text-ink hover:bg-surface-sunken"
-                                        >
-                                            {row.submission.status === 'graded' || row.submission.status === 'returned'
-                                                ? 'Edit'
-                                                : 'Grade'}
-                                        </button>
-                                        {row.submission.status === 'graded' && (
-                                            <button
-                                                onClick={() => handleReturn(row.submission!.id)}
-                                                disabled={isPending}
-                                                className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover disabled:opacity-60"
-                                            >
-                                                Return to student
-                                            </button>
-                                        )}
-                                        {row.submission.status === 'returned' && (
-                                            <span className="text-caption text-success">Returned</span>
-                                        )}
-                                    </>
+                                    <p className="text-caption text-text-secondary">No submission yet</p>
                                 )}
                             </div>
-                        )}
-                    </div>
+
+                            {row.submission && (
+                                <div className="flex items-center gap-3 shrink-0">
+                                    {editingId === row.submission.id ? (
+                                        <form
+                                            action={(fd) => handleGrade(row.submission!.id, fd)}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <input
+                                                type="number"
+                                                name="score"
+                                                min={0}
+                                                max={maxScore}
+                                                defaultValue={row.submission.score ?? ''}
+                                                required
+                                                className="h-11 w-20 px-2 rounded-md border-2 border-hairline text-body-md text-ink outline-none focus:border-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                                            />
+                                            <span className="text-caption text-text-secondary">/ {maxScore}</span>
+                                            <button
+                                                type="submit"
+                                                disabled={isPending}
+                                                className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
+                                            >
+                                                Save
+                                            </button>
+                                        </form>
+                                    ) : (
+                                        <>
+                                            <span className="text-caption text-ink">
+                                                {row.submission.status === 'graded' || row.submission.status === 'returned'
+                                                    ? `${row.submission.score} / ${maxScore}`
+                                                    : row.submission.status === 'resubmitted'
+                                                        ? 'Needs re-grading'
+                                                        : 'Ungraded'}
+                                            </span>
+                                            <button
+                                                onClick={() => setEditingId(row.submission!.id)}
+                                                className="h-12 px-4 rounded-md border-2 border-hairline text-caption font-semibold text-ink hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                                            >
+                                                {row.submission.status === 'graded' || row.submission.status === 'returned'
+                                                    ? 'Edit'
+                                                    : 'Grade'}
+                                            </button>
+                                            {row.submission.status === 'graded' && (
+                                                <button
+                                                    onClick={() => handleReturn(row.submission!.id)}
+                                                    disabled={isPending}
+                                                    className="h-12 px-4 rounded-md bg-brand text-on-ink text-caption font-semibold hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-60"
+                                                >
+                                                    Return to student
+                                                </button>
+                                            )}
+                                            {row.submission.status === 'returned' && (
+                                                <span className="text-caption text-success">Returned</span>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
                     {row.submission && expandedId === row.submission.id && row.submission.response_text && (
                         <div className="mt-3 pt-3 border-t border-hairline">
@@ -192,7 +197,7 @@ export function SubmissionsGradeList({ rows, maxScore }: { rows: Row[]; maxScore
                         </div>
                     )}
                 </div>
-            ))}
+            )))}
         </div>
     )
 }
