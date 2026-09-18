@@ -14,9 +14,9 @@ export default async function AdminDeletedUsersPage() {
 
     return (
         <div>
-            <h1 className="text-h1 text-ink mb-2">Deleted accounts</h1>
+            <h1 className="text-h1 text-ink mb-2">Archived accounts</h1>
             <p className="text-body-md text-text-secondary mb-8">
-                Restore an account that was previously erased.
+                Restore an account that was previously archived.
             </p>
 
             <DeletedUsersList initialUsers={deletedUsers} />

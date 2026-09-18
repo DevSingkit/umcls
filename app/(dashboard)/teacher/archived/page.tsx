@@ -2,20 +2,6 @@ import { requireRole } from '@/lib/auth/get-current-user'
 import { getMyArchivedCourses } from '@/features/courses/actions/courses'
 import { CourseCard } from '@/features/courses/components/CourseCard'
 
-// Read-only-in-the-sense-of-no-archive-controls-here list of a
-// teacher's archived courses. Everything about the course itself
-// (lessons, quizzes, grading, etc.) still works exactly as before —
-// this page only exists so an archived course is still reachable now
-// that it no longer appears on the dashboard/main course list.
-// Unarchiving is admin-only (migration 059) — there is deliberately no
-// button here to reverse it.
-//
-// DESIGN-LMS 2.1 REDESIGN (2026-08-31): pure visual fix, no logic
-// touched — requireRole guard and getMyArchivedCourses call unchanged.
-// Removed `font-heading` from the page's h1, same Classroom-Mode-is-
-// Roboto fix applied everywhere else in this track. CourseCard itself
-// was already redesigned in an earlier round (student batch) — no
-// changes needed here since it's the same shared component.
 export default async function TeacherArchivedCoursesPage() {
     await requireRole(['teacher'])
     const courses = await getMyArchivedCourses()

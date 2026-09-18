@@ -1,7 +1,7 @@
 // app/admissions/page.tsx
 
 import Link from "next/link";
-import { FileText, CheckCircle2, HelpCircle } from "lucide-react";
+import { FileText, CheckCircle2 } from "lucide-react";
 import { SiteNav } from "@/components/layout/SiteNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
@@ -36,11 +36,7 @@ const steps = [
   {
     title: "Assessment of Fees & Payment",
     description: "Settle matriculation, miscellaneous, and learning resource fees at the school finance desk under flexible payment plans.",
-  },
-  {
-    title: "Official Enrollment & LMS Credentials",
-    description: "Receive your child's official section assignment, class schedule, uniform vouchers, and UMCLSI LMS portal credentials.",
-  },
+  }
 ];
 
 export default function AdmissionsPage() {
@@ -69,25 +65,7 @@ export default function AdmissionsPage() {
             </Link>
           </div>
 
-          {/* Enrollment Status Bar */}
-          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-hairline bg-surface p-6 shadow-card md:grid-cols-4">
-            <div>
-              <p className="text-caption text-text-secondary">Levels Open</p>
-              <p className="mt-1 text-body-md font-bold text-ink">Nursery to Grade 6</p>
-            </div>
-            <div>
-              <p className="text-caption text-text-secondary">Governance</p>
-              <p className="mt-1 text-body-md font-bold text-ink">DepEd Division Caloocan</p>
-            </div>
-            <div>
-              <p className="text-caption text-text-secondary">Payment Options</p>
-              <p className="mt-1 text-body-md font-bold text-ink">Annual / Term Schemes</p>
-            </div>
-            <div>
-              <p className="text-caption text-text-secondary">Office Hours</p>
-              <p className="mt-1 text-body-md font-bold text-ink">Mon–Fri (8:00 AM–4:00 PM)</p>
-            </div>
-          </div>
+    
         </div>
       </section>
 

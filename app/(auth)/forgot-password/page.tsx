@@ -1,39 +1,4 @@
 // app/(auth)/forgot-password/page.tsx
-//
-// Design system: DESIGN-LMS.md v1.8
-//
-// No longer a self-service reset flow. As of 2026-08-17, password
-// resets are admin-only — an admin resets a user's password directly
-// (see features/admin, once that action exists) rather than the user
-// emailing themselves a reset link. This page is now a static notice
-// pointing them to their admin, and no longer calls
-// requestPasswordReset. The old email-a-link flow and its landing
-// page (app/reset-password/page.tsx) have been removed entirely.
-//
-// DESIGN-LMS 2.1 (2026-08-31): removed font-heading (Fredoka) — global
-// default is now Roboto (font-document) via globals.css's base h1-h6
-// rule. Fixed text-amber -> text-warning: `amber` was a color name
-// from the OLD DESIGN-LMS v1.0 tailwind.config.ts and does not exist
-// in the current config (which uses `warning`/`warning-soft` for the
-// same hex value) — this class was silently not applying.
-//
-// Also: added the shared SiteNav/SiteFooter shell, matching every
-// other public page (about/our-story/contact/admissions/academics/
-// login) — previously this page had its own standalone centered-logo
-// header instead, flagged as an open inconsistency and now resolved
-// per explicit user confirmation ("add it for consistency"). The
-// standalone logo block above the card is removed since SiteNav
-// already shows the logo/school name in its own header.
-//
-// DESIGN-LMS 2.1 bugfix pass (2026-08-31, continued): two fixes.
-// (1) The "• Forgot your password?" eyebrow line directly restated the
-// h1 right below it ("Contact your school admin") — a redundant label
-// adding no information, which the locked decluttering rule (cut
-// redundant/explanatory UI copy) targets. Removed. (2) "Back to sign
-// in" was h-11 (44px) — bumped to h-12 (48px), the standing minimum
-// for any clickable target.
-// app/(auth)/forgot-password/page.tsx
-
 import Link from "next/link";
 import { UserCog } from "lucide-react";
 import { SiteNav } from "@/components/layout/SiteNav";

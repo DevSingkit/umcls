@@ -54,8 +54,9 @@ export default async function TeacherCourseOverviewLayout({
             <CourseStreamHeader
                 courseId={courseId}
                 role="teacher"
-                title={course.subject || course.title}
-                subtitle={course.subject ? course.title : undefined}
+                title={course.title}
+                subject={course.subject || undefined}
+                subtitle={course.description || undefined}
             />
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -64,9 +65,6 @@ export default async function TeacherCourseOverviewLayout({
                         <span className="inline-flex items-center rounded-full bg-warning-soft px-2.5 py-1 text-caption font-semibold text-warning">
                             Unpublished
                         </span>
-                    )}
-                    {course.description && (
-                        <p className="text-caption text-text-secondary mt-1">{course.description}</p>
                     )}
                     {!course.is_published && (
                         <p className="mt-1 text-caption text-text-secondary">

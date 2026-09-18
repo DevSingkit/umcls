@@ -2,8 +2,6 @@ import { notFound } from 'next/navigation'
 import { getAttemptForGrading } from '@/features/quizzes/actions/grade-short-answer'
 import { ShortAnswerGradeList } from '@/features/quizzes/components/ShortAnswerGradeList'
 
-// DESIGN-LMS 2.1 PASS: removed font-heading from student-name title
-// (Classroom Mode, Fredoka is Mission-Mode-only).
 export default async function GradeAttemptPage({
     params,
 }: {

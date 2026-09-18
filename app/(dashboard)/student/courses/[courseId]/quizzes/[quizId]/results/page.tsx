@@ -37,10 +37,6 @@ export default async function QuizResultsPage({
         show_results_after: 'submission' | 'grading' | 'never'
     }
 
-    // Total possible points for this quiz — sum of every question's
-    // points, since quiz_attempts.score is now a raw point total
-    // (e.g. "8"), not a 0-100 percentage. No pass/fail anymore either,
-    // so there's nothing to compare the score against except this max.
     const { data: questions } = await supabase
         .from('questions')
         .select('points')

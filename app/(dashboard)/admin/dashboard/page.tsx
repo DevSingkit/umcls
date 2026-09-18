@@ -6,12 +6,6 @@ import { getWeeklyLoginCounts } from '@/features/admin/actions/dashboard-stats'
 import { WeeklyActivityChart } from '@/features/admin/components/WeeklyActivityChart'
 import { DashboardAutoRefresh } from '@/features/admin/components/DashboardAutoRefresh'
 
-// Admin home page (PH2-001, full scope). Logic unchanged from session
-// two — same three counts, same weekly login query, same removed
-// Recent Activity feed (redundant with /admin/audit-logs) and removed
-// Users/Enroll nav tabs. This pass only reworks the markup to follow
-// DESIGN-LMS.md v2.0 §7.5a (every content area gets one outer surface
-// card) and §7.8 (dashboards are full-width data content, not capped).
 export default async function AdminDashboardPage() {
     await requireRole(['admin'])
     const supabase = await createClient()

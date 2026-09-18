@@ -1,20 +1,3 @@
-// Admin backup: every course's grades as XLSX, one worksheet per
-// course. Rebuilt from scratch — the old DepEd-weighted version was
-// removed when gradebook_items/gradebook_scores/subject_weight_profiles
-// were dropped (migration 083). Sourced from getAllCourseGradesForBackup,
-// same real assignment/quiz data as the live Classroom-style gradebook
-// grid — no manual columns, no weights, no Final Grade.
-//
-// Same auth pattern as app/api/admin/backup/users/route.ts: checked
-// directly via supabase.auth.getUser(), not requireRole (see that
-// route's comment for why).
-//
-// Layout per sheet:
-//   Teacher: {name}
-//   Course: {title} — {description}
-//   (blank row)
-//   Student Name | Quiz Title | Quiz Title | Assignment Title | ...
-//   Student A    | 0/5        | 0/10       | 80/100           | ...
 import { NextResponse } from 'next/server'
 import ExcelJS from 'exceljs'
 import { createClient } from '@/lib/supabase/server'

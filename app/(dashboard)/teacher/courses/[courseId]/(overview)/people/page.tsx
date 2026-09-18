@@ -2,22 +2,6 @@ import { notFound } from 'next/navigation'
 import { Avatar } from '@/components/ui/Avatar'
 import { getCourseTeacherForTeacher, getCourseRoster } from '@/features/courses/actions/courses'
 
-// Course-scoped People tab (teacher). Replaces the old standalone
-// /teacher/people course-selector page — courseId now comes from the
-// route via CourseTabs, not a searchParam. Two lists per §6.1d:
-// Teacher (themself), then Students (full roster, always shown —
-// unlike the student side, a teacher's own roster isn't gated by any
-// visibility toggle).
-//
-// DESIGN-LMS 2.1 REDESIGN (2026-09-06): students moved from a flat
-// divide-y list (name-only, avatar small and left-aligned like a
-// settings row) to a photo-forward card grid — per request, the
-// roster should read as a class photo/seating chart, not an account
-// list. Each student card centers a `lg` (64px) avatar above the
-// name — confirmed against Avatar.tsx before using it, rather than
-// guessing at a size. Teacher keeps the single spotlighted card
-// treatment (still the right pattern for a one-person "section"),
-// also bumped to `lg` so the sizing is consistent between sections.
 export default async function TeacherCoursePeoplePage({
     params,
 }: {

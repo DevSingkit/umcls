@@ -1,31 +1,4 @@
 // app/(dashboard)/teacher/courses/[courseId]/lessons/[lessonId]/page.tsx
-//
-// Original file, unchanged except for one addition: a "Missions"
-// section, inserted after Materials and before Simplify Lesson,
-// mirroring that section's exact shape (fetch server-side, hand the
-// list to a small component, "+ New X" link included in that
-// component). Gated behind `user?.role === 'teacher'`, same pattern
-// already used for the Simplify Lesson section below it — this file
-// isn't exclusively teacher-only by its own logic (relies on
-// getCurrentUser, not requireRole), so the gate is kept consistent
-// with how the file already guards teacher-only sections rather than
-// assumed redundant.
-//
-// PHASE 8 REMOVAL (2026-08-28, new conversation continuing the same
-// project): Simplify Lesson section removed entirely — AI Simplify is
-// being retired app-wide (full UI removal, confirmed with user).
-// getSimplifiedLessonsForTeacher call and the simplifications fetch
-// removed along with it. Database (lesson_simplifications table,
-// users.preferred_simplify_language column) deliberately left
-// untouched — only the UI/actions are being removed this pass, not
-// the schema; flagged to user as the safer, reversible default rather
-// than assumed.
-//
-// DESIGN-LMS 2.1 PASS: removed font-heading from title and all three
-// section headers (Materials/Missions/Comments) — this is the
-// teacher-side Classroom Mode lesson view, not the student Mission
-// Mode lesson-reading page, so Fredoka doesn't apply here at all.
-
 import { notFound } from 'next/navigation'
 import { getLesson } from '@/features/lessons/actions/get-lesson'
 import { getCurrentUser } from '@/lib/auth/get-current-user'

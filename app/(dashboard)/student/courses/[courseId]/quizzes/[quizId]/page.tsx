@@ -3,19 +3,6 @@ import { HelpCircle } from 'lucide-react'
 import { getQuizForStudent, getQuizOverviewForStudent } from '@/features/quizzes/actions/get-quiz-for-student'
 import { QuizStartGate } from '@/features/quizzes/components/QuizStartGate'
 
-// Rebuilt for DESIGN-LMS.md §8.10 Model B (Quiz = plain-document,
-// two-column + sticky side panel) and §8.7a's icon mapping (Quiz =
-// info-blue HelpCircle, same mapping CourseStream.tsx /
-// TeacherCourseStream.tsx already use — reused here rather than
-// invented fresh).
-//
-// Data-fetching logic is UNCHANGED from the original — same
-// getQuizOverviewForStudent/getQuizForStudent calls, same
-// shouldShowTakeForm branch. Only the rendering changed: the
-// "not started / in progress" branch now goes through QuizStartGate
-// (Model B overview -> Start/Resume -> unmodified TakeQuizForm) instead
-// of mounting TakeQuizForm immediately, and the results branch is now
-// a real two-column layout instead of a single stacked column.
 export default async function QuizDetailsPage({
     params,
 }: {

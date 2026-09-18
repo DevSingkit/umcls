@@ -2,8 +2,6 @@ import { notFound } from 'next/navigation'
 import { listAttemptsForQuiz } from '@/features/quizzes/actions/grade-short-answer'
 import { AttemptsList } from '@/features/quizzes/components/AttemptsList'
 
-// DESIGN-LMS 2.1 PASS: removed font-heading from title (Classroom
-// Mode, Fredoka is Mission-Mode-only).
 export default async function QuizAttemptsPage({
     params,
 }: {

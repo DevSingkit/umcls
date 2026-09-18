@@ -1,22 +1,6 @@
 'use client'
 // features/courses/components/AnnouncementComposer.tsx
-//
-// Phase 3.8: inline "Share something with your class..." composer,
-// Classroom-style — confirmed with user (chose inline composer over a
-// full new page, unlike lesson/quiz/assignment). Sits above
-// TeacherCourseStream in the teacher's course page. Collapsed by
-// default to a single click-to-expand input, matching Classroom's own
-// actual pattern (a one-line prompt that grows into a full compose box
-// on focus/click) rather than always showing a full textarea taking up
-// space above the stream.
-//
-// DESIGN-LMS 2.1 REDESIGN (2026-09-06): pure visual fix, no logic
-// touched — postAnnouncement call, useTransition/router.refresh flow,
-// and expand/collapse state unchanged. The expanded textarea used
-// `border-[1.5px] border-hairline-strong`, a one-off pattern that
-// didn't match the standard form-input convention used everywhere
-// else (InquiryForm, New Course form): `border-2 border-hairline`.
-// Aligned to that standard.
+
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -51,7 +35,7 @@ export function AnnouncementComposer({ courseId }: { courseId: string }) {
                 onClick={() => setIsExpanded(true)}
                 className="w-full text-left h-14 min-h-touch px-6 rounded-md bg-surface border border-hairline shadow-card hover:shadow-card-hover text-body-md text-text-secondary transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
-                Share something with your class...
+                Announce something with your class...
             </button>
         )
     }
@@ -68,7 +52,7 @@ export function AnnouncementComposer({ courseId }: { courseId: string }) {
                 required
                 rows={3}
                 maxLength={5000}
-                placeholder="Share something with your class..."
+                placeholder="Announce something with your class..."
                 className="w-full min-w-0 px-4 py-3 rounded-md border-2 border-hairline bg-surface text-body-md text-ink outline-none focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
             />
             {error && (

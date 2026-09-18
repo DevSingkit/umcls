@@ -6,15 +6,6 @@ import { TeacherCourseStream } from '@/features/courses/components/TeacherCourse
 import { AnnouncementComposer } from '@/features/courses/components/AnnouncementComposer'
 import { MaterialList } from '@/features/materials/components/MaterialList'
 
-// Header, CourseTabs, and course-level actions (Add a student,
-// +Create, ⋮ menu) now live in the shared (overview)/layout.tsx —
-// this page is just the Stream content itself.
-//
-// PHASE 3.8 ADDITION (2026-08-28): AnnouncementComposer sits above
-// TeacherCourseStream, matching Classroom's own layout (compose box
-// pinned at the top of the stream, posts below it) — confirmed with
-// user (inline composer, not a new page, unlike lesson/quiz/
-// assignment creation).
 export default async function TeacherCourseDetailPage({
     params,
 }: {
@@ -24,10 +15,6 @@ export default async function TeacherCourseDetailPage({
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
-    // Confirms the course still belongs to this teacher — the layout
-    // already does this same check before rendering at all, but this
-    // page can still be requested directly (e.g. a stale link), so it
-    // keeps its own guard rather than assuming the layout already ran.
     const { data: course, error: courseError } = await supabase
         .from('courses')
         .select('id')

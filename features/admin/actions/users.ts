@@ -149,9 +149,9 @@ export type ArchivedUserRow = {
 
 export async function getAllDeletedUsers(): Promise<ArchivedUserRow[]> {
     await requireRole(['admin'])
-    const supabase = await createClient()
+    const adminClient = createAdminClient()
 
-    const { data } = await supabase
+    const { data } = await adminClient
         .from('users')
         .select('id, full_name, email, role, deleted_at')
         .not('deleted_at', 'is', null)

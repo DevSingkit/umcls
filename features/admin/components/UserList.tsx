@@ -378,7 +378,7 @@ export function UserList({ initialUsers }: { initialUsers: UserRow[] }) {
                                                     }}
                                                     className="block w-full px-4 py-2.5 text-left text-caption font-medium text-error hover:bg-error-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-error"
                                                 >
-                                                    Erase User Data
+                                                    Archive user
                                                 </button>
                                             </div>
                                         )}

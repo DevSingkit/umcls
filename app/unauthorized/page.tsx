@@ -3,10 +3,6 @@ import { ShieldAlert } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLE_DASHBOARD } from "@/lib/navigation/nav-items";
 
-// Standalone page (outside the (dashboard) shell) — reached when a logged-in
-// user's role doesn't match the page they tried to open (AUTH_NOTES.md).
-// Uses getCurrentUser(), not requireUser(), so a broken session can't loop
-// back into this page.
 export default async function UnauthorizedPage() {
   const user = await getCurrentUser();
   const backHref = user ? ROLE_DASHBOARD[user.role] : "/";

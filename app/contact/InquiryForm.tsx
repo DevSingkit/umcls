@@ -2,24 +2,11 @@
 //
 // NOT WIRED UP. There is no server action, database table, or email
 // delivery for inquiries yet — that decision was explicitly deferred
-// (see page.tsx comment, 2026-08-31). On submit this logs a clear
+// On submit this logs a clear
 // console.error flag instead of silently doing nothing, so this
 // doesn't get mistaken for a working feature during QA or a demo.
 // Replace handleSubmit's body with a real server action call once
 // storage/delivery is decided.
-//
-// DESIGN-LMS 2.1 bugfix pass (2026-08-31): this file predated the
-// redesign and never got a pass — no logic touched, three visual
-// fixes only. (1) `text-on-brand` isn't a real token (only `on-ink`
-// exists in tailwind.config.ts) — same dead-token bug class fixed
-// everywhere else this track. (2) Inputs used plain `border
-// border-hairline-strong` at h-12 — aligned to the standing form-input
-// convention used everywhere else (`border-2 border-hairline`, h-11 —
-// Classroom Mode inputs deliberately stay at 44px, not bumped).
-// (3) Labels used `text-body-md font-medium text-ink` instead of the
-// standard `text-label text-ink-soft` label style used on every other
-// form in the app.
-// app/contact/InquiryForm.tsx
 
 "use client";
 
@@ -31,7 +18,6 @@ export function InquiryForm() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    // eslint-disable-next-line no-console
     console.error(
       "[InquiryForm] NOT IMPLEMENTED: contact form has no backend yet. " +
         "This submission was not saved or sent anywhere."

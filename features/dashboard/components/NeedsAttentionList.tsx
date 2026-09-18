@@ -32,7 +32,7 @@ const ITEM_KIND_LABEL: Record<AttentionItem['kind'], string> = {
 const ITEM_CTA_LABEL: Record<AttentionItem['kind'], string> = {
     assignment_submission: 'Grade submission',
     quiz_short_answer: 'Review answer',
-    mission_stuck: 'Inspect mission',
+    mission_stuck: 'View progress',
 }
 
 function timeAgo(iso: string) {
@@ -101,8 +101,10 @@ export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
                                 </p>
                                 {item.kind === 'mission_stuck' ? (
                                     <p className="text-caption text-error">
-                                        This student has encountered repeated difficulty on this quest. Review their response
-                                        pattern or provide guidance.
+                                        {item.wrongCount
+                                            ? `Missed ${item.wrongCount} time${item.wrongCount === 1 ? '' : 's'} on this quest. `
+                                            : 'This student has encountered repeated difficulty on this quest. '}
+                                        Review their response pattern or provide guidance.
                                     </p>
                                 ) : (
                                     <p className="text-caption text-text-secondary">

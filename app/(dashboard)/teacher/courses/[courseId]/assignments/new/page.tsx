@@ -1,7 +1,5 @@
 import { NewAssignmentForm } from '@/features/assignments/components/NewAssignmentForm'
 
-// DESIGN-LMS 2.1 PASS: removed font-heading from title (Classroom
-// Mode, Fredoka is Mission-Mode-only).
 export default async function NewAssignmentPage({
     params,
 }: {

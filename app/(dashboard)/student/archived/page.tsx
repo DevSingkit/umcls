@@ -2,10 +2,6 @@ import { requireRole } from '@/lib/auth/get-current-user'
 import { getMyArchivedEnrolledCourses } from '@/features/courses/actions/get-enrolled-courses'
 import { CourseCard } from '@/features/courses/components/CourseCard'
 
-// Same purpose as the teacher archived page: a course an admin
-// archived no longer shows on the student dashboard, but everything
-// in it (lessons, quizzes, grades already recorded) is still fully
-// accessible from here.
 export default async function StudentArchivedCoursesPage() {
     await requireRole(['student'])
     const courses = await getMyArchivedEnrolledCourses()

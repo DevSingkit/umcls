@@ -11,10 +11,6 @@ export default function LoginPage() {
       <SiteNav />
 
       <main className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-12 sm:px-6 md:py-16">
-        {/* Decorative watermark, scoped to this section only so it never
-            bleeds into the nav or footer. Scales from a modest badge on
-            mobile up to a larger centered mark on desktop without ever
-            competing with the form for attention. */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 flex items-center justify-center"

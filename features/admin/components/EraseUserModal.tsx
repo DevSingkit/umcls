@@ -62,12 +62,10 @@ export function EraseUserModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 <p id="erase-user-title" className="text-body-emphasis text-ink mb-2">
-                    Erase User Data for {fullName}?
+                    Archive user {fullName}?
                 </p>
                 <p className="text-body-md text-text-secondary mb-4">
-                    This removes {fullName} from the main users list and signs them out. Their
-                    name, email, login, and academic history all stay intact — nothing is
-                    deleted. You can find and restore this account any time from{' '}
+                    This removes {fullName} from the main users list and signs them out. You can find and restore this account any time from{' '}
                     <span className="font-medium text-ink">Archives</span>.
                 </p>
                 {error && (
@@ -87,7 +85,7 @@ export function EraseUserModal({
                         disabled={isSubmitting}
                         className="h-12 px-6 flex items-center rounded-md bg-error text-on-ink font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 disabled:opacity-40"
                     >
-                        {isSubmitting ? 'Erasing…' : 'Erase User Data'}
+                        {isSubmitting ? 'Archiving…' : 'Archive user'}
                     </button>
                 </div>
             </div>

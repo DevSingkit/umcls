@@ -24,7 +24,7 @@ export default async function AdminUsersPage() {
         { href: '/admin/users/new', icon: UserPlus, label: 'Add account' },
         { href: '/admin/users/enroll', icon: UserCheck, label: 'Enroll' },
         { href: '/admin/users/reassign', icon: ArrowLeftRight, label: 'Reassign' },
-        { href: '/admin/users/deleted', icon: Archive, label: 'Deleted' },
+        { href: '/admin/users/deleted', icon: Archive, label: 'Archive' },
     ]
 
     return (

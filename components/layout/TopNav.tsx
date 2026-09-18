@@ -88,30 +88,37 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
 
         {/* Desktop page title, sourced from PageHeaderContext.
             Always breadcrumbs off "UMCLSI" — e.g. "UMCLSI > English"
-            with the section/instructor as a lighter subtitle. */}
+            with the section/instructor as a lighter subtitle. The ">"
+            and title/subtitle only render once a page has actually
+            called usePageHeader (e.g. dashboard has no header, so it's
+            just "UMCLSI" alone). */}
         <div className="hidden min-w-0 items-center gap-2 md:flex">
           <span className="text-body-md font-semibold text-on-ink/70 shrink-0">
             UMCLSI
           </span>
-          {header && (
-            <span className="text-on-ink/70 shrink-0" aria-hidden="true">
-              &gt;
-            </span>
-          )}
-          {header ? (
-            <div className="min-w-0 flex flex-col justify-center">
-              <span className="text-h2 text-on-ink truncate leading-tight">
-                {header.title}
+          {header?.title && (
+            <>
+              <span className="text-on-ink/70 shrink-0" aria-hidden="true">
+                &gt;
               </span>
-              {header.subtitle && (
-                <span className="text-caption text-on-ink/70 truncate leading-tight">
-                  {header.subtitle}
-                </span>
-              )}
-            </div>
-          ) : (
-            <span className="text-h2 text-on-ink truncate">
-            </span>
+              <div className="min-w-0 flex flex-col justify-center">
+                <div className="flex items-end gap-2 min-w-0">
+                  <span className="text-h2 text-on-ink truncate leading-tight">
+                    {header.title}
+                  </span>
+                  {header.subject && (
+                    <span className="text-body-md text-on-ink/70 truncate leading-tight shrink-0">
+                      {header.subject}
+                    </span>
+                  )}
+                </div>
+                {header.subtitle && (
+                  <span className="text-caption text-on-ink/70 truncate leading-tight">
+                    {header.subtitle}
+                  </span>
+                )}
+              </div>
+            </>
           )}
         </div>
 
@@ -126,7 +133,7 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
               aria-haspopup="menu"
               aria-expanded={isMenuOpen}
               className={cn(
-                "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-pill shadow-card transition-opacity hover:opacity-90",
+                "rounded-pill",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
               )}
             >
@@ -168,7 +175,10 @@ export function TopNav({ role, fullName, userId, avatarUrl }: TopNavProps) {
           </div>
         </div>
       </div>
-      
+
+      {/* Optional tabs row (e.g. CourseTabs), pushed here by whatever page
+          called usePageHeader. Kept inside the same sticky bar so it reads
+          as one header, matching the Classroom reference. */}
       {header?.tabs && (
         <div className="px-4 lg:px-6">{header.tabs}</div>
       )}

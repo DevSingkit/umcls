@@ -1,10 +1,3 @@
-// Admin backup: every user's profile + email as XLSX. Same Route
-// Handler shape as app/api/gradebook/export/route.ts (auth checked
-// directly via supabase.auth.getUser(), not requireRole — see that
-// route's own comment for why). No date-range cap here (unlike
-// gradebook export's FIND-018 requirement) — a full user roster
-// backup is a bounded, admin-only, whole-table snapshot, not an
-// open-ended per-course data pull.
 import { NextResponse } from 'next/server'
 import ExcelJS from 'exceljs'
 import { createClient } from '@/lib/supabase/server'

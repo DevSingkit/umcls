@@ -1,18 +1,7 @@
+// app/(dashboard)/teacher/courses/[courseId]/quizzes/new/page.tsx
 import { requireRole } from '@/lib/auth/get-current-user'
 import { NewQuizForm } from '@/features/quizzes/components/NewQuizForm'
 
-// app/(dashboard)/teacher/courses/[courseId]/quizzes/new/page.tsx
-//
-// Replaces the old flow (CreateMenu → createDraftQuiz → redirect to
-// /quizzes/[quizId]/edit). No quiz exists yet at this URL — the title
-// and first question are collected here, client-side, and only once
-// both are valid does createQuizWithFirstQuestion write anything to
-// the database (see that function's comment in create-quiz.ts for
-// why: the old flow inserted an empty draft the instant the button
-// was clicked, which showed up in the course stream with no content).
-//
-// DESIGN-LMS 2.1 PASS: removed font-heading from title (Classroom
-// Mode, Fredoka is Mission-Mode-only).
 export default async function NewQuizPage({
     params,
 }: {

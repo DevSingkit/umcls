@@ -10,10 +10,8 @@ import {
   HandHeart,
   ArrowUpRight,
   ArrowRight,
-  Gamepad2,
   Quote,
   CalendarDays,
-  CheckCircle2,
   MapPin,
 } from "lucide-react";
 import { SiteNav } from "@/components/layout/SiteNav";
@@ -39,12 +37,6 @@ const programs = [
     title: "Elementary (Grades 1 to 6)",
     description:
       "DepEd K-12 aligned curriculum emphasizing academic excellence, cooperative learning, and moral development.",
-  },
-  {
-    icon: Gamepad2,
-    title: "Mission Engine (Gamified LMS)",
-    description:
-      "Interactive digital practice, quizzes, and skill challenges designed to make homework engaging and measurable.",
   },
 ];
 
@@ -74,11 +66,7 @@ const corePillars = [
   {
     title: "Cooperative Growth",
     quote: "Students learn by encouraging and guiding one another, building leadership and teamwork skills early on.",
-  },
-  {
-    title: "Interactive Mastery",
-    quote: "Our gamified learning tools provide real-time feedback so every child masters key concepts at their own pace.",
-  },
+  }
 ];
 
 const announcements = [
@@ -111,10 +99,6 @@ export default function LandingPage() {
         <section className="px-6 pb-16 pt-12 md:pb-24 md:pt-20">
           <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-brand-soft border border-brand/20 px-4 py-2 text-base font-bold text-brand shadow-clay-sm">
-                <HandHeart className="h-5 w-5 shrink-0" strokeWidth={2.5} aria-hidden="true" />
-                <span>Classroom without walls, Classroom without losers</span>
-              </div>
 
               <h1 className="mt-6 text-3xl font-extrabold text-ink sm:text-4xl md:text-5xl md:leading-[1.15]">
                 Nurturing Minds, Building Character, Growing in Faith.
@@ -123,12 +107,17 @@ export default function LandingPage() {
               <p className="mt-6 max-w-2xl text-lg text-ink-soft leading-relaxed">
                 A private Christian basic education institution serving the
                 community of Tala, Caloocan City, offering Nursery,
-                Kindergarten, and Elementary education paired with
-                interactive learning technology.
+                Kindergarten, and Elementary education.
               </p>
 
               {/* 56px Primary Touch Targets */}
               <div className="mt-10 flex flex-wrap items-center gap-4">
+                <Link
+                  href="/login"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-surface px-8 text-xl font-bold text-ink border border-hairline shadow-card hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
+                >
+                  Log in
+                </Link>
                 <Link
                   href="/admissions"
                   className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-brand px-8 text-xl font-bold text-white shadow-clay-sm active:shadow-clay-inset hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
@@ -136,20 +125,12 @@ export default function LandingPage() {
                   Admissions
                   <ArrowRight className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
                 </Link>
-                <Link
-                  href="/login"
-                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-surface px-8 text-xl font-bold text-ink border border-hairline shadow-card hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 transition-all"
-                >
-                  Log in
-                </Link>
+                
               </div>
 
               {/* High-Visibility Badges */}
               <div className="mt-8 flex flex-wrap gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-base font-bold text-brand shadow-clay-sm">
-                  <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
-                  DepEd Recognized
-                </span>
+                
                 <span className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-base font-bold text-ink-soft border border-hairline shadow-clay-sm">
                   <MapPin className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
                   847 Sampaguita Street, Tala, Caloocan City
@@ -199,7 +180,7 @@ export default function LandingPage() {
             <p className="mt-4 text-lg leading-relaxed text-ink-soft">
               We are a growing community of learners across Nursery,
               Kindergarten, and Elementary, and by combining caring instruction
-              with interactive tools like our Mission Engine LMS, we ensure
+              with interactive tools, we ensure
               every learner receives focused attention, sound academic
               guidance, and a strong moral foundation.
             </p>

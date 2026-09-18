@@ -16,13 +16,7 @@ const timeline = [
     title: "Formal Expansion to Elementary",
     description:
       "Following growth in enrollment, the institution earned official DepEd Division of Caloocan City recognition for Grades 1 through 6, incorporating under SEC registration as United Methodist Cooperative Learning System, Inc.",
-  },
-  {
-    era: "LMS & Digital Integration",
-    title: "Blended Learning Infrastructure",
-    description:
-      "To complement structured classroom instruction, UMCLSI introduced a dedicated online Learning Management System for coursework tracking, parent updates, and supplemental study materials.",
-  },
+  }
 ];
 
 const pillarsOfCooperation = [
@@ -61,25 +55,6 @@ export default function OurStoryPage() {
             Founded as a Christian ministry extension of the United Methodist Church, UMCLSI has served generations of early childhood and elementary learners in Tala, Caloocan City through affordable, quality basic education grounded in Methodist values.
           </p>
 
-          {/* Institutional Fast Facts */}
-          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl border border-hairline bg-surface p-6 shadow-card md:grid-cols-4">
-            <div>
-              <p className="text-caption text-text-secondary">School Type</p>
-              <p className="mt-1 text-body-md font-bold text-ink">Private Basic Education</p>
-            </div>
-            <div>
-              <p className="text-caption text-text-secondary">DepEd Status</p>
-              <p className="mt-1 text-body-md font-bold text-ink">Fully Recognized</p>
-            </div>
-            <div>
-              <p className="text-caption text-text-secondary">Affiliation</p>
-              <p className="mt-1 text-body-md font-bold text-ink">United Methodist Church</p>
-            </div>
-            <div>
-              <p className="text-caption text-text-secondary">Location</p>
-              <p className="mt-1 text-body-md font-bold text-ink">Tala, Caloocan City</p>
-            </div>
-          </div>
         </div>
       </section>
 

@@ -76,8 +76,11 @@ export function LearningInsightsCard({ insights }: { insights: LearningInsights 
                         <AlertTriangle size={20} className="text-warning shrink-0 mt-0.5" aria-hidden="true" />
                         <div className="min-w-0 flex-1">
                             <p className="text-caption font-semibold text-text-secondary">
-                                Common difficulty this week · {insights.commonDifficulty.courseName} ·{' '}
-                                {insights.commonDifficulty.missionTitle}
+                                Common difficulty this week: {insights.commonDifficulty.courseName}
+                                {insights.commonDifficulty.courseSubject && (
+                                    <> · {insights.commonDifficulty.courseSubject}</>
+                                )}{' '}
+                                · {insights.commonDifficulty.missionTitle}
                             </p>
                             <p className="font-sans text-body-emphasis text-ink truncate mt-0.5">
                                 {insights.commonDifficulty.prompt}

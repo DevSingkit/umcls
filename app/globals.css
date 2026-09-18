@@ -4,10 +4,9 @@
 
 @layer base {
   :root {
-    /* Set your light design system colors here */
-    --canvas: #f8fafc; /* Change this to #ffffff or #fbfbf9 for pure/warm white */
-    --surface: #ffffff; /* Card background color */
-    --ink: #0f172a; /* Default text color */
+    --canvas: #f8fafc; 
+    --surface: #ffffff;
+    --ink: #0f172a;
   }
 
   html {
@@ -16,12 +15,11 @@
   }
 
   body {
-    /* Enforces 18px legibility floor by default across body text */
     @apply bg-[var(--canvas)] text-[var(--ink)] font-sans text-body-lg antialiased min-h-screen selection:bg-[#8F1349] selection:text-white;
     overflow-x: clip;
   }
 
-  /* Reset global headings so Tailwind utility classes in JSX take control */
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans tracking-tight text-ink;
   }
@@ -34,12 +32,7 @@
     outline-offset: 2px;
   }
 
-  /* Border width tokens (§3 Design System)
-     Widths were drifting per-component (border, border-[1.5px],
-     border-2 all used for conceptually similar hairlines). These pair
-     a fixed width with the existing hairline colors so both are chosen
-     together as one decision instead of independently. Prefer these
-     over ad-hoc border-[Npx] utilities for standard dividers/inputs. */
+
   .border-hairline-default {
     @apply border border-hairline;
   }
@@ -47,17 +40,15 @@
     @apply border-[1.5px] border-hairline-strong;
   }
 
-  /* Tactile 3D Active State Depression Utility for Touch Devices (Mission Mode) */
+
   .active-press {
     @apply transition-transform active:translate-y-1 active:border-b-0;
   }
 
-  /* Custom utility for document text if needed in JSX classNames */
   .font-document {
     font-family: var(--font-roboto), Roboto, sans-serif;
   }
 
-  /* Hide scrollbars for clean horizontal tab rails while preserving swipe capability */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -66,7 +57,6 @@
     scrollbar-width: none;
   }
 
-  /* Claymorphism Utilities (Recessed & Tactile Surfaces) */
   .clay-well {
     @apply shadow-clay-inset bg-surface-sunken;
   }
@@ -80,9 +70,6 @@
     background-color: var(--surface);
   }
 
-  /* ── K-5 Compound Claymorphism Utilities ────────────────── */
-
-  /* Elevated card with soft inner highlight + outer shadow */
   .clay-card {
     @apply shadow-clay-card bg-surface rounded-2xl;
     background-image: linear-gradient(
@@ -92,14 +79,12 @@
     );
   }
 
-  /* Tactile 3D CTA button with bottom edge + press state */
   .clay-button {
     @apply shadow-clay-button border-b-[6px] border-brand-border
            rounded-2xl min-h-touch min-w-touch
            transition-all active:translate-y-1 active:border-b-0 active:shadow-none;
   }
 
-  /* 3D sphere for mission path nodes */
   .mission-sphere {
     @apply w-20 h-20 rounded-full flex items-center justify-center shrink-0;
     box-shadow:
@@ -119,7 +104,6 @@
   }
 }
 
-/* Accessibility Settings Overrides */
 html[data-text-size="larger"] {
   font-size: 112.5%;
 }
@@ -141,7 +125,6 @@ html[data-reduced-motion="true"] ::after {
   scroll-behavior: auto !important;
 }
 
-/* Reduced Motion Override for System Accessibility */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;

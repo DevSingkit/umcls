@@ -1,25 +1,10 @@
 // app/contact/page.tsx
-//
-// Contact Us. Form fields are stacked full-width at all breakpoints —
-// a two-column form on a school-inquiry page mostly just makes tab
-// order confusing on mobile, and the field count here is small enough
-// that a single column reads fine on desktop too.
-//
 // NOT WIRED UP: submission has no server action yet — see
 // InquiryForm's onSubmit below. Decided to skip building storage/email
 // delivery for now (2026-08-31); flagging in logs instead of silently
 // pretending this works, so it's not mistaken for a working feature
 // during testing.
-//
-// DESIGN-LMS 2.1 fact-correction pass (2026-09-06): phone, email,
-// street address, office hours, and the map query on this page were
-// all placeholder/made-up values from an earlier pass, not verified
-// school info. Replaced with:
-//   0994 584 9446 / umcls20educ@gmail.com /
-//   847 Sampaguita Street, Tala, Caloocan City, Metro Manila /
-//   Mon–Fri 8:00 AM–4:00 PM, closed weekends & holidays.
-// Map iframe query updated to match the corrected street address.
-// app/contact/page.tsx
+
 
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import Link from "next/link";

@@ -19,9 +19,6 @@ export type TeacherDashboardStats = {
     coursesCount: number
     studentsCount: number
     needsGradingCount: number
-    // Kept separate from needsGradingCount on purpose — a stuck-mission
-    // student doesn't need grading, they need help, so folding this
-    // into needsGradingCount would misdescribe what that number means.
     stuckStudentsCount: number
 }
 
@@ -33,6 +30,7 @@ export type AttentionItem = {
     studentName: string
     submittedAt: string
     href: string
+    wrongCount?: number
 }
 
 export type TeacherCoursePreview = {
@@ -45,58 +43,25 @@ export type TeacherCoursePreview = {
     teacherAvatarUrl: string | null
 }
 
-// PHASE 4 ADDITION (ADAPTIVE-ENGINE-PLAN.md, 2026-08-28): real
-// learning-state aggregates, matching the thesis doc's own example
-// ("24 learning well, 8 need more practice, 3 need support"). Built
-// from activity_mastery (Phase 1/2), NOT from the stuckItems logic
-// above — that heuristic is mission_progress/attempt_events-based and
-// predates activity_mastery entirely; this is a genuinely different,
-// more precise signal, not a restyle of stuckItems.
-//
-// Classification per student (a judgment call, not independently
-// specified anywhere — flagged in the log): checked in this priority
-// order, first match wins —
-//   1. 'needs_support' — has at least one activity_mastery row with
-//      wrong_count >= STUCK_WRONG_ATTEMPTS_THRESHOLD (reusing the
-//      SAME constant already established above for stuck-mission
-//      detection, for consistency rather than inventing a second
-//      threshold).
-//   2. 'learning_well' — at least 70% of their attempted activities
-//      (activity_mastery rows) are in state 'mastered'.
-//   3. 'needs_practice' — everyone else with at least one
-//      activity_mastery row (some engagement, not yet struggling, not
-//      yet mostly mastered).
-// A student with ZERO activity_mastery rows anywhere in this teacher's
-// courses is excluded from all three buckets — "never touched mission
-// content" is not the same as "needs support," same bootstrapping-
-// default care already established elsewhere in this codebase.
 export type LearningInsights = {
     learningWellCount: number
     needsPracticeCount: number
     needsSupportCount: number
-    // The single activity with the most wrong attempts in the last 7
-    // days across this teacher's courses — "common difficulty"
-    // callout, per the plan's exact spec. Null if there's no wrong-
-    // attempt activity in that window at all.
     commonDifficulty: {
         activityId: string
         prompt: string
         missionTitle: string
         courseName: string
+        courseSubject: string | null
         wrongCountThisWeek: number
         href: string
     } | null
 }
 
-// One combined fetch so the dashboard page makes a single call and all
-// three sections (stats, needs-attention, courses preview) stay in sync
-// with each other, rather than racing separate requests.
 export async function getTeacherDashboardData() {
     const user = await requireRole(['teacher'])
     const supabase = await createClient()
 
-    // Every course this teacher owns. Used to scope all the queries below,
-    // and to build the courses-preview list.
     const { data: courses } = await supabase
         .from('courses')
         .select('id, title, subject, description, is_published, created_at')
@@ -122,14 +87,8 @@ export async function getTeacherDashboardData() {
     }
 
     const courseNameById = new Map(courseList.map((c) => [c.id, c.title]))
+    const courseSubjectById = new Map(courseList.map((c) => [c.id, c.subject]))
 
-    // Get assignment/quiz ids scoped to this teacher's courses first,
-    // rather than filtering through a joined table — Supabase applies
-    // .in()/.eq() on an embedded relation to that relation's own rows,
-    // not as a row-level filter on the parent select, so this two-step
-    // shape is the safe one (matches how courses.ts and
-    // grade-short-answer.ts scope every query: base-table id first,
-    // then use that id list directly).
     const [assignmentsResult, quizzesResult, studentsResult] = await Promise.all([
         supabase.from('assignments').select('id, title, course_id').in('course_id', courseIds),
         supabase.from('quizzes').select('id, title, course_id').in('course_id', courseIds),
@@ -140,10 +99,6 @@ export async function getTeacherDashboardData() {
             .eq('status', 'active'),
     ])
 
-    // Same silent-swallow risk as the submissions/short-answer queries
-    // below — if assignmentIds ends up empty when it shouldn't, this is
-    // the query to check first, since everything else short-circuits
-    // off of it.
     if (assignmentsResult.error) {
         console.error('teacher-dashboard assignmentsResult error:', assignmentsResult.error.message, assignmentsResult.error.code, assignmentsResult.error.details)
     }
@@ -157,8 +112,6 @@ export async function getTeacherDashboardData() {
     const quizIds = [...quizById.keys()]
 
     const [submissionsResult, shortAnswerResult] = await Promise.all([
-        // Ungraded assignment submissions, scoped to this teacher's
-        // assignment ids directly.
         assignmentIds.length === 0
             ? Promise.resolve({ data: [] as any[], error: null })
             : supabase
@@ -170,26 +123,6 @@ export async function getTeacherDashboardData() {
                   .in('status', ['submitted', 'resubmitted'])
                   .order('submitted_at', { ascending: false }),
 
-        // Quiz attempts with at least one ungraded short_answer response,
-        // scoped to this teacher's quiz ids directly. quiz_responses has
-        // no course_id of its own, so it's still nested here for the
-        // "any ungraded short_answer" check, but the outer filter is on
-        // quiz_id, not on a joined column.
-        //
-        // FIX: previously filtered .eq('status', 'submitted'), on the
-        // assumption an attempt with a still-ungraded short-answer
-        // response always sits at status = 'submitted' until a teacher
-        // grades it. That assumption is wrong in practice — an attempt
-        // can already show status = 'graded' (and even a computed
-        // score) while a short-answer response on it still has
-        // is_correct = null, which silently dropped it off this list.
-        // The real, reliable signal is the response's own is_correct,
-        // same source of truth already used by grade-short-answer.ts's
-        // listAttemptsForQuiz — status is not. Broadened to both
-        // 'submitted' and 'graded' rather than dropping the filter
-        // entirely, so a quiz still genuinely in_progress (student
-        // hasn't finished yet, autosaved rows with no grading decided
-        // either way) doesn't show up here prematurely.
         quizIds.length === 0
             ? Promise.resolve({ data: [] as any[], error: null })
             : supabase
@@ -202,12 +135,6 @@ export async function getTeacherDashboardData() {
                   .order('submitted_at', { ascending: false }),
     ])
 
-    // Was silently swallowed via ?? [] with no error check at all —
-    // same class of bug as the deactivateUser/toggleQuizPublish fixes
-    // found earlier this session, just on the read side instead of
-    // write. Logging here so a real query error (as opposed to a
-    // genuinely empty result) is visible instead of looking identical
-    // to "nothing needs grading."
     if (submissionsResult.error) {
         console.error('teacher-dashboard submissionsResult error:', submissionsResult.error.message, submissionsResult.error.code, submissionsResult.error.details)
     }
@@ -249,12 +176,6 @@ export async function getTeacherDashboardData() {
         }
     })
 
-    // Mission-stuck students — same two-step id-scoping shape as
-    // assignments/quizzes above: lessons for this teacher's courses
-    // first, then missions scoped to those lesson ids, then
-    // mission_progress/attempt_events scoped to those mission/activity
-    // ids. Four queries deep because mission_progress has no course_id
-    // of its own (mirrors quiz_responses' lack of one, noted above).
     const { data: lessonRows, error: lessonRowsError } = await supabase
         .from('lessons')
         .select('id, course_id')
@@ -341,10 +262,6 @@ export async function getTeacherDashboardData() {
         console.error('teacher-dashboard wrongEventsError:', wrongEventsError.message, wrongEventsError.code, wrongEventsError.details)
     }
 
-    // Wrong-attempt count per (mission, student), built once here rather
-    // than queried per-row, so this stays a fixed number of round trips
-    // regardless of how many students are currently "unlocked" across
-    // this teacher's courses.
     const wrongCountByMissionStudent = new Map<string, number>()
     for (const event of wrongEvents ?? []) {
         const missionId = activityMissionId.get(event.activity_id)
@@ -358,9 +275,6 @@ export async function getTeacherDashboardData() {
     const stuckRows = (missionProgressResult.data ?? []).filter((row: any) => {
         const wrongCount = wrongCountByMissionStudent.get(`${row.mission_id}:${row.student_id}`) ?? 0
         const isStale = new Date(row.updated_at).getTime() < staleCutoffMs
-        // "Stuck" here means either a real volume of wrong answers, or
-        // sitting at zero streak with no progress in a while — either
-        // one alone is enough, not both required.
         return wrongCount >= STUCK_WRONG_ATTEMPTS_THRESHOLD || (isStale && row.correct_streak === 0)
     })
 
@@ -373,7 +287,8 @@ export async function getTeacherDashboardData() {
             courseName: courseNameById.get(missionInfo?.courseId) ?? 'Course',
             studentName: row.users?.full_name ?? 'A student',
             submittedAt: row.updated_at,
-            href: `/teacher/courses/${missionInfo?.courseId}/lessons/${missionInfo?.lessonId}/missions/${row.mission_id}/edit`,
+            href: `/teacher/courses/${missionInfo?.courseId}/lessons/${missionInfo?.lessonId}/missions/${row.mission_id}/progress`,
+            wrongCount: wrongCountByMissionStudent.get(`${row.mission_id}:${row.student_id}`) ?? 0,
         }
     })
 
@@ -381,10 +296,6 @@ export async function getTeacherDashboardData() {
         (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
     )
 
-    // PHASE 4: learning-state aggregates, computed from activity_mastery
-    // — reuses activityIds already derived above for the stuckItems
-    // computation, one more query rather than re-deriving missions/
-    // lessons/activities from scratch.
     const { data: masteryRows, error: masteryRowsError } =
         activityIds.length === 0
             ? { data: [] as any[], error: null }
@@ -421,12 +332,6 @@ export async function getTeacherDashboardData() {
         }
     }
 
-    // Common-difficulty callout: highest wrong-attempt count on a
-    // single activity in the last 7 days. Derived from the SAME
-    // wrongEvents already fetched above for stuckItems (now also
-    // carrying responded_at), not a second query — that query is a
-    // lifetime/no-time-window count for stuck detection; this filters
-    // it down to a 7-day window for a different purpose.
     const weeklyStartMs = Date.now() - 7 * 24 * 60 * 60 * 1000
     const weeklyWrongCountByActivity = new Map<string, number>()
     for (const event of wrongEvents ?? []) {
@@ -445,6 +350,7 @@ export async function getTeacherDashboardData() {
                 prompt: activityPromptById.get(activityId) ?? 'Activity',
                 missionTitle: missionInfo.title,
                 courseName: courseNameById.get(missionInfo.courseId) ?? 'Course',
+                courseSubject: courseSubjectById.get(missionInfo.courseId) ?? null,
                 wrongCountThisWeek: count,
                 href: `/teacher/courses/${missionInfo.courseId}/lessons/${missionInfo.lessonId}/missions/${missionId}/edit`,
             }
@@ -466,15 +372,6 @@ export async function getTeacherDashboardData() {
     }
 
     const coursesPreview: TeacherCoursePreview[] = await (async () => {
-        // Every course here is already scoped to teacher_id = user.id
-        // above, so there's exactly one teacher across all of them —
-        // the logged-in user. One lookup, reused for every card, rather
-        // than a per-course join for something that never varies.
-        //
-        // No longer sliced to a preview count — with the standalone
-        // My Courses page removed, this grid is the only place a
-        // teacher's classes are listed at all, not a capped preview of
-        // a fuller list elsewhere.
         const { data: profile, error: profileError } = await supabase
             .from('users')
             .select('full_name, avatar_url')

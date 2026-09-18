@@ -2,16 +2,6 @@ import Link from 'next/link'
 import { BookOpen, Plus } from 'lucide-react'
 import { getMyCourses } from '@/features/courses/actions/courses'
 
-// Shows every course the logged in teacher owns. If they have none yet,
-// shows a simple message and a button to create the first one.
-//
-// DESIGN-LMS 2.1 pass (2026-09-06): removed literal "+" glyph prefixes
-// from both "New class" CTAs, replaced with lucide-react's Plus icon
-// (already imported for the empty-state badge) for consistent SVG
-// iconography per §1.3. Both buttons bumped from h-12 to h-14 to match
-// the app-wide h-14 primary-CTA standard used everywhere else in this
-// cluster (NewCoursePage "Create class", AnnouncementComposer trigger,
-// EditCourseForm "Save changes", EnrollStudentForm "Enroll student").
 export default async function TeacherCoursesPage() {
     const courses = await getMyCourses()
 

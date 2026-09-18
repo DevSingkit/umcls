@@ -1,6 +1,6 @@
 // app/academics/page.tsx
 
-import { Calendar, Clock, BookOpen, Download, ShieldCheck, HeartHandshake, Sparkles, School } from "lucide-react";
+import { Calendar, BookOpen, Sparkles, School } from "lucide-react";
 import { SiteNav } from "@/components/layout/SiteNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
@@ -24,11 +24,7 @@ const methodology = [
   {
     title: "Methodist Cooperative Learning Model",
     description: "Structured group tasks and peer-led exercises designed to build collaborative problem-solving skills rather than individual competition.",
-  },
-  {
-    title: "UMCLSI LMS Integration",
-    description: "Digital assignment tracking, learning modules, and direct teacher-parent communication through our dedicated online portal.",
-  },
+  }
 ];
 
 const coCurriculars = [
@@ -188,7 +184,7 @@ export default function AcademicsPage() {
           <p className="text-caption font-semibold uppercase tracking-wider text-brand">
             Instructional Model
           </p>
-          <h2 className="mt-2 text-2xl font-bold text-ink">Methodology & LMS Integration</h2>
+          <h2 className="mt-2 text-2xl font-bold text-ink">Methodology</h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
             {methodology.map((item) => (
               <div

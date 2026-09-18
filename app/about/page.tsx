@@ -78,12 +78,7 @@ const historyMilestones = [
     year: "Cooperative Model",
     title: "Peer-Based Learning Paradigm",
     description: "Adopted a cooperative learning methodology that structures classroom seating and tasks around team problem-solving and peer mentorship.",
-  },
-  {
-    year: "LMS & Modernization",
-    title: "Digital & LMS Integration",
-    description: "Implemented modern digital learning resources and LMS integration while preserving traditional classroom discipline and Christian values.",
-  },
+  }
 ];
 
 const facilities = [
@@ -100,7 +95,7 @@ const facilities = [
   {
     icon: Trees,
     title: "Community-Centered Location",
-    description: "Conveniently situated at 847 Sampaguita Street, Barangay Tala, Caloocan City — accessible to local neighborhood families.",
+    description: "Conveniently situated at 847 Sampaguita Street, Barangay Tala, Caloocan City accessible to local neighborhood families.",
   },
 ];
 
@@ -119,7 +114,7 @@ export default function AboutPage() {
             United Methodist Cooperative Learning System, Inc.
           </h1>
           <p className="mt-4 max-w-2xl text-body-md leading-relaxed text-ink-soft">
-            A recognized private basic education institution operating under the DepEd Division of Caloocan City and an educational ministry associated with the United Methodist Church network. We serve Nursery through Grade 6 in Tala, Caloocan City, centered on cooperative learning—where students help each other grow academically, socially, and spiritually.
+            A recognized private basic education institution operating under the DepEd Division of Caloocan City and an educational ministry associated with the United Methodist Church network. We serve Nursery through Grade 6 in Tala, Caloocan City, centered on cooperative learning where students help each other grow academically, socially, and spiritually.
           </p>
 
           {/* Quick Institutional Summary */}

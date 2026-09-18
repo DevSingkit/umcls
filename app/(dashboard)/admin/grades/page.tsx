@@ -4,19 +4,6 @@ import { getAllCoursesForAdmin } from '@/features/admin/actions/admin-grades'
 import { getGradebookForCourseGrid } from '@/features/grades/queries/gradebook'
 import { GradebookGrid } from '@/features/grades/components/GradebookGrid'
 
-// Admin gradebook, read-only — same Classroom-style grid a teacher
-// sees on their own course's Grades tab, just with a course picker
-// across every course in the school. Reuses getGradebookForCourseGrid
-// as-is (already accepts 'admin' with full cross-course access) — no
-// new query needed. Deliberately NOT an edit surface — see the
-// original header comment on this file for the full reasoning; that
-// logic is untouched.
-//
-// Design pass: course picker rows now use the §7.5a "one outer card,
-// nested rows with hairline dividers" pattern instead of each course
-// being its own separately shadowed card. This is the same fix as
-// AdminCourseList — a list of many small items shouldn't each carry
-// their own shadow when they live inside one section.
 export default async function AdminGradesPage({
     searchParams,
 }: {

@@ -13,6 +13,8 @@ import {
 export interface PageHeaderState {
   /** Bold title shown in the top bar, e.g. course name or page name. */
   title: string;
+  /** Optional lighter label shown next to the title, e.g. course subject. */
+  subject?: string;
   /** Optional muted line under the title, e.g. section/instructor. */
   subtitle?: string;
   /** Optional row rendered below the title (e.g. CourseTabs). */
@@ -77,7 +79,7 @@ function useHeaderSetter() {
  */
 export function usePageHeader(header: PageHeaderState) {
   const setHeader = useHeaderSetter();
-  const { title, subtitle, tabs } = header;
+  const { title, subject, subtitle, tabs } = header;
 
   // Keep the latest tabs node in a ref so the effect below can read it
   // without needing `tabs` in its dependency array — `tabs` is a fresh
@@ -87,8 +89,8 @@ export function usePageHeader(header: PageHeaderState) {
   tabsRef.current = tabs;
 
   useEffect(() => {
-    setHeader({ title, subtitle, tabs: tabsRef.current });
+    setHeader({ title, subject, subtitle, tabs: tabsRef.current });
     return () => setHeader(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, subtitle, setHeader]);
+  }, [title, subject, subtitle, setHeader]);
 }

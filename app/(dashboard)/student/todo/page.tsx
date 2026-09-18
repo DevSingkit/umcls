@@ -4,9 +4,6 @@ import { getMyEnrolledCourses } from '@/features/courses/actions/get-enrolled-co
 import { TodoTabs } from '@/features/todo/components/TodoTabs'
 import { SectionCard } from '@/components/ui/SectionCard'
 
-// Full To-do page — Assigned/Missing/Done, matching real Google
-// Classroom's actual structure (confirmed via research, not assumed).
-// The dashboard's TodoList preview links here via "View all".
 export default async function StudentTodoPage() {
     await requireRole(['student'])
 

@@ -7,6 +7,7 @@ interface CourseStreamHeaderProps {
   courseId: string;
   role: "student" | "teacher";
   title: string;
+  subject?: string;
   subtitle?: string;
 }
 
@@ -19,10 +20,12 @@ export function CourseStreamHeader({
   courseId,
   role,
   title,
+  subject,
   subtitle,
 }: CourseStreamHeaderProps) {
   usePageHeader({
     title,
+    subject,
     subtitle,
     tabs: <CourseTabs courseId={courseId} role={role} />,
   });

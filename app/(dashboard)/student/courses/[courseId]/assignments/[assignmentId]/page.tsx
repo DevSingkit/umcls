@@ -6,34 +6,6 @@ import { listMaterials } from '@/features/materials/actions/materials'
 import { MaterialList } from '@/features/materials/components/MaterialList'
 import { SubmissionUploadForm } from '@/features/assignments/components/SubmissionUploadForm'
 
-// Rebuilt for DESIGN-LMS.md §8.10 Model B (Assignment = plain-document,
-// two-column + sticky side panel) and §8.7a's icon mapping (Assignment
-// = amber ClipboardList, same mapping CourseStream.tsx /
-// TeacherCourseStream.tsx already use).
-//
-// Data-fetching is UNCHANGED — same getAssignment/getMySubmission/
-// listMaterials calls. What changed: instructions + Attachments now
-// live in the main (left) column, and "Your submission" — the
-// SubmissionUploadForm, now in its `compact` variant — moved into a
-// sticky side panel on desktop per §8.10's explicit spec ("the panel
-// is the button's home now, not a stacked section"). On mobile the
-// panel simply stacks below the main content in normal document flow
-// (no sticky behavior), same as §8.10 requires.
-//
-// DESIGN-LMS 2.1 PASS (2026-08-31): confirmed as the real/only
-// assignment-detail page (no assignments/page.tsx list route exists
-// in this app at all — nothing to touch there). Three fixes, no
-// layout/logic change:
-// (1) `bg-amber-soft`/`text-amber` aren't real tokens (config only
-//     has `warning`/`warning-soft`) — same recurring bug fixed
-//     elsewhere all session, badge now uses warning.
-// (2) Removed `font-heading` from the assignment title — this page is
-//     Classroom Mode, and Fredoka is locked to Mission Mode only
-//     (lesson reading / mission gameplay / mission results). h1
-//     already falls back to font-document (Roboto) via the global
-//     h1-h6 rule in globals.css once the override is gone.
-// (3) Badge icon was 16px; DESIGN-LMS 2.1 §1.3 specifies 20px for
-//     mobile body UI icons (24px is nav-only). Bumped to 20.
 export default async function StudentAssignmentDetailPage({
     params,
 }: {

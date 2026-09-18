@@ -49,6 +49,7 @@ export default async function StudentCourseOverviewLayout({
                 courseId={courseId}
                 role="student"
                 title={course.title}
+                subject={course.subject || undefined}
                 subtitle={course.description || undefined}
             />
 

@@ -5,10 +5,6 @@ import { SubmissionsGradeList } from '@/features/assignments/components/Submissi
 import { listMaterials } from '@/features/materials/actions/materials'
 import { MaterialList } from '@/features/materials/components/MaterialList'
 
-// DESIGN-LMS 2.1 PASS: removed font-heading from title (Classroom
-// Mode, Fredoka is Mission-Mode-only); bg-amber-soft/text-amber ->
-// bg-warning-soft/text-warning (dead tokens, same fix applied
-// everywhere else this track).
 export default async function AssignmentDetailPage({
     params,
 }: {
