@@ -1,0 +1,24 @@
+-- 20260828000004_090_drop_ai_generation_logs.sql
+-- Follow-up to 089_drop_ai_simplify_schema.sql, same session, same
+-- cleanup pass for thesis database documentation.
+--
+-- ai_generation_logs is now confirmed to have NO live callers:
+--   - AI question generation (the other historical user of this
+--     table, implied by its own generation_mode CHECK constraint
+--     allowing 'ai') was already removed by
+--     046_remove_ai_question_generation.sql, well before this
+--     session.
+--   - AI Simplify (features/simplify/actions/simplify.ts) was this
+--     session's only other confirmed caller — already deleted in
+--     Phase 8, and its own inserts here were silently broken anyway
+--     (used generation_mode: 'simplify', a value never permitted by
+--     this table's own CHECK constraint — the insert's returned
+--     error was never checked, so this logging was already a no-op
+--     for as long as it existed).
+--   - Confirmed via AddQuestionForm.tsx (read in full this session):
+--     no reference to ai_generation_logs, or to any AI-assisted
+--     question flow at all, anywhere in current question creation.
+--
+-- User explicitly confirmed removal after this verification.
+
+drop table if exists public.ai_generation_logs;

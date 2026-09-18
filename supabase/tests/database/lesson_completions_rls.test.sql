@@ -13,9 +13,9 @@ insert into auth.users (id, email) values
     ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'student_a@test.local'),
     ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'student_b@test.local');
 
-insert into public.users (id, role, full_name, is_active) values
-    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'student', 'Student A', true),
-    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'student', 'Student B', true);
+insert into public.users (id, email, role, full_name, is_active) values
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'student_a@test.local', 'student', 'Student A', true),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'student_b@test.local', 'student', 'Student B', true);
 
 -- (Assumes courses/lessons/enrollments tables and columns as in DATABASE.md.
 -- Adjust column names here if the real schema differs.)

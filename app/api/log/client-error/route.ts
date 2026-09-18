@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { clientErrorRateLimit } from '@/lib/security/rate-limit';
-// NOTE: `clientErrorRateLimit` needs to be added to lib/security/rate-limit.ts
-// — it doesn't exist yet (only loginRateLimit + resetRateLimit were built so
-// far). See the accompanying snippet for the one export to add.
 
 export const dynamic = 'force-dynamic';
 
-// Defense in depth: Zod enforces per-field limits, this catches an
-// oversized/garbage body before we even attempt to parse JSON.
 const MAX_BODY_BYTES = 20_000;
 const MAX_MESSAGE = 500;
 const MAX_STACK = 8_000;
@@ -24,14 +19,10 @@ const ClientErrorSchema = z.object({
 
 const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
-/** Strips the one PII pattern that can plausibly show up in a JS error
- * message or stack trace: an email address embedded in interpolated text. */
 function redactPII(input: string): string {
     return input.replace(EMAIL_RE, '[redacted-email]');
 }
 
-/** Keeps only the path. Query strings and hashes are the most common place
- * a token, email, or other identifier leaks into a URL. */
 function sanitizeUrl(rawUrl: string): string {
     try {
         const parsed = new URL(rawUrl, 'http://placeholder.local');
@@ -77,9 +68,6 @@ export async function POST(request: NextRequest) {
 
     const { message, stack, componentStack, url } = parsed.data;
 
-    // Structured log to stdout — matches the Type 2 "Application Logs" format
-    // in LMS_ARCHITECTURE.md §10.1. Picked up automatically by Vercel Runtime
-    // Logs; no separate log pipeline needed for V1.
     console.error(
         JSON.stringify({
             level: 'error',

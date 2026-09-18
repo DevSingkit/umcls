@@ -18,7 +18,7 @@ export async function getQuizForStudent(quizId: string) {
 
     const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
-        .select('id, title, description, course_id, passing_score')
+        .select('id, title, description, course_id, shuffle_questions, shuffle_options')
         .eq('id', quizId)
         .single()
 
@@ -56,5 +56,141 @@ export async function getQuizForStudent(quizId: string) {
     return {
         ...quiz,
         questions: questionsWithOptions,
+    }
+}
+
+export type QuizAttemptSummary = {
+    id: string
+    status: string
+    score: number | null
+    maxScore: number
+    submittedAt: string | null
+    // Per-question detail, gated by the quiz's show_results_after
+    // setting (migration 033) — same rule as grade-quiz-submission.ts.
+    // Omitted (not null) for any question whose correctness isn't
+    // allowed to be shown yet, for the same "don't leak that a hidden
+    // field exists" reason documented in grade-quiz-submission.ts.
+    questionResults: { questionId: string; isCorrect?: boolean }[]
+}
+
+export type QuizOverviewForStudent = {
+    quiz: {
+        id: string
+        title: string
+        description: string | null
+        courseId: string
+        maxAttempts: number
+    }
+    attemptCount: number
+    latestAttempt: QuizAttemptSummary | null
+    // True once attemptCount >= maxAttempts on a finished (non
+    // in_progress) latest attempt — mirrors trg_check_max_attempts, but
+    // computed here just to decide what button the page shows; the
+    // trigger remains the actual enforcement if this is ever wrong.
+    canStartNewAttempt: boolean
+}
+
+/**
+ * Loads what the quiz details page needs: the quiz itself, plus whether
+ * the student has an existing attempt and, if so, its result — gated by
+ * show_results_after exactly like grade-quiz-submission.ts gates its
+ * response at submit time. This is what closes the gap that gating: an
+ * attempt's per-question correctness must stay hidden on every later
+ * visit too, not just immediately after submitting.
+ */
+export async function getQuizOverviewForStudent(quizId: string): Promise<QuizOverviewForStudent> {
+    await requireRole(['student'])
+    const supabase = await createClient()
+
+    const { data: quiz, error: quizError } = await supabase
+        .from('quizzes')
+        .select('id, title, description, course_id, max_attempts, show_results_after')
+        .eq('id', quizId)
+        .single()
+
+    if (quizError || !quiz) {
+        throw new Error('Quiz not found')
+    }
+
+    const { data: attempts, error: attemptsError } = await supabase
+        .from('quiz_attempts')
+        .select('id, status, score, submitted_at, attempt_number')
+        .eq('quiz_id', quizId)
+        .order('attempt_number', { ascending: false })
+
+    if (attemptsError) {
+        throw new Error('Could not load attempt history')
+    }
+
+    const attemptRows = attempts ?? []
+    const latest = attemptRows[0] ?? null
+
+    // Total possible points for this quiz — quiz_attempts.score is a
+    // raw point total now, not a 0-100 percentage (migration 071), so
+    // the page needs this to show "8 / 10" instead of a bare number.
+    const { data: questions } = await supabase.from('questions').select('points').eq('quiz_id', quizId)
+    const maxScore = (questions ?? []).reduce((sum, q) => sum + (q.points ?? 0), 0)
+
+    let latestAttempt: QuizAttemptSummary | null = null
+
+    if (latest) {
+        const isFullyGraded = latest.status === 'graded'
+        const showDetail =
+            quiz.show_results_after === 'submission' ||
+            (quiz.show_results_after === 'grading' && isFullyGraded)
+        const neverShow = quiz.show_results_after === 'never'
+
+        let questionResults: { questionId: string; isCorrect?: boolean }[] = []
+
+        // Only fetch per-question results at all if there's a chance
+        // we'll show them — an in_progress attempt has no responses to
+        // show yet either way.
+        if (latest.status !== 'in_progress' && !neverShow) {
+            const { data: responses } = await supabase
+                .from('quiz_responses')
+                .select('question_id, is_correct')
+                .eq('attempt_id', latest.id)
+
+            questionResults = (responses ?? []).map((r) => {
+                // is_correct is null for short_answer questions until a
+                // teacher grades them, and for every question if this
+                // whole attempt isn't graded yet under 'grading'.
+                if (!showDetail || r.is_correct === null) {
+                    return { questionId: r.question_id }
+                }
+                return { questionId: r.question_id, isCorrect: r.is_correct }
+            })
+        }
+
+        latestAttempt = {
+            id: latest.id,
+            status: latest.status,
+            // Score follows the same gate as detail — 'grading'
+            // withholds it until the attempt is fully graded, matching
+            // what grade-quiz-submission.ts does at submit time. No
+            // more pass/fail (is_passing removed) — just the raw score.
+            score: quiz.show_results_after === 'grading' && !isFullyGraded ? null : latest.score,
+            maxScore,
+            submittedAt: latest.submitted_at,
+            questionResults,
+        }
+    }
+
+    const canStartNewAttempt =
+        latest === null ||
+        latest.status === 'in_progress' ||
+        attemptRows.filter((a) => a.status !== 'abandoned').length < quiz.max_attempts
+
+    return {
+        quiz: {
+            id: quiz.id,
+            title: quiz.title,
+            description: quiz.description,
+            courseId: quiz.course_id,
+            maxAttempts: quiz.max_attempts,
+        },
+        attemptCount: attemptRows.length,
+        latestAttempt,
+        canStartNewAttempt,
     }
 }

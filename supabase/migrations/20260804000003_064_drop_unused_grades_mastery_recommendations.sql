@@ -1,0 +1,54 @@
+-- Drops three tables confirmed dead in DATABASE.md §7 (grades,
+-- mastery_records, recommendations) and independently reconfirmed
+-- empty via a live row-count check on 2026-08-04 before this migration
+-- was written (0 rows in all three) — not dropped on doc claims alone.
+--
+-- Why each one is safe to drop, not just unused:
+--
+-- grades: no function or trigger has ever written to it (TASKS.md's own
+-- Batch 6 documents this as a deliberately deferred weighting decision
+-- that was never picked back up). The DepEd Matatag gradebook rebuild
+-- (migration 057) computes everything live from assignment_submissions/
+-- quiz_attempts instead — see features/grades/queries/gradebook.ts,
+-- which has no actions/ folder at all, matching "read-only, computed
+-- live, nothing here mutates this table."
+--
+-- mastery_records: RLS existed, nothing ever wrote to it. No competency-
+-- tracking feature was ever built on top of it.
+--
+-- recommendations: RLS existed (recs_insert_teacher, recs_select,
+-- recs_update_student), nothing ever wrote to it. The nav item for this
+-- feature (PH7-002) points at /coming-soon, a real deliberate
+-- placeholder route, not this table.
+--
+-- Explicitly NOT touched by this migration: ai_generation_logs (real,
+-- used by Simplify) and subject_weight_profiles (real, used by the
+-- DepEd grading rebuild) — these are active tables, not unused ones,
+-- despite superficially sitting in the same "was this ever wired up"
+-- category as the three above.
+--
+-- question_struggle_stats and quiz_struggle_summary are NOT referenced
+-- here because they never existed as real views in the first place
+-- (DATABASE.md §2, PH9-003) — there is nothing to drop.
+-- student_activity_events is NOT referenced here either — confirmed
+-- absent from a live information_schema.tables query on 2026-08-04,
+-- settling what DATABASE.md/TASKS_RECONCILED.md previously listed as
+-- unconfirmed: it was never created at all, not just missing from an
+-- earlier schema dump.
+--
+-- DROP TABLE automatically drops each table's RLS policies and grants
+-- along with it — no separate DROP POLICY statements needed, listing
+-- what each table's policies were (for the historical record, since
+-- this project's convention is to explain *why*, not just *what*):
+--   grades: no policies existed beyond default RLS enablement per
+--     LMS_ARCHITECTURE.md's module map — never independently confirmed
+--     policy-by-policy in this pass, going by DATABASE.md §7's "RLS
+--     exists" language for the sibling tables.
+--   mastery_records: RLS existed per DATABASE.md §7, specific policy
+--     names not enumerated there.
+--   recommendations: recs_insert_teacher, recs_select,
+--     recs_update_student (DATABASE.md §1, "recommendations" section).
+
+drop table if exists public.recommendations;
+drop table if exists public.mastery_records;
+drop table if exists public.grades;

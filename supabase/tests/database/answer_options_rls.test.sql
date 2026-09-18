@@ -7,10 +7,11 @@ begin;
 select plan(4);
 
 -- Test 1: the view has no is_correct column, structurally, regardless of role
-select isnt(
-    (select count(*) from information_schema.columns
-     where table_name = 'answer_options_for_student' and column_name = 'is_correct'),
-    1,
+select ok(
+    not exists (
+        select 1 from information_schema.columns
+        where table_name = 'answer_options_for_student' and column_name = 'is_correct'
+    ),
     'answer_options_for_student view has no is_correct column'
 );
 

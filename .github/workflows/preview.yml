@@ -44,7 +44,7 @@ jobs:
         with:
           urls: |
             ${{ steps.wait-for-preview.outputs.url }}
-            ${{ steps.wait-for-preview.outputs.url }}/login
+            ${{ steps.wait-for-preview.outputs.url }}/
           configPath: ./lighthouserc.js
           uploadArtifacts: true
           temporaryPublicStorage: true

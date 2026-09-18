@@ -1,20 +1,52 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
+import { Fredoka, Nunito, Roboto } from 'next/font/google'
 import './globals.css'
-// Importing env here means the whole app fails to boot with a clear error
-// if any required variable is missing — PH0-002's core acceptance
-// criterion. Keep this import first, before anything else in this file
-// that might otherwise fail more confusingly.
-import '@/lib/env'
+import '@/lib/env.server'
+export const dynamic = 'force-dynamic'
 
+const fredoka = Fredoka({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-fredoka',
+  display: 'swap',
+})
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-nunito',
+  display: 'swap',
+})
+const roboto = Roboto({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-roboto',
+  display: 'swap',
+})
 export const metadata: Metadata = {
-  title: 'LMS',
-  description: 'School Learning Management System',
+  title: {
+    default: 'UMCLS Classroom | Elementary Learning Platform',
+    template: '%s | UMCLS Classroom',
+  },
+  description:
+    'Official learning portal and gamified mission engine for UMCLS elementary students, parents, and teachers.',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#8F1349',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html
+      lang="en"
+      className={`${fredoka.variable} ${nunito.variable} ${roboto.variable}`}
+    >
+      <body className="bg-canvas text-ink font-sans antialiased selection:bg-brand-soft selection:text-brand">
+        {children}
+      </body>
     </html>
   )
 }

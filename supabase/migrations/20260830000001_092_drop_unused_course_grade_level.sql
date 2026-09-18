@@ -1,0 +1,23 @@
+-- 20260830000001_092_drop_unused_course_grade_level.sql
+-- Fourth migration in this session's cleanup pass for thesis database
+-- documentation.
+--
+-- courses.grade_level confirmed dead, more thoroughly checked than the
+-- other three drops this session since it's a currently-working form
+-- field, not an already-silently-broken one:
+--   - courses.ts's OWN comment on the column stated its purpose was
+--     "to scope what grade level Simplify generation targets" — AI
+--     Simplify fully retired this session (Phase 8).
+--   - CourseCard.tsx (the actual course tile shown everywhere — student
+--     dashboard, teacher dashboard, course lists): no grade_level
+--     reference at all.
+--   - AdminCourseList.tsx (admin's course management view): no
+--     grade_level reference at all.
+--   - EditCourseForm.tsx / the course-creation page: only ever
+--     COLLECTED it, never displayed or used it for anything else.
+-- User explicitly confirmed removal — including removing the Grade
+-- level field from both course forms — after this verification, since
+-- unlike the other three drops this one removes a currently-working
+-- UI control, not just dead backend plumbing.
+
+alter table public.courses drop column if exists grade_level;
